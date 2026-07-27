@@ -13,8 +13,10 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
 
 const tabs = ["Component.tsx", "styles.css", "usage.tsx", "notes.md"] as const;
 
-export function CodeEditor() {
-  const component = useSelectedComponent();
+export function CodeEditor({ componentSlug }: { componentSlug?: string } = {}) {
+  const selectedComponent = useSelectedComponent();
+  const componentFromSlug = useVaultStore((state) => state.components.find((item) => item.slug === componentSlug));
+  const component = componentFromSlug ?? selectedComponent;
   const editorTab = useVaultStore((state) => state.editorTab);
   const setEditorTab = useVaultStore((state) => state.setEditorTab);
   const updateCode = useVaultStore((state) => state.updateCode);

@@ -10,7 +10,7 @@ import { useVaultStore } from "@/stores/vault-store";
 export function ComponentBrowser({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const components = useVaultStore((state) => state.components);
-  const selectedComponentId = useVaultStore((state) => state.selectedComponentId);
+  const activeComponentSlug = useVaultStore((state) => state.activeComponentSlug);
   const search = useVaultStore((state) => state.search);
   const category = useVaultStore((state) => state.category);
   const viewMode = useVaultStore((state) => state.viewMode);
@@ -28,9 +28,9 @@ export function ComponentBrowser({ compact = false }: { compact?: boolean }) {
     });
   }, [components, search, category]);
 
-  function selectComponent(id: string) {
-    setSelectedComponent(id);
-    router.push(`/vault/components/${id}`);
+  function selectComponent(slug: string) {
+    setSelectedComponent(slug);
+    router.push(`/vault/components/${slug}`);
   }
 
   return (
@@ -121,13 +121,13 @@ export function ComponentBrowser({ compact = false }: { compact?: boolean }) {
             {filtered.map((component) => (
               <article
                 key={component.id}
-                data-active={selectedComponentId === component.id}
+                data-active={activeComponentSlug === component.slug}
                 className={cn(
                   "retro-panel cursor-pointer bg-surface-light p-2 transition duration-150 hover:-translate-y-0.5",
                   viewMode === "list" && "grid grid-cols-[160px_1fr] gap-3",
                   "data-[active=true]:outline data-[active=true]:outline-2 data-[active=true]:outline-orange",
                 )}
-                onClick={() => selectComponent(component.id)}
+                onClick={() => selectComponent(component.slug)}
               >
                 <div className="dot-grid grid min-h-24 place-items-center overflow-hidden border border-surface-dark bg-background p-3" dangerouslySetInnerHTML={{ __html: component.previewHtml }} />
                 <div className="mt-2 flex items-start justify-between gap-2">

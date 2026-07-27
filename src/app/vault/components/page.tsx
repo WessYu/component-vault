@@ -1,5 +1,5 @@
-import { VaultShell } from "@/components/desktop/vault-shell";
+import { ComponentLibraryScreen } from "@/features/components/component-library-screen";
 
 export default function ComponentsPage() {
-  return <VaultShell activeSection="Browser" focus="browser" />;
+  return <ComponentLibraryScreen />;
 }

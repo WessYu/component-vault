@@ -5,7 +5,7 @@ import type { ComponentState, ComponentVariant, VaultComponent, WindowKey } from
 import { demoComponents } from "@/services/demo-data";
 
 type EditorTab = "Component.tsx" | "styles.css" | "usage.tsx" | "notes.md";
-type InspectorTab = "PROPS" | "NOTES" | "TOKENS" | "USAGE";
+type InspectorTab = "PROPS" | "STATES" | "TOKENS" | "NOTES" | "USAGE";
 type DeviceMode = "Desktop" | "Tablet" | "Mobile";
 
 type WindowState = {
@@ -16,7 +16,7 @@ type WindowState = {
 
 type VaultState = {
   components: VaultComponent[];
-  selectedComponentId: string;
+  activeComponentSlug: string;
   activeWindow: WindowKey;
   windows: Record<WindowKey, WindowState>;
   editorTab: EditorTab;
@@ -31,7 +31,21 @@ type VaultState = {
   zoom: number;
   previewState: ComponentState;
   previewVariant: ComponentVariant;
-  setSelectedComponent: (id: string) => void;
+  tableSettings: {
+    density: "Compact" | "Comfortable";
+    stripedRows: boolean;
+    stickyHeader: boolean;
+    borders: boolean;
+    rows: number;
+    columns: number;
+    sortable: boolean;
+    pagination: boolean;
+    radius: number;
+    rowHeight: number;
+    headerBackground: string;
+  };
+  setSelectedComponent: (slug: string) => void;
+  setActiveComponentSlug: (slug: string) => void;
   setActiveWindow: (window: WindowKey) => void;
   toggleWindow: (window: WindowKey, action: "minimize" | "maximize" | "close" | "restore") => void;
   setEditorTab: (tab: EditorTab) => void;
@@ -48,6 +62,7 @@ type VaultState = {
   setZoom: (value: number) => void;
   setPreviewState: (value: ComponentState) => void;
   setPreviewVariant: (value: ComponentVariant) => void;
+  updateTableSettings: (values: Partial<VaultState["tableSettings"]>) => void;
 };
 
 const defaultWindowState: Record<WindowKey, WindowState> = {
@@ -60,7 +75,7 @@ const defaultWindowState: Record<WindowKey, WindowState> = {
 
 export const useVaultStore = create<VaultState>((set, get) => ({
   components: demoComponents,
-  selectedComponentId: demoComponents[0].id,
+  activeComponentSlug: demoComponents[0].slug,
   activeWindow: "browser",
   windows: defaultWindowState,
   editorTab: "Component.tsx",
@@ -75,11 +90,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   zoom: 100,
   previewState: "Default",
   previewVariant: "Primary",
-  setSelectedComponent: (id) => {
-    const selected = get().components.find((component) => component.id === id);
+  tableSettings: {
+    density: "Comfortable",
+    stripedRows: true,
+    stickyHeader: true,
+    borders: true,
+    rows: 5,
+    columns: 4,
+    sortable: true,
+    pagination: true,
+    radius: 4,
+    rowHeight: 42,
+    headerBackground: "#DED9CB",
+  },
+  setSelectedComponent: (slug) => get().setActiveComponentSlug(slug),
+  setActiveComponentSlug: (slug) => {
+    const selected = get().components.find((component) => component.slug === slug || component.id === slug);
+    if (!selected) return;
     set({
-      selectedComponentId: id,
-      activeWindow: "browser",
+      activeComponentSlug: selected.slug,
       previewState: selected?.props.state ?? "Default",
       previewVariant: selected?.props.variant ?? "Primary",
     });
@@ -139,8 +168,15 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({ previewVariant: value });
     get().addLog(`Variant switched to ${value}.`);
   },
+  updateTableSettings: (values) =>
+    set((state) => ({
+      tableSettings: {
+        ...state.tableSettings,
+        ...values,
+      },
+    })),
 }));
 
 export function useSelectedComponent() {
-  return useVaultStore((state) => state.components.find((component) => component.id === state.selectedComponentId) ?? state.components[0]);
+  return useVaultStore((state) => state.components.find((component) => component.slug === state.activeComponentSlug) ?? state.components[0]);
 }

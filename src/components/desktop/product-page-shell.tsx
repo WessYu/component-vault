@@ -2,7 +2,7 @@
 
 import { TopBar } from "@/components/desktop/top-bar";
 import { SideDock } from "@/components/desktop/side-dock";
-import { Taskbar } from "@/components/desktop/taskbar";
+import { FocusedTaskbar } from "@/components/desktop/focused-taskbar";
 
 export function ProductPageShell({ activeSection, children }: { activeSection: string; children: React.ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export function ProductPageShell({ activeSection, children }: { activeSection: s
         <SideDock active={activeSection} />
         <section className="retro-panel min-h-[calc(100dvh-120px)] overflow-hidden bg-surface-light">{children}</section>
       </div>
-      <Taskbar />
+      <FocusedTaskbar />
     </main>
   );
 }
