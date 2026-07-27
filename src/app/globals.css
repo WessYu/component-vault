@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f7f5;
+  --background: #f7f8fc;
   --surface: #ffffff;
-  --surface-light: #fbfbfa;
-  --surface-dark: #e6e6e3;
-  --border-dark: #d6d6d2;
+  --surface-light: #f2f4fa;
+  --surface-dark: #e4e7ef;
+  --border-dark: #d4d8e3;
   --border-light: #ffffff;
-  --text-primary: #18181b;
-  --text-secondary: #62626d;
-  --navy: #18181b;
-  --navy-light: #3f3f46;
-  --olive: #52525b;
-  --terminal: #111113;
-  --orange: #18181b;
-  --green: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
+  --text-primary: #171a2b;
+  --text-secondary: #6d7285;
+  --navy: #171a2b;
+  --navy-light: #6366f1;
+  --olive: #6d7285;
+  --terminal: #171a2b;
+  --orange: #6366f1;
+  --green: #51c89b;
+  --warning: #f1be48;
+  --danger: #ff7664;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-plex-mono);
 }
@@ -57,6 +57,10 @@ body {
 
 body {
   overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
 }
 
 button,

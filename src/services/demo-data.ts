@@ -1,10 +1,10 @@
 import type { Collection, DesignToken, VaultComponent } from "@/types/vault";
 
 const sharedTokens: DesignToken[] = [
-  { id: "token-orange", type: "color", name: "accent.orange", value: "#DE572F" },
-  { id: "token-navy", type: "color", name: "ink.navy", value: "#243F5E" },
-  { id: "token-radius", type: "radius", name: "radius.control", value: "6px" },
-  { id: "token-shadow", type: "shadow", name: "shadow.press", value: "2px 2px 0 #3E3B34" },
+  { id: "token-primary", type: "color", name: "accent.primary", value: "#6366F1" },
+  { id: "token-blue", type: "color", name: "category.dataDisplay", value: "#4C8DFF" },
+  { id: "token-radius", type: "radius", name: "radius.card", value: "16px" },
+  { id: "token-shadow", type: "shadow", name: "shadow.panel", value: "0 20px 70px rgba(23, 26, 43, .08)" },
 ];
 
 const usage = [
@@ -50,7 +50,7 @@ export const demoComponents: VaultComponent[] = [
     id: "button-primary",
     name: "Button / Primary",
     slug: "button-primary",
-    description: "Primary action button with pressed-state bevel and accessible focus ring.",
+    description: "Primary action button with clear hierarchy, responsive sizing and accessible focus states.",
     category: "Buttons",
     framework: "React",
     language: "tsx",
@@ -127,7 +127,7 @@ export function Button({
     id: "input-text-field",
     name: "Input / Text Field",
     slug: "input-text-field",
-    description: "Text input with label, helper copy and retro inset treatment.",
+    description: "Text input with visible label, helper copy and polished validation states.",
     category: "Forms",
     framework: "React",
     language: "tsx",
@@ -300,10 +300,10 @@ export function Button({
     notes: "Initials need accessible full names. Use real avatars only when they add recognition.",
   }),
   makeComponent({
-    id: "pricing-pro",
-    name: "Pricing / Pro",
-    slug: "pricing-pro",
-    description: "Pricing block for plans with technical feature lists.",
+    id: "pricing-card",
+    name: "Pricing Card",
+    slug: "pricing-card",
+    description: "Interactive pricing card for subscription tiers, benefits, billing period and highlighted CTAs.",
     category: "Cards",
     framework: "React",
     language: "tsx",
@@ -317,7 +317,7 @@ export function Button({
 }`,
     styles: `.cv-pricing { width: 230px; padding: 16px; background: #ece8dc; border: 2px solid #3e3b34; }
 .cv-pricing strong { display: block; font-size: 38px; margin: 6px 0; }`,
-    usageCode: `<ProPricing cta="Upgrade Vault" />`,
+    usageCode: `<PricingCard tier="Pro" price={19} highlighted />`,
     notes: "Keep the plan name literal. Do not hide billing cadence near the price.",
   }),
 ];
@@ -334,7 +334,7 @@ export const demoCollections: Collection[] = [
     id: "marketing-site",
     name: "Marketing Site",
     description: "Conversion-focused sections used by public pages.",
-    componentIds: ["navbar-floating", "pricing-pro", "card-stats"],
+    componentIds: ["navbar-floating", "pricing-card", "card-stats"],
     updatedAt: "2026-07-21T10:00:00.000Z",
   },
   {

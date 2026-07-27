@@ -35,7 +35,7 @@ export function ProtectedVault({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <main className="grid min-h-dvh place-items-center bg-background p-4">
-        <div className="retro-panel-inset bg-terminal p-5 font-tech text-green">Checking vault credentials...</div>
+        <div className="rounded-3xl border border-[#E4E7EF] bg-white p-5 text-sm font-semibold text-[#6366F1] shadow-xl shadow-indigo-100">Checking vault credentials...</div>
       </main>
     );
   }
