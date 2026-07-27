@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import "./motion.css";
 import { AppProviders } from "@/components/providers";
 
 const inter = Inter({
@@ -18,7 +19,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Component Vault",
-  description: "A retro developer workstation for storing reusable interface components.",
+  description: "A living visual playground for exploring, testing, documenting and reusing interface components.",
 };
 
 export default function RootLayout({
