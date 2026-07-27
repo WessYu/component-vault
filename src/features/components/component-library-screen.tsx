@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { CategoryFilters } from "@/components/library/category-filters";
 import { ComponentSearch } from "@/components/library/component-search";
 import { ComponentGrid } from "@/components/library/component-grid";
+import { InteractiveExperiencesSection } from "@/components/library/interactive-experiences-section";
 import { ComponentDetailPanel } from "@/components/detail/component-detail-panel";
 import { visualCategory } from "@/components/library/category-style";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,9 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       });
   }, [components, favoriteOnly, filter, query, sort]);
+
+  const motionExperiences = filtered.filter((component) => component.category === "Motion Experiences");
+  const standardComponents = filtered.filter((component) => component.category !== "Motion Experiences");
 
   function selectComponent(component: VaultComponent) {
     setActiveComponentSlug(component.slug);
@@ -102,9 +106,15 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
             <span className="hidden sm:inline">Select a card to inspect it in the playground panel.</span>
           </div>
 
+          {!favoriteOnly && motionExperiences.length ? (
+            <div className="mt-5">
+              <InteractiveExperiencesSection experiences={motionExperiences} />
+            </div>
+          ) : null}
+
           <div className="mt-5">
             <ComponentGrid
-              components={filtered}
+              components={favoriteOnly ? filtered : standardComponents}
               selectedSlug={panelOpen ? activeComponentSlug : undefined}
               view={view}
               onSelect={selectComponent}

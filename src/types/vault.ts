@@ -7,7 +7,8 @@ export type ComponentCategory =
   | "Feedback"
   | "Surfaces"
   | "Charts"
-  | "Utilities";
+  | "Utilities"
+  | "Motion Experiences";
 
 export type ComponentState =
   | "Default"

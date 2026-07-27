@@ -1,4 +1,5 @@
-﻿import type { Collection, DesignToken, VaultComponent } from "@/types/vault";
+﻿import { interactiveExperiences } from "@/components/experiences/experience-data";
+import type { Collection, DesignToken, VaultComponent } from "@/types/vault";
 
 const sharedTokens: DesignToken[] = [
   { id: "token-primary", type: "color", name: "accent.primary", value: "#6366F1" },
@@ -324,6 +325,26 @@ export function Button({
     usageCode: `<PricingCard tier="Pro" price={19} highlighted />`,
     notes: "Keep the plan name literal. Do not hide billing cadence near the price.",
   }),
+  ...interactiveExperiences.map((experience) =>
+    makeComponent({
+      id: experience.slug,
+      name: experience.name,
+      slug: experience.slug,
+      description: experience.description,
+      category: "Motion Experiences",
+      framework: "React",
+      language: "tsx",
+      version: experience.version,
+      isFavorite: experience.slug === "project-chapter-scroll" || experience.slug === "card-stack-navigator",
+      updatedAt: "2026-07-27T12:00:00.000Z",
+      tags: ["motion", "scroll", "navigation", "interaction"],
+      previewHtml: `<div class="vault-motion-preview">${experience.shortName}</div>`,
+      code: experience.code,
+      styles: `.vault-motion-preview { border: 1px solid #e4e7ef; border-radius: 24px; background: linear-gradient(135deg, ${experience.accent}, ${experience.secondary}); color: #ffffff; padding: 28px; font-weight: 700; }`,
+      usageCode: `<${experience.name.replace(/[^A-Za-z]/g, "")} items={items} />`,
+      notes: experience.docs.join(" "),
+    }),
+  ),
 ];
 
 export const demoCollections: Collection[] = [
@@ -362,6 +383,13 @@ export const demoCollections: Collection[] = [
     componentIds: ["table-data-grid", "alert-warning", "modal-centered"],
     updatedAt: "2026-07-20T14:42:00.000Z",
   },
+  {
+    id: "motion-experiences",
+    name: "Motion Experiences",
+    description: "Complete navigation, scroll and shared-transition patterns for interactive product storytelling.",
+    componentIds: interactiveExperiences.map((experience) => experience.slug),
+    updatedAt: "2026-07-27T12:00:00.000Z",
+  },
 ];
 
 export const categories = [
@@ -375,8 +403,10 @@ export const categories = [
   "Surfaces",
   "Charts",
   "Utilities",
+  "Motion Experiences",
 ] as const;
 
 export const filterGroups = ["All Components", "Layout", "Input", "Data", "Feedback", "Navigation"] as const;
+
 
 

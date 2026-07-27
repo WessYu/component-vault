@@ -1,6 +1,6 @@
 import type { VaultComponent } from "@/types/vault";
 
-export type VisualCategory = "Data Display" | "Inputs" | "Navigation" | "Layout" | "Feedback" | "Forms" | "Utilities" | "Surfaces" | "Charts" | "Cards";
+export type VisualCategory = "Data Display" | "Inputs" | "Navigation" | "Layout" | "Feedback" | "Forms" | "Utilities" | "Surfaces" | "Charts" | "Cards" | "Motion Experiences";
 
 export function visualCategory(componentOrCategory: VaultComponent | string): VisualCategory {
   const category = typeof componentOrCategory === "string" ? componentOrCategory : componentOrCategory.category;
@@ -22,6 +22,7 @@ export function categoryStyle(categoryInput: VaultComponent | string) {
     Surfaces: { accent: "#56C7D9", soft: "#ECFAFC", border: "#ADE6EE", text: "#167889", gradient: "from-[#ECFAFC] to-[#F8FEFF]" },
     Charts: { accent: "#6366F1", soft: "#EEF0FF", border: "#C7CCFF", text: "#4548B8", gradient: "from-[#EEF0FF] to-[#FAFAFF]" },
     Cards: { accent: "#6366F1", soft: "#EEF0FF", border: "#C7CCFF", text: "#4548B8", gradient: "from-[#EEF0FF] to-[#FAFAFF]" },
+    "Motion Experiences": { accent: "#7C3AED", soft: "#F3EEFF", border: "#D8C7FF", text: "#5B21B6", gradient: "from-[#F3EEFF] to-[#FFF7FB]" },
   };
 
   return styles[category] ?? styles.Utilities;
@@ -29,6 +30,7 @@ export function categoryStyle(categoryInput: VaultComponent | string) {
 
 export function cardSpan(component: VaultComponent) {
   if (component.slug === "table-data-grid" || component.slug === "navbar-floating") return "md:col-span-2";
+  if (component.category === "Motion Experiences") return "md:col-span-2";
   if (component.slug === "pricing-card" || component.slug === "profile-compact") return "md:row-span-2";
   if (component.slug === "card-stats") return "lg:col-span-2";
   return "";

@@ -10,6 +10,8 @@ import { ComponentDetailTabs, type DetailTab } from "@/components/detail/compone
 import { PreviewToolbar } from "@/components/detail/component-detail-panel";
 import { PropertiesEditor, defaultPricingOptions, defaultTableOptions, type PricingOptions, type TableOptions } from "@/components/detail/properties-editor";
 import { categoryStyle, visualCategory } from "@/components/library/category-style";
+import { ExperienceChecklist, ExperienceWorkspace } from "@/components/experiences/shared/experience-shell";
+import type { ExperienceSlug } from "@/components/experiences/experience-data";
 import { useVaultStore } from "@/stores/vault-store";
 
 export function ComponentDetailWorkspace({ slug }: { slug: string }) {
@@ -54,6 +56,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
   }
 
   const style = categoryStyle(component);
+  const isMotionExperience = component.category === "Motion Experiences";
 
   async function copyCode() {
     if (!component) return;
@@ -99,35 +102,44 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
                 {copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />}
                 {copied ? "Copied" : "Copy code"}
               </button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}>
-                <PanelRightOpen size={17} aria-hidden />
-                Customize
-              </button>
+              {!isMotionExperience ? (
+                <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}>
+                  <PanelRightOpen size={17} aria-hidden />
+                  Customize
+                </button>
+              ) : null}
             </div>
           </div>
 
-          <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="min-w-0 space-y-6">
-              <section className="rounded-[32px] border border-[#E4E7EF] bg-white p-4 shadow-[0_18px_70px_rgba(23,26,43,0.05)]">
-                <div className="mb-4">
-                  <PreviewToolbar viewport={viewport} setViewport={setViewport} theme={theme} setTheme={setTheme} />
-                </div>
-                <ComponentPreview component={component} viewport={viewport} theme={theme} tableOptions={tableOptions} pricingOptions={pricingOptions} />
-              </section>
-              <ComponentDetailTabs component={component} active={activeTab} onChange={setActiveTab} />
+          {isMotionExperience ? (
+            <div className="mt-8 space-y-5">
+              <ExperienceChecklist />
+              <ExperienceWorkspace slug={component.slug as ExperienceSlug} />
             </div>
-
-            <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold">Props editor</h2>
-                  <p className="text-sm text-[#6D7285]">Changes update the preview.</p>
-                </div>
-                <span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span>
+          ) : (
+            <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="min-w-0 space-y-6">
+                <section className="rounded-[32px] border border-[#E4E7EF] bg-white p-4 shadow-[0_18px_70px_rgba(23,26,43,0.05)]">
+                  <div className="mb-4">
+                    <PreviewToolbar viewport={viewport} setViewport={setViewport} theme={theme} setTheme={setTheme} />
+                  </div>
+                  <ComponentPreview component={component} viewport={viewport} theme={theme} tableOptions={tableOptions} pricingOptions={pricingOptions} />
+                </section>
+                <ComponentDetailTabs component={component} active={activeTab} onChange={setActiveTab} />
               </div>
-              <PropertiesEditor component={component} tableOptions={tableOptions} setTableOptions={setTableOptions} pricingOptions={pricingOptions} setPricingOptions={setPricingOptions} />
-            </aside>
-          </div>
+
+              <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-bold">Props editor</h2>
+                    <p className="text-sm text-[#6D7285]">Changes update the preview.</p>
+                  </div>
+                  <span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span>
+                </div>
+                <PropertiesEditor component={component} tableOptions={tableOptions} setTableOptions={setTableOptions} pricingOptions={pricingOptions} setPricingOptions={setPricingOptions} />
+              </aside>
+            </div>
+          )}
         </div>
       </section>
 

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export const visualFilters = ["All", "Data Display", "Inputs", "Navigation", "Layout", "Feedback"] as const;
+export const visualFilters = ["All", "Motion Experiences", "Data Display", "Inputs", "Navigation", "Layout", "Feedback"] as const;
 
 export function CategoryFilters({ active, onChange }: { active: string; onChange: (value: string) => void }) {
   return (

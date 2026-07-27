@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categoryStyle } from "@/components/library/category-style";
+import { ExperiencePreview } from "@/components/experiences/shared/experience-shell";
+import type { ExperienceSlug } from "@/components/experiences/experience-data";
 import type { VaultComponent } from "@/types/vault";
 
 type PreviewProps = {
@@ -60,6 +62,8 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
       <div className={cn("w-full transition-all duration-200", width)}>
         {component.slug === "table-data-grid" ? (
           <DataTablePreview compact={compact} options={tableOptions} />
+        ) : component.category === "Motion Experiences" ? (
+          <ExperiencePreview slug={component.slug as ExperienceSlug} />
         ) : component.slug === "pricing-card" ? (
           <PricingPreview compact={compact} options={pricingOptions} />
         ) : component.slug === "card-stats" ? (
