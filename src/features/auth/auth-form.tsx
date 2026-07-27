@@ -7,6 +7,7 @@ import { AlertTriangle, CheckCircle2, LockKeyhole, LogIn, Sparkles, UserPlus } f
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
+import { localLogin, localRegister, requestLocalPasswordReset } from "@/services/vault-service";
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from "./auth-schema";
 
 type AuthFormProps = {
@@ -16,6 +17,7 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   const schema = mode === "login" ? loginSchema : registerSchema;
   const form = useForm<LoginInput | RegisterInput>({
     resolver: zodResolver(schema),
@@ -29,32 +31,73 @@ export function AuthForm({ mode }: AuthFormProps) {
     setMessage(null);
     const supabase = getSupabaseBrowserClient();
 
-    if (supabase) {
-      const result =
-        mode === "login"
-          ? await supabase.auth.signInWithPassword(values)
-          : await supabase.auth.signUp({
-              email: values.email,
-              password: values.password,
-              options: { data: { name: "name" in values ? values.name : "" } },
-            });
+    try {
+      if (supabase) {
+        const result =
+          mode === "login"
+            ? await supabase.auth.signInWithPassword(values)
+            : await supabase.auth.signUp({
+                email: values.email,
+                password: values.password,
+                options: { data: { name: "name" in values ? values.name : "" } },
+              });
 
-      if (result.error) {
-        setMessage(result.error.message);
-        return;
-      }
-    } else {
-      window.localStorage.setItem(
-        "component-vault-demo-session",
-        JSON.stringify({
+        if (result.error) {
+          setMessage(result.error.message);
+          return;
+        }
+      } else if (mode === "login") {
+        await localLogin({ email: values.email, password: values.password });
+      } else {
+        await localRegister({
+          name: "name" in values ? values.name : "Vault User",
           email: values.email,
-          name: "name" in values ? values.name : "Demo Operator",
-          createdAt: new Date().toISOString(),
-        }),
-      );
+          password: values.password,
+        });
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to authenticate.");
+      return;
     }
 
     router.push("/vault");
+  }
+
+  async function handlePasswordReset() {
+    setMessage(null);
+    const email = form.getValues("email");
+    if (!email) {
+      setMessage("Enter your email before requesting a password reset.");
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        const result = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (result.error) {
+          setMessage(result.error.message);
+        } else {
+          setMessage("Password reset email sent.");
+        }
+        return;
+      }
+
+      const result = await requestLocalPasswordReset(email);
+      if (result.resetUrl) {
+        const resetUrl = new URL(result.resetUrl);
+        router.push(`${resetUrl.pathname}${resetUrl.search}`);
+      } else {
+        setMessage(result.message);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to request a password reset.");
+    } finally {
+      setIsResetting(false);
+    }
   }
 
   const Icon = mode === "login" ? LogIn : UserPlus;
@@ -142,10 +185,10 @@ export function AuthForm({ mode }: AuthFormProps) {
             <div className="mt-5 rounded-3xl border border-[#E4E7EF] bg-[#F7F8FC] p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#171A2B]">
                 <LockKeyhole size={16} aria-hidden />
-                {isSupabaseConfigured ? "Supabase connected" : "Demo session enabled"}
+                {isSupabaseConfigured ? "Supabase connected" : "Local backend session"}
               </div>
               <p className="mt-2 text-sm leading-6 text-[#6D7285]">
-                {isSupabaseConfigured ? "Authentication is handled by the configured Supabase project." : "Local demo sessions are stored in this browser for development."}
+                {isSupabaseConfigured ? "Authentication is handled by the configured Supabase project." : "The Next backend creates a httpOnly session cookie for this workspace."}
               </p>
             </div>
 
@@ -164,8 +207,8 @@ export function AuthForm({ mode }: AuthFormProps) {
               <Link className="font-semibold text-[#6366F1] hover:text-[#4F46E5]" href={mode === "login" ? "/register" : "/login"}>
                 {mode === "login" ? "Create account" : "Already registered"}
               </Link>
-              <button type="button" className="w-fit text-[#6D7285] hover:text-[#171A2B]" onClick={() => setMessage("Password reset link would be sent by Supabase Auth when configured.")}>
-                Forgot password?
+              <button type="button" className="w-fit text-[#6D7285] hover:text-[#171A2B] disabled:cursor-not-allowed disabled:opacity-50" disabled={isResetting} onClick={handlePasswordReset}>
+                {isResetting ? "Preparing reset..." : "Forgot password?"}
               </button>
             </div>
           </form>

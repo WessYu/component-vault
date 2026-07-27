@@ -1,8 +1,15 @@
 "use client";
 
 import { create } from "zustand";
-import type { ComponentState, ComponentVariant, VaultComponent, WindowKey } from "@/types/vault";
-import { demoComponents } from "@/services/demo-data";
+import type { Collection, ComponentState, ComponentVariant, VaultComponent, WindowKey } from "@/types/vault";
+import { demoCollections, demoComponents } from "@/services/demo-data";
+import {
+  createCollection as createCollectionRequest,
+  createComponent as createComponentRequest,
+  getVaultData,
+  toggleComponentFavorite,
+  updateComponent,
+} from "@/services/vault-service";
 
 type EditorTab = "Component.tsx" | "styles.css" | "usage.tsx" | "notes.md";
 type InspectorTab = "PROPS" | "STATES" | "TOKENS" | "NOTES" | "USAGE";
@@ -16,6 +23,10 @@ type WindowState = {
 
 type VaultState = {
   components: VaultComponent[];
+  collections: Collection[];
+  isHydrated: boolean;
+  isSyncing: boolean;
+  backendError: string | null;
   activeComponentSlug: string;
   activeWindow: WindowKey;
   windows: Record<WindowKey, WindowState>;
@@ -54,8 +65,11 @@ type VaultState = {
   setSearch: (value: string) => void;
   setCategory: (value: string) => void;
   setViewMode: (mode: "grid" | "list") => void;
-  toggleFavorite: (id: string) => void;
-  updateCode: (id: string, field: "code" | "styles" | "usageCode" | "notes", value: string) => void;
+  loadVault: (force?: boolean) => Promise<void>;
+  createComponent: (input?: Partial<VaultComponent>) => Promise<VaultComponent | null>;
+  createCollection: (input?: Partial<Collection>) => Promise<Collection | null>;
+  toggleFavorite: (id: string) => Promise<void>;
+  updateCode: (id: string, field: "code" | "styles" | "usageCode" | "notes", value: string) => Promise<void>;
   setGridEnabled: (value: boolean) => void;
   setGuidesEnabled: (value: boolean) => void;
   setDeviceMode: (value: DeviceMode) => void;
@@ -75,6 +89,10 @@ const defaultWindowState: Record<WindowKey, WindowState> = {
 
 export const useVaultStore = create<VaultState>((set, get) => ({
   components: demoComponents,
+  collections: demoCollections,
+  isHydrated: false,
+  isSyncing: false,
+  backendError: null,
   activeComponentSlug: demoComponents[0].slug,
   activeWindow: "browser",
   windows: defaultWindowState,
@@ -144,18 +162,88 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   setSearch: (value) => set({ search: value }),
   setCategory: (value) => set({ category: value }),
   setViewMode: (mode) => set({ viewMode: mode }),
-  toggleFavorite: (id) =>
+  loadVault: async (force = false) => {
+    if (get().isHydrated && !force) return;
+    set({ isSyncing: true, backendError: null });
+    try {
+      const payload = await getVaultData();
+      set({
+        components: payload.components,
+        collections: payload.collections,
+        isHydrated: true,
+        isSyncing: false,
+      });
+    } catch (error) {
+      set({
+        backendError: error instanceof Error ? error.message : "Unable to load vault backend.",
+        isSyncing: false,
+      });
+    }
+  },
+  createComponent: async (input = {}) => {
+    set({ isSyncing: true, backendError: null });
+    try {
+      const component = await createComponentRequest(input);
+      set((state) => ({
+        components: [component, ...state.components.filter((item) => item.id !== component.id)],
+        activeComponentSlug: component.slug,
+        isSyncing: false,
+      }));
+      return component;
+    } catch (error) {
+      set({ backendError: error instanceof Error ? error.message : "Unable to create component.", isSyncing: false });
+      return null;
+    }
+  },
+  createCollection: async (input = {}) => {
+    set({ isSyncing: true, backendError: null });
+    try {
+      const collection = await createCollectionRequest(input);
+      set((state) => ({
+        collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)],
+        isSyncing: false,
+      }));
+      return collection;
+    } catch (error) {
+      set({ backendError: error instanceof Error ? error.message : "Unable to create collection.", isSyncing: false });
+      return null;
+    }
+  },
+  toggleFavorite: async (id) => {
+    const previous = get().components;
     set((state) => ({
       components: state.components.map((component) =>
         component.id === id ? { ...component, isFavorite: !component.isFavorite } : component,
       ),
-    })),
-  updateCode: (id, field, value) =>
+      backendError: null,
+    }));
+    try {
+      const component = await toggleComponentFavorite(id);
+      set((state) => ({
+        components: state.components.map((item) => (item.id === component.id ? component : item)),
+      }));
+    } catch (error) {
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to update favorite." });
+    }
+  },
+  updateCode: async (id, field, value) => {
+    const previous = get().components;
+    const updatedAt = new Date().toISOString();
     set((state) => ({
       components: state.components.map((component) =>
-        component.id === id ? { ...component, [field]: value, updatedAt: new Date().toISOString() } : component,
+        component.id === id ? { ...component, [field]: value, updatedAt } : component,
       ),
-    })),
+      backendError: null,
+    }));
+    try {
+      const component = await updateComponent(id, { [field]: value, updatedAt });
+      set((state) => ({
+        components: state.components.map((item) => (item.id === component.id ? component : item)),
+      }));
+    } catch (error) {
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to save component." });
+    }
+  },
   setGridEnabled: (value) => set({ gridEnabled: value }),
   setGuidesEnabled: (value) => set({ guidesEnabled: value }),
   setDeviceMode: (value) => set({ deviceMode: value }),

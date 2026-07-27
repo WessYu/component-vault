@@ -20,6 +20,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
   const activeComponentSlug = useVaultStore((state) => state.activeComponentSlug);
   const setActiveComponentSlug = useVaultStore((state) => state.setActiveComponentSlug);
   const toggleFavorite = useVaultStore((state) => state.toggleFavorite);
+  const createComponent = useVaultStore((state) => state.createComponent);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -69,9 +70,13 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
             </div>
             <button
               className="inline-flex min-h-11 w-fit items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200"
-              onClick={() => {
-                const target = components.find((component) => component.slug === "pricing-card") ?? components[0];
-                selectComponent(target);
+              onClick={async () => {
+                const component = await createComponent({
+                  name: "Untitled Component",
+                  description: "New backend-backed component ready for code, usage notes and preview configuration.",
+                  tags: ["draft", "backend"],
+                });
+                if (component) selectComponent(component);
               }}
             >
               <Plus size={17} aria-hidden />

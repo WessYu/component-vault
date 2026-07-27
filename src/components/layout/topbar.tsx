@@ -1,17 +1,18 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Check, Command, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { demoCollections } from "@/services/demo-data";
 import { useVaultStore } from "@/stores/vault-store";
 import { cn } from "@/lib/utils";
 
 export function Topbar({ onCreate }: { onCreate?: () => void }) {
   const router = useRouter();
   const components = useVaultStore((state) => state.components);
+  const collections = useVaultStore((state) => state.collections);
+  const createComponent = useVaultStore((state) => state.createComponent);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,12 +45,12 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
       .filter((component) => [component.name, component.category, ...component.tags].join(" ").toLowerCase().includes(term))
       .slice(0, 6)
       .map((component) => ({ label: component.name, meta: component.category, href: `/vault/components/${component.slug}` }));
-    const collectionResults = demoCollections
+    const collectionResults = collections
       .filter((collection) => collection.name.toLowerCase().includes(term))
       .slice(0, 3)
       .map((collection) => ({ label: collection.name, meta: "Collection", href: `/vault/collections/${collection.id}` }));
     return [...componentResults, ...collectionResults];
-  }, [components, query]);
+  }, [collections, components, query]);
 
   return (
     <>
@@ -60,14 +61,25 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
         >
           <Search size={17} aria-hidden />
           <span className="truncate">Search components, categories, or tags...</span>
-          <span className="ml-auto hidden rounded-md border border-[#E4E7EF] px-1.5 py-0.5 text-[11px] font-medium text-[#6D7285] sm:inline">⌘ K</span>
+          <span className="ml-auto hidden rounded-md border border-[#E4E7EF] px-1.5 py-0.5 text-[11px] font-medium text-[#6D7285] sm:inline">Ctrl K</span>
         </button>
         <button className="grid size-10 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm" aria-label="Filters">
           <SlidersHorizontal size={17} aria-hidden />
         </button>
         <button
           className="inline-flex min-h-10 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-[#5558e8]"
-          onClick={() => onCreate?.() ?? router.push("/vault/components/pricing-card")}
+          onClick={async () => {
+            if (onCreate) {
+              onCreate();
+              return;
+            }
+            const component = await createComponent({
+              name: "Untitled Component",
+              description: "New backend-backed component ready for implementation.",
+              tags: ["draft", "backend"],
+            });
+            router.push(component ? `/vault/components/${component.slug}` : "/vault/components");
+          }}
         >
           <Plus size={17} aria-hidden />
           <span className="hidden sm:inline">New Component</span>

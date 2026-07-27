@@ -1,6 +1,8 @@
+"use client";
+
 import { ArrowRight, Database, Palette, Ruler, Sparkles, Type } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { demoComponents } from "@/services/demo-data";
+import { useVaultStore } from "@/stores/vault-store";
 
 const tokenIcons = {
   color: Palette,
@@ -12,7 +14,8 @@ const tokenIcons = {
 };
 
 export function TokensView() {
-  const tokens = Array.from(new Map(demoComponents.flatMap((component) => component.tokens).map((token) => [token.id, token])).values());
+  const components = useVaultStore((state) => state.components);
+  const tokens = Array.from(new Map(components.flatMap((component) => component.tokens).map((token) => [token.id, token])).values());
   const groupedTokens = Object.entries(
     tokens.reduce<Record<string, typeof tokens>>((groups, token) => {
       groups[token.type] = [...(groups[token.type] ?? []), token];
@@ -39,7 +42,7 @@ export function TokensView() {
               {[
                 ["Families", groupedTokens.length.toString()],
                 ["Tokens", tokens.length.toString()],
-                ["Components", demoComponents.length.toString()],
+                ["Components", components.length.toString()],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-3xl border border-[#E4E7EF] bg-white px-5 py-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9A9FB1]">{label}</p>
