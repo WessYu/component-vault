@@ -22,6 +22,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
   const activeComponentSlug = useVaultStore((state) => state.activeComponentSlug);
   const setActiveComponentSlug = useVaultStore((state) => state.setActiveComponentSlug);
   const toggleFavorite = useVaultStore((state) => state.toggleFavorite);
+  const createComponent = useVaultStore((state) => state.createComponent);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -61,6 +62,15 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
     router.push(`/vault/components/${component.slug}`);
   }
 
+  async function handleCreate() {
+    const component = await createComponent({
+      name: "Untitled Component",
+      description: "New backend-backed component ready for code, usage notes and preview configuration.",
+      tags: ["draft", "backend"],
+    });
+    if (component) selectComponent(component);
+  }
+
   return (
     <AppShell active={favoriteOnly ? "Favorites" : "Library"}>
       <section className="relative px-4 py-7 md:px-7 md:py-9">
@@ -86,10 +96,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
             </div>
             <motion.button
               className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200"
-              onClick={() => {
-                const target = components.find((component) => component.slug === "pricing-card") ?? components[0];
-                selectComponent(target);
-              }}
+              onClick={() => void handleCreate()}
               whileHover={reduceMotion ? undefined : { y: -3, scale: 1.015 }}
               whileTap={reduceMotion ? undefined : { scale: 0.96 }}
             >
