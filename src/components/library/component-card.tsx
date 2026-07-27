@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Heart, MoreHorizontal, Star } from "lucide-react";
 import { ComponentPreview } from "@/components/detail/component-preview";
 import { cardSpan, categoryStyle, visualCategory } from "@/components/library/category-style";
-import { motionEase } from "@/components/motion/site-motion";
+import { fastMotion, motionEase } from "@/components/motion/site-motion";
 import { cn } from "@/lib/utils";
 import type { VaultComponent } from "@/types/vault";
 
@@ -27,18 +27,18 @@ export function ComponentCard({
 
   return (
     <motion.article
-      layout
+      layout="position"
       initial="rest"
       animate={selected ? "selected" : "rest"}
       whileHover={reduceMotion ? undefined : "hover"}
       variants={{
-        rest: { y: 0, scale: 1, rotate: 0 },
-        selected: { y: -2, scale: 1.004, rotate: 0 },
-        hover: { y: -7, scale: 1.008, rotate: view === "grid" ? -0.18 : 0 },
+        rest: { y: 0, scale: 1 },
+        selected: { y: -1, scale: 1.002 },
+        hover: { y: -4, scale: 1.003 },
       }}
-      transition={{ duration: 0.24, ease: motionEase }}
+      transition={fastMotion}
       className={cn(
-        "group relative overflow-hidden rounded-[28px] border bg-white/92 shadow-[0_18px_70px_rgba(23,26,43,0.055)] backdrop-blur transition-colors",
+        "group relative transform-gpu overflow-hidden rounded-[28px] border bg-white shadow-[0_14px_48px_rgba(23,26,43,0.05)] transition-[border-color,box-shadow] duration-150 hover:shadow-[0_18px_54px_rgba(23,26,43,0.075)]",
         selected ? "ring-2 ring-[#6366F1]/35" : "border-[#E4E7EF]",
         view === "grid" && cardSpan(component),
         view === "list" && "grid gap-4 md:grid-cols-[320px_1fr]",
@@ -46,22 +46,23 @@ export function ComponentCard({
       style={{ borderColor: selected ? style.accent : undefined }}
     >
       <motion.div
-        className="pointer-events-none absolute inset-y-0 -left-1/2 z-20 w-1/3 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/70 to-transparent"
+        className="pointer-events-none absolute inset-y-0 -left-1/3 z-20 w-1/4 transform-gpu bg-gradient-to-r from-transparent via-white/60 to-transparent"
         variants={{
-          rest: { x: "-80%", opacity: 0 },
-          selected: { x: "-80%", opacity: 0 },
-          hover: { x: "520%", opacity: 0.72 },
+          rest: { x: "-120%", opacity: 0 },
+          selected: { x: "-120%", opacity: 0 },
+          hover: { x: "620%", opacity: 0.55 },
         }}
-        transition={{ duration: 0.72, ease: motionEase }}
+        transition={{ duration: 0.34, ease: motionEase }}
       />
       <motion.div
-        className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full blur-3xl"
+        className="pointer-events-none absolute -right-12 -top-12 size-36 rounded-full blur-2xl"
         style={{ background: style.accent }}
         variants={{
-          rest: { opacity: 0.035, scale: 0.9 },
-          selected: { opacity: 0.12, scale: 1.04 },
-          hover: { opacity: 0.14, scale: 1.12 },
+          rest: { opacity: 0.025, scale: 0.94 },
+          selected: { opacity: 0.085, scale: 1 },
+          hover: { opacity: 0.1, scale: 1.04 },
         }}
+        transition={fastMotion}
       />
 
       <div
@@ -79,12 +80,13 @@ export function ComponentCard({
       >
         <div className={cn("overflow-hidden p-3", view === "list" && "md:p-4")}>
           <motion.div
+            className="transform-gpu"
             variants={{
               rest: { scale: 1, y: 0 },
-              selected: { scale: 1.008, y: -1 },
-              hover: { scale: 1.022, y: -3 },
+              selected: { scale: 1.004, y: 0 },
+              hover: { scale: 1.012, y: -1 },
             }}
-            transition={{ duration: 0.32, ease: motionEase }}
+            transition={{ duration: 0.18, ease: motionEase }}
           >
             <ComponentPreview component={component} compact />
           </motion.div>
@@ -94,7 +96,8 @@ export function ComponentCard({
             <motion.span
               className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
               style={{ background: style.soft, color: style.text }}
-              variants={{ rest: { scale: 1 }, selected: { scale: 1.03 }, hover: { scale: 1.04 } }}
+              variants={{ rest: { scale: 1 }, selected: { scale: 1.015 }, hover: { scale: 1.02 } }}
+              transition={fastMotion}
             >
               {visualCategory(component)}
             </motion.span>
@@ -112,30 +115,32 @@ export function ComponentCard({
       <motion.div
         className="absolute right-4 top-4 z-30 flex gap-2"
         variants={{
-          rest: { opacity: 0, y: 5, scale: 0.96 },
+          rest: { opacity: 0, y: 3, scale: 0.98 },
           selected: { opacity: 1, y: 0, scale: 1 },
           hover: { opacity: 1, y: 0, scale: 1 },
         }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.12, ease: motionEase }}
       >
         <motion.button
-          className="grid size-9 place-items-center rounded-2xl bg-white/92 text-[#6D7285] shadow-lg backdrop-blur hover:text-[#6366F1]"
+          className="grid size-9 place-items-center rounded-2xl bg-white/95 text-[#6D7285] shadow-md hover:text-[#6366F1]"
           onClick={(event) => {
             event.stopPropagation();
             onFavorite();
           }}
           aria-label={component.isFavorite ? "Remove favorite" : "Add favorite"}
-          whileTap={reduceMotion ? undefined : { scale: 0.86 }}
-          whileHover={reduceMotion ? undefined : { rotate: -7, scale: 1.06 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.92 }}
+          whileHover={reduceMotion ? undefined : { scale: 1.04 }}
+          transition={fastMotion}
         >
           <Heart size={16} fill={component.isFavorite ? style.accent : "none"} color={component.isFavorite ? style.accent : "currentColor"} aria-hidden />
         </motion.button>
         <motion.button
-          className="grid size-9 place-items-center rounded-2xl bg-white/92 text-[#6D7285] shadow-lg backdrop-blur"
+          className="grid size-9 place-items-center rounded-2xl bg-white/95 text-[#6D7285] shadow-md"
           aria-label="Component actions"
           onClick={(event) => event.stopPropagation()}
-          whileTap={reduceMotion ? undefined : { scale: 0.86 }}
-          whileHover={reduceMotion ? undefined : { rotate: 7, scale: 1.06 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.92 }}
+          whileHover={reduceMotion ? undefined : { scale: 1.04 }}
+          transition={fastMotion}
         >
           <MoreHorizontal size={16} aria-hidden />
         </motion.button>
