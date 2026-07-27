@@ -1,5 +1,5 @@
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
@@ -34,8 +34,8 @@ body {
     transform: scale(1);
   }
   50% {
-    opacity: 0.82;
-    transform: scale(1.035);
+    opacity: 0.72;
+    transform: scale(1.018);
   }
 }
 
@@ -49,12 +49,19 @@ body {
 }
 
 .vault-animated-gradient {
-  background-size: 200% 200%;
-  animation: vault-gradient-shift 9s ease-in-out infinite;
+  background-size: 160% 160%;
+  animation: vault-gradient-shift 7s ease-in-out infinite;
 }
 
 .vault-soft-pulse {
-  animation: vault-soft-pulse 4.8s ease-in-out infinite;
+  animation: vault-soft-pulse 3.8s ease-in-out infinite;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .vault-animated-gradient,
+  .vault-soft-pulse {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
