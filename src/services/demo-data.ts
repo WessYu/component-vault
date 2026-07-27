@@ -1,4 +1,4 @@
-import type { Collection, DesignToken, VaultComponent } from "@/types/vault";
+﻿import type { Collection, DesignToken, VaultComponent } from "@/types/vault";
 
 const sharedTokens: DesignToken[] = [
   { id: "token-primary", type: "color", name: "accent.primary", value: "#6366F1" },
@@ -58,7 +58,7 @@ export const demoComponents: VaultComponent[] = [
     isFavorite: true,
     updatedAt: "2026-07-24T14:25:00.000Z",
     tags: ["action", "form", "a11y"],
-    previewHtml: '<button class="cv-button">Button</button>',
+    previewHtml: '<button class="vault-button">Button</button>',
     code: `type ButtonProps = {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "ghost" | "danger";
@@ -73,19 +73,19 @@ export function Button({
   isLoading = false,
 }: ButtonProps) {
   return (
-    <button className={["cv-button", variant, size].join(" ")} disabled={isLoading}>
+    <button className={["vault-button", variant, size].join(" ")} disabled={isLoading}>
       {isLoading ? "Loading..." : children}
     </button>
   );
 }`,
-    styles: `.cv-button {
-  min-height: 38px;
+    styles: `.vault-button {
+  min-height: 44px;
   padding: 0 18px;
-  border: 2px solid;
-  border-color: #f4f0e5 #3e3b34 #3e3b34 #f4f0e5;
-  background: #243f5e;
-  color: #ece8dc;
-  box-shadow: 2px 2px 0 rgba(62, 59, 52, .38);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 14px 34px rgba(99, 102, 241, .28);
   font-weight: 700;
 }`,
     usageCode: `<Button variant="primary">Save component</Button>`,
@@ -103,22 +103,23 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-22T09:15:00.000Z",
     tags: ["metric", "dashboard"],
-    previewHtml: '<article class="cv-stat"><span>Monthly Revenue</span><strong>$24,780</strong><small>+12.5%</small><svg viewBox="0 0 120 34"><path d="M1 27 L14 23 L27 26 L40 18 L54 23 L67 13 L80 16 L94 8 L109 13 L119 5" /></svg></article>',
+    previewHtml: '<article class="vault-stat"><span>Monthly Revenue</span><strong>$24,780</strong><small>+12.5%</small><svg viewBox="0 0 120 34"><path d="M1 27 L14 23 L27 26 L40 18 L54 23 L67 13 L80 16 L94 8 L109 13 L119 5" /></svg></article>',
     code: `export function StatCard() {
   return (
-    <article className="cv-stat" aria-label="Monthly revenue up 12.5 percent">
+    <article className="vault-stat" aria-label="Monthly revenue up 12.5 percent">
       <span>Monthly Revenue</span>
       <strong>$24,780</strong>
       <small>+12.5%</small>
     </article>
   );
 }`,
-    styles: `.cv-stat {
+    styles: `.vault-stat {
   width: 220px;
-  padding: 16px;
-  background: #ece8dc;
-  border: 1px solid #918b7b;
-  box-shadow: 2px 2px 0 rgba(62, 59, 52, .22);
+  padding: 18px;
+  border: 1px solid #e4e7ef;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 18px 60px rgba(23, 26, 43, .08);
 }`,
     usageCode: `<StatCard label="Monthly Revenue" value="$24,780" change="+12.5%" />`,
     notes: "Designed for financial or operational deltas. Do not use more than four in a dense row on tablet.",
@@ -135,21 +136,22 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-19T16:02:00.000Z",
     tags: ["form", "input"],
-    previewHtml: '<label class="cv-field"><span>Name</span><input placeholder="Placeholder text" /></label>',
+    previewHtml: '<label class="vault-field"><span>Name</span><input placeholder="Placeholder text" /></label>',
     code: `export function TextField() {
   return (
-    <label className="cv-field">
+    <label className="vault-field">
       <span>Name</span>
       <input placeholder="Placeholder text" />
     </label>
   );
 }`,
-    styles: `.cv-field { display: grid; gap: 6px; width: 220px; }
-.cv-field input {
-  border: 2px solid;
-  border-color: #3e3b34 #f4f0e5 #f4f0e5 #3e3b34;
-  background: #f7f2e7;
-  padding: 9px 10px;
+    styles: `.vault-field { display: grid; gap: 6px; width: 220px; }
+.vault-field input {
+  min-height: 42px;
+  border: 1px solid #e4e7ef;
+  border-radius: 14px;
+  background: #f7f8fc;
+  padding: 0 12px;
 }`,
     usageCode: `<TextField label="Name" placeholder="Placeholder text" />`,
     notes: "Always render visible labels. Reserve placeholder text for examples, never as the only label.",
@@ -166,17 +168,17 @@ export function Button({
     isFavorite: true,
     updatedAt: "2026-07-23T12:33:00.000Z",
     tags: ["table", "data", "admin"],
-    previewHtml: '<table class="cv-table"><thead><tr><th>Customer</th><th>Status</th><th>Value</th></tr></thead><tbody><tr><td>Acme Corp.</td><td>Active</td><td>$12,430</td></tr><tr><td>Globex Inc.</td><td>Pending</td><td>$8,210</td></tr></tbody></table>',
+    previewHtml: '<table class="vault-table"><thead><tr><th>Customer</th><th>Status</th><th>Value</th></tr></thead><tbody><tr><td>Acme Corp.</td><td>Active</td><td>$12,430</td></tr><tr><td>Globex Inc.</td><td>Pending</td><td>$8,210</td></tr></tbody></table>',
     code: `export function DataGrid({ rows }: { rows: Array<{ customer: string; status: string; value: string }> }) {
   return (
-    <table className="cv-table">
+    <table className="vault-table">
       <thead><tr><th>Customer</th><th>Status</th><th>Value</th></tr></thead>
       <tbody>{rows.map((row) => <tr key={row.customer}><td>{row.customer}</td><td>{row.status}</td><td>{row.value}</td></tr>)}</tbody>
     </table>
   );
 }`,
-    styles: `.cv-table { border-collapse: collapse; min-width: 360px; background: #ece8dc; }
-.cv-table th, .cv-table td { border-bottom: 1px solid #b8b0a0; padding: 9px 12px; text-align: left; }`,
+    styles: `.vault-table { min-width: 420px; overflow: hidden; border-collapse: collapse; border-radius: 18px; background: #ffffff; }
+.vault-table th, .vault-table td { border-bottom: 1px solid #e4e7ef; padding: 12px 14px; text-align: left; }`,
     usageCode: `<DataGrid rows={customers} />`,
     notes: "Use when scanning and comparing records matters more than illustration. Keep row height predictable.",
   }),
@@ -192,14 +194,15 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-20T10:46:00.000Z",
     tags: ["warning", "system"],
-    previewHtml: '<div class="cv-alert">This is a warning message with details.</div>',
+    previewHtml: '<div class="vault-alert">This is a warning message with details.</div>',
     code: `export function WarningAlert() {
-  return <div role="status" className="cv-alert">This is a warning message with details.</div>;
+  return <div role="status" className="vault-alert">This is a warning message with details.</div>;
 }`,
-    styles: `.cv-alert {
-  border: 1px solid #d68b31;
-  background: #fff4da;
-  color: #3e2a10;
+    styles: `.vault-alert {
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  background: #fff7ed;
+  color: #9a3412;
   padding: 12px 14px;
 }`,
     usageCode: `<WarningAlert>Autosave paused. Check connection.</WarningAlert>`,
@@ -217,22 +220,23 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-18T13:11:00.000Z",
     tags: ["dialog", "surface"],
-    previewHtml: '<section class="cv-modal"><button aria-label="Close">×</button><h3>Modal Title</h3><p>Confirm this vault action?</p><footer>Continue</footer></section>',
+    previewHtml: '<section class="vault-modal"><button aria-label="Close">x</button><h3>Modal Title</h3><p>Confirm this vault action?</p><footer>Continue</footer></section>',
     code: `export function CenteredModal() {
   return (
-    <section role="dialog" aria-modal="true" aria-labelledby="modal-title" className="cv-modal">
-      <button aria-label="Close">×</button>
+    <section role="dialog" aria-modal="true" aria-labelledby="modal-title" className="vault-modal">
+      <button aria-label="Close">x</button>
       <h3 id="modal-title">Modal Title</h3>
       <p>Confirm this vault action?</p>
     </section>
   );
 }`,
-    styles: `.cv-modal {
+    styles: `.vault-modal {
   width: 260px;
-  padding: 14px;
-  background: #ece8dc;
-  border: 2px solid;
-  border-color: #f4f0e5 #3e3b34 #3e3b34 #f4f0e5;
+  padding: 18px;
+  border: 1px solid #e4e7ef;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(23, 26, 43, .12);
 }`,
     usageCode: `<CenteredModal open onClose={handleClose} />`,
     notes: "Trap focus and return focus to the trigger. Keep confirmation language specific.",
@@ -249,11 +253,11 @@ export function Button({
     isFavorite: true,
     updatedAt: "2026-07-21T08:45:00.000Z",
     tags: ["nav", "marketing"],
-    previewHtml: '<nav class="cv-nav"><b>CV</b><a>Docs</a><a>Vault</a><a>Tokens</a></nav>',
+    previewHtml: '<nav class="vault-nav"><b>CV</b><a>Docs</a><a>Vault</a><a>Tokens</a></nav>',
     code: `export function FloatingNavbar() {
-  return <nav className="cv-nav" aria-label="Primary"><b>CV</b><a>Docs</a><a>Vault</a><a>Tokens</a></nav>;
+  return <nav className="vault-nav" aria-label="Primary"><b>CV</b><a>Docs</a><a>Vault</a><a>Tokens</a></nav>;
 }`,
-    styles: `.cv-nav { display: flex; gap: 18px; align-items: center; padding: 10px 14px; background: #ded9cb; border: 1px solid #918b7b; }`,
+    styles: `.vault-nav { display: flex; gap: 18px; align-items: center; padding: 10px 14px; border: 1px solid #e4e7ef; border-radius: 999px; background: #ffffff; box-shadow: 0 16px 50px rgba(23, 26, 43, .08); }`,
     usageCode: `<FloatingNavbar />`,
     notes: "Use on marketing and documentation pages. Keep active location visibly marked.",
   }),
@@ -269,12 +273,12 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-17T09:23:00.000Z",
     tags: ["tabs", "panel"],
-    previewHtml: '<div class="cv-tabs"><button data-active="true">Props</button><button>Notes</button><button>Tokens</button></div>',
+    previewHtml: '<div class="vault-tabs"><button data-active="true">Props</button><button>Notes</button><button>Tokens</button></div>',
     code: `export function Tabs() {
-  return <div role="tablist" className="cv-tabs"><button role="tab" aria-selected>Props</button><button role="tab">Notes</button><button role="tab">Tokens</button></div>;
+  return <div role="tablist" className="vault-tabs"><button role="tab" aria-selected>Props</button><button role="tab">Notes</button><button role="tab">Tokens</button></div>;
 }`,
-    styles: `.cv-tabs { display: flex; background: #c9c4b5; border-bottom: 1px solid #918b7b; }
-.cv-tabs button { padding: 8px 12px; border-right: 1px solid #918b7b; }`,
+    styles: `.vault-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid #e4e7ef; border-radius: 16px; background: #f7f8fc; }
+.vault-tabs button { border: 0; border-radius: 12px; background: transparent; padding: 8px 12px; }`,
     usageCode: `<Tabs items={["Props", "Notes", "Tokens"]} />`,
     notes: "Use arrow-key navigation in production implementations. Avoid wrapping tab labels.",
   }),
@@ -290,12 +294,12 @@ export function Button({
     isFavorite: false,
     updatedAt: "2026-07-16T18:20:00.000Z",
     tags: ["profile", "account"],
-    previewHtml: '<div class="cv-profile"><span>WC</span><strong>Wesley Cruz</strong><small>Owner</small></div>',
+    previewHtml: '<div class="vault-profile"><span>WC</span><strong>Wesley Cruz</strong><small>Owner</small></div>',
     code: `export function CompactProfile() {
-  return <div className="cv-profile"><span>WC</span><strong>Wesley Cruz</strong><small>Owner</small></div>;
+  return <div className="vault-profile"><span>WC</span><strong>Wesley Cruz</strong><small>Owner</small></div>;
 }`,
-    styles: `.cv-profile { display: grid; grid-template-columns: 38px 1fr; gap: 2px 10px; align-items: center; }
-.cv-profile span { grid-row: span 2; display: grid; place-items: center; background: #243f5e; color: #ece8dc; width: 38px; height: 38px; }`,
+    styles: `.vault-profile { display: grid; grid-template-columns: 38px 1fr; gap: 2px 10px; align-items: center; }
+.vault-profile span { grid-row: span 2; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 14px; background: #6366f1; color: #ffffff; }`,
     usageCode: `<CompactProfile user={session.user} />`,
     notes: "Initials need accessible full names. Use real avatars only when they add recognition.",
   }),
@@ -311,12 +315,12 @@ export function Button({
     isFavorite: true,
     updatedAt: "2026-07-15T11:15:00.000Z",
     tags: ["pricing", "marketing"],
-    previewHtml: '<article class="cv-pricing"><p>PRO VAULT</p><strong>$19</strong><ul><li>Unlimited components</li><li>Private collections</li></ul></article>',
+    previewHtml: '<article class="vault-pricing"><p>Pro</p><strong>$19</strong><ul><li>Unlimited components</li><li>Private collections</li></ul></article>',
     code: `export function ProPricing() {
-  return <article className="cv-pricing"><p>PRO VAULT</p><strong>$19</strong><ul><li>Unlimited components</li><li>Private collections</li></ul></article>;
+  return <article className="vault-pricing"><p>Pro</p><strong>$19</strong><ul><li>Unlimited components</li><li>Private collections</li></ul></article>;
 }`,
-    styles: `.cv-pricing { width: 230px; padding: 16px; background: #ece8dc; border: 2px solid #3e3b34; }
-.cv-pricing strong { display: block; font-size: 38px; margin: 6px 0; }`,
+    styles: `.vault-pricing { width: 240px; padding: 20px; border: 1px solid #e4e7ef; border-radius: 24px; background: #ffffff; box-shadow: 0 24px 80px rgba(23, 26, 43, .12); }
+.vault-pricing strong { display: block; font-size: 38px; margin: 6px 0; }`,
     usageCode: `<PricingCard tier="Pro" price={19} highlighted />`,
     notes: "Keep the plan name literal. Do not hide billing cadence near the price.",
   }),
@@ -374,3 +378,5 @@ export const categories = [
 ] as const;
 
 export const filterGroups = ["All Components", "Layout", "Input", "Data", "Feedback", "Navigation"] as const;
+
+
