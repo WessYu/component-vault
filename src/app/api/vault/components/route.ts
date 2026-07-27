@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { mutateVaultDb, readVaultDb } from "@/lib/vault-db";
+import { createVaultComponent, listVaultComponents } from "@/lib/vault-db";
 import { demoComponents } from "@/services/demo-data";
 import type { VaultComponent } from "@/types/vault";
 
@@ -13,8 +13,8 @@ function slugify(value: string) {
 }
 
 export async function GET() {
-  const database = await readVaultDb();
-  return NextResponse.json({ components: database.components });
+  const components = await listVaultComponents();
+  return NextResponse.json({ components });
 }
 
 export async function POST(request: Request) {
@@ -24,27 +24,24 @@ export async function POST(request: Request) {
   const name = body.name?.trim() || "Untitled Component";
   const baseSlug = slugify(body.slug || name);
 
-  const component = await mutateVaultDb((database) => {
-    let slug = baseSlug;
-    let suffix = 2;
-    while (database.components.some((item) => item.slug === slug)) {
-      slug = `${baseSlug}-${suffix}`;
-      suffix += 1;
-    }
+  const components = await listVaultComponents();
+  let slug = baseSlug;
+  let suffix = 2;
+  while (components.some((item) => item.slug === slug)) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
 
-    const next: VaultComponent = {
-      ...template,
-      ...body,
-      id: randomUUID(),
-      userId: "demo-user",
-      name,
-      slug,
-      updatedAt: now,
-      version: body.version || "v1.0.0",
-      isFavorite: Boolean(body.isFavorite),
-    };
-    database.components.unshift(next);
-    return next;
+  const component = await createVaultComponent({
+    ...template,
+    ...body,
+    id: randomUUID(),
+    userId: "demo-user",
+    name,
+    slug,
+    updatedAt: now,
+    version: body.version || "v1.0.0",
+    isFavorite: Boolean(body.isFavorite),
   });
 
   return NextResponse.json({ component }, { status: 201 });

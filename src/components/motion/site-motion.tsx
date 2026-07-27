@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export const motionEase = [0.22, 1, 0.36, 1] as const;
@@ -17,13 +17,15 @@ export function SiteMotionLayer({ tone = "app" }: { tone?: "app" | "landing" }) 
   const springY = useSpring(pointerY, { stiffness: 190, damping: 32, mass: 0.35 });
   const orbX = useTransform(springX, (value) => value - 210);
   const orbY = useTransform(springY, (value) => value - 210);
-  const [canTrackPointer, setCanTrackPointer] = useState(false);
+  const canTrackPointer = useRef(false);
 
   useEffect(() => {
     if (reduceMotion) return;
 
     const media = window.matchMedia("(min-width: 1024px) and (pointer: fine)");
-    const updateCapability = () => setCanTrackPointer(media.matches);
+    const updateCapability = () => {
+      canTrackPointer.current = media.matches;
+    };
     updateCapability();
     media.addEventListener("change", updateCapability);
 
@@ -31,10 +33,11 @@ export function SiteMotionLayer({ tone = "app" }: { tone?: "app" | "landing" }) 
   }, [reduceMotion]);
 
   useEffect(() => {
-    if (!canTrackPointer || reduceMotion) return;
+    if (reduceMotion) return;
 
     let frame = 0;
     function handlePointerMove(event: PointerEvent) {
+      if (!canTrackPointer.current) return;
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         pointerX.set(event.clientX);
@@ -47,7 +50,7 @@ export function SiteMotionLayer({ tone = "app" }: { tone?: "app" | "landing" }) 
       cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", handlePointerMove);
     };
-  }, [canTrackPointer, pointerX, pointerY, reduceMotion]);
+  }, [pointerX, pointerY, reduceMotion]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
@@ -60,7 +63,7 @@ export function SiteMotionLayer({ tone = "app" }: { tone?: "app" | "landing" }) 
         )}
       />
       <div className="absolute inset-0 hidden opacity-[0.32] [background-image:linear-gradient(rgba(99,102,241,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)] md:block" />
-      {canTrackPointer && !reduceMotion ? (
+      {!reduceMotion ? (
         <motion.div
           className="absolute size-[420px] will-change-transform rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.11),rgba(154,120,255,0.04)_42%,transparent_70%)] blur-xl"
           style={{ x: orbX, y: orbY }}
@@ -174,11 +177,13 @@ export function Magnetic({ children, className }: { children: ReactNode; classNa
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 430, damping: 34, mass: 0.25 });
   const springY = useSpring(y, { stiffness: 430, damping: 34, mass: 0.25 });
-  const [enabled, setEnabled] = useState(false);
+  const pointerFine = useRef(false);
 
   useEffect(() => {
     const media = window.matchMedia("(pointer: fine)");
-    const updateCapability = () => setEnabled(media.matches && !reduceMotion);
+    const updateCapability = () => {
+      pointerFine.current = media.matches;
+    };
     updateCapability();
     media.addEventListener("change", updateCapability);
     return () => media.removeEventListener("change", updateCapability);
@@ -187,9 +192,9 @@ export function Magnetic({ children, className }: { children: ReactNode; classNa
   return (
     <motion.div
       className={className}
-      style={enabled ? { x: springX, y: springY } : undefined}
+      style={reduceMotion ? undefined : { x: springX, y: springY }}
       onPointerMove={(event) => {
-        if (!enabled) return;
+        if (reduceMotion || !pointerFine.current) return;
         const rect = event.currentTarget.getBoundingClientRect();
         x.set((event.clientX - rect.left - rect.width / 2) * 0.07);
         y.set((event.clientY - rect.top - rect.height / 2) * 0.08);

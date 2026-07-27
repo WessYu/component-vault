@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createLocalSession, publicUser, readVaultDb, verifyPassword } from "@/lib/vault-db";
+import { createLocalSession, getUserByEmail, publicUser, verifyPassword } from "@/lib/vault-db";
 
 const cookieName = "component-vault-session";
 
@@ -12,9 +12,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
 
-  const database = await readVaultDb();
-  const user = database.users.find((item) => item.email === email);
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  const user = await getUserByEmail(email);
+  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
