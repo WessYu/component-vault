@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #c9c4b5;
-  --surface: #ded9cb;
-  --surface-light: #ece8dc;
-  --surface-dark: #918b7b;
-  --border-dark: #3e3b34;
-  --border-light: #f4f0e5;
-  --text-primary: #171813;
-  --text-secondary: #555549;
-  --navy: #243f5e;
-  --navy-light: #42658a;
-  --olive: #424834;
-  --terminal: #10170e;
-  --orange: #de572f;
-  --green: #7fa16a;
-  --warning: #d68b31;
-  --danger: #a84034;
+  --background: #f7f7f5;
+  --surface: #ffffff;
+  --surface-light: #fbfbfa;
+  --surface-dark: #e6e6e3;
+  --border-dark: #d6d6d2;
+  --border-light: #ffffff;
+  --text-primary: #18181b;
+  --text-secondary: #62626d;
+  --navy: #18181b;
+  --navy-light: #3f3f46;
+  --olive: #52525b;
+  --terminal: #111113;
+  --orange: #18181b;
+  --green: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-plex-mono);
 }
@@ -75,13 +75,13 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--orange);
+  outline: 2px solid #18181b;
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--navy);
-  color: var(--surface-light);
+  background: #18181b;
+  color: #ffffff;
 }
 
 .font-tech {
