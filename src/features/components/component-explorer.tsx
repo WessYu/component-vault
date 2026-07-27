@@ -18,9 +18,9 @@ export function ComponentExplorer({ activeSlug }: { activeSlug?: string }) {
   }, [active.category, components, query]);
 
   return (
-    <aside className="retro-panel min-h-0 overflow-hidden bg-surface-light">
+    <aside className="min-h-0 overflow-hidden rounded-2xl border border-[#e5e5e2] bg-white shadow-[0_18px_60px_rgba(15,15,15,0.04)]">
       <div className="border-b border-surface-dark p-2">
-        <label className="retro-panel-inset flex items-center gap-2 bg-surface-light px-2 py-1">
+        <label className="flex items-center gap-2 rounded-xl border border-[#e5e5e2] bg-[#fafafa] px-3 py-2">
           <Search size={13} aria-hidden />
           <span className="sr-only">Search current category</span>
           <input className="min-w-0 flex-1 bg-transparent text-xs outline-none" value={query} placeholder="Find in category..." onChange={(event) => setQuery(event.target.value)} />

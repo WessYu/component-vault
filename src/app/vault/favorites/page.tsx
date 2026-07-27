@@ -1,5 +1,5 @@
-import { VaultShell } from "@/components/desktop/vault-shell";
+import { ComponentLibraryScreen } from "@/features/components/component-library-screen";
 
 export default function FavoritesPage() {
-  return <VaultShell activeSection="Favorites" focus="browser" />;
+  return <ComponentLibraryScreen />;
 }

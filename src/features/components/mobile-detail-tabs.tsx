@@ -33,7 +33,7 @@ export function MobileDetailTabs({ componentSlug }: { componentSlug?: string }) 
           <InspectorPanel focused defaultTab="NOTES" componentSlug={componentSlug} />
         </div>
       </div>
-      <nav className="retro-panel grid grid-cols-4" aria-label="Component detail tabs">
+      <nav className="grid grid-cols-4 border-t border-[#e5e5e2] bg-white" aria-label="Component detail tabs">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (

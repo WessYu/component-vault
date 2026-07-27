@@ -1,5 +1,5 @@
-import { VaultShell } from "@/components/desktop/vault-shell";
+import { redirect } from "next/navigation";
 
 export default function VaultPage() {
-  return <VaultShell activeSection="Dashboard" />;
+  redirect("/vault/components");
 }
