@@ -44,7 +44,7 @@ export const getFavoritesBySession = query({
     const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
     if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return [];
     const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
-    return user?.favoriteComponentIds ?? [];
+    return (user?.favoriteComponentIds ?? []) as string[];
   },
 });
 
@@ -56,9 +56,9 @@ export const toggleFavoriteBySession = mutation({
     const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
     if (!user) return null;
 
-    const current = user.favoriteComponentIds ?? [];
+    const current: string[] = (user.favoriteComponentIds ?? []) as string[];
     const favoriteComponentIds = current.includes(args.componentId)
-      ? current.filter((id) => id !== args.componentId)
+      ? current.filter((id: string) => id !== args.componentId)
       : [...current, args.componentId];
 
     await ctx.db.patch(user._id, { favoriteComponentIds });
