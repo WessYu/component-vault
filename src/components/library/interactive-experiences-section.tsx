@@ -67,9 +67,9 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               data-feature-active={isActive ? "true" : undefined}
               className={cn(
                 "group relative overflow-hidden rounded-[30px] border bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-colors",
-                isActive ? "border-[#C9C7FF] md:col-span-2 2xl:col-span-2" : "border-[#E4E7EF]",
+                isActive ? "border-[#C9C7FF] p-4 md:col-span-2 2xl:col-span-3" : "border-[#E4E7EF]",
               )}
-              animate={isActive ? { scale: 1.012 } : { scale: 1 }}
+              animate={isActive ? { scale: 1.018 } : { scale: 1 }}
               whileHover={reduceMotion ? undefined : { y: -5 }}
               transition={{ layout: { duration: 0.28, ease: motionEase }, ...fastMotion }}
               onPointerEnter={() => startPreview(component)}
@@ -90,7 +90,13 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
                 ) : null}
               </AnimatePresence>
 
-              <motion.div layout className={cn("overflow-hidden rounded-[26px]", isActive ? "min-h-[390px]" : "min-h-[178px]")}>
+              <motion.div
+                layout
+                className={cn(
+                  "overflow-hidden rounded-[26px]",
+                  isActive ? "min-h-[560px] [&>div]:min-h-[560px]" : "min-h-[178px]",
+                )}
+              >
                 <ComponentPreview key={`${component.slug}-${isActive ? "active" : "rest"}`} component={component} compact={!isActive} viewport={isActive ? "Desktop" : "Tablet"} />
               </motion.div>
 
