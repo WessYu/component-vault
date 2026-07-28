@@ -1,44 +1,17 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
 import { ComponentPreview } from "@/components/detail/component-preview";
 import { fastMotion } from "@/components/motion/site-motion";
-import { cn } from "@/lib/utils";
 import type { VaultComponent } from "@/types/vault";
 
 export function InteractiveExperiencesSection({ experiences }: { experiences: VaultComponent[] }) {
   const router = useRouter();
-  const [activeSlug, setActiveSlug] = useState<string | null>(null);
-  const [pendingSlug, setPendingSlug] = useState<string | null>(null);
-  const hoverTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
 
   if (!experiences.length) return null;
-
-  function clearHoverTimer() {
-    if (hoverTimer.current) {
-      window.clearTimeout(hoverTimer.current);
-      hoverTimer.current = null;
-    }
-    setPendingSlug(null);
-  }
-
-  function startPreview(component: VaultComponent) {
-    clearHoverTimer();
-    setPendingSlug(component.slug);
-    hoverTimer.current = window.setTimeout(() => {
-      setActiveSlug(component.slug);
-      setPendingSlug(null);
-    }, 700);
-  }
-
-  function stopPreview(component: VaultComponent) {
-    clearHoverTimer();
-    setActiveSlug((current) => (current === component.slug ? null : current));
-  }
 
   return (
     <section className="rounded-[34px] border border-[#E4E7EF] bg-white p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] md:p-5">
@@ -50,67 +23,45 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
           </p>
           <h2 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[#171A2B]">Interactive Experiences</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6D7285]">
-            Complete scroll, navigation, morph and comparison patterns with real interaction previews.
+            Compact previews in the library. Open a pattern to use the complete interactive experience.
           </p>
         </div>
         <span className="text-sm font-medium text-[#6D7285]">{experiences.length} patterns</span>
       </div>
 
-      <div className="mt-5 grid auto-rows-[minmax(260px,auto)] gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
         {experiences.map((component) => {
-          const isActive = activeSlug === component.slug;
-          const isPending = pendingSlug === component.slug;
+          const isEmerging = component.tags.includes("2026-trend") || component.slug.startsWith("trend-");
           return (
             <motion.article
               key={component.slug}
-              data-feature-active={isActive ? "true" : undefined}
-              className={cn(
-                "group relative overflow-hidden rounded-[30px] border bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-[border-color,box-shadow] duration-150 will-change-transform",
-                isActive ? "border-[#C9C7FF] shadow-[0_18px_64px_rgba(99,102,241,0.12)] md:col-span-2" : "border-[#E4E7EF]",
-              )}
-              animate={isActive ? { scale: 1.006 } : { scale: 1 }}
-              whileHover={reduceMotion ? undefined : { y: -2 }}
+              className="group relative min-w-0 overflow-hidden rounded-[30px] border border-[#E4E7EF] bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)]"
+              whileHover={reduceMotion ? undefined : { y: -3, scale: 1.006 }}
               transition={fastMotion}
-              onPointerEnter={() => startPreview(component)}
-              onPointerLeave={() => stopPreview(component)}
-              onFocus={() => setActiveSlug(component.slug)}
-              onBlur={() => setActiveSlug((current) => (current === component.slug ? null : current))}
             >
-              <AnimatePresence>
-                {isPending ? (
-                  <motion.span
-                    className="absolute left-5 right-5 top-5 z-20 h-1 overflow-hidden rounded-full bg-white/70"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <motion.span className="block h-full rounded-full bg-[#6366F1]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 0.7, ease: "linear" }} />
-                  </motion.span>
-                ) : null}
-              </AnimatePresence>
+              {isEmerging ? (
+                <span className="absolute right-5 top-5 z-20 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6366F1] shadow-sm backdrop-blur">
+                  Emerging 2026
+                </span>
+              ) : null}
 
-              <motion.div
-                className={cn(
-                  "overflow-hidden rounded-[26px] transition-[min-height] duration-200 ease-out",
-                  isActive ? "min-h-[430px] [&>div]:min-h-[430px]" : "min-h-[178px]",
-                )}
-              >
-                <ComponentPreview key={`${component.slug}-${isActive ? "active" : "rest"}`} component={component} compact={!isActive} viewport={isActive ? "Desktop" : "Tablet"} />
-              </motion.div>
+              <div className="h-[184px] min-h-0 overflow-hidden rounded-[24px]">
+                <ComponentPreview component={component} compact viewport="Tablet" />
+              </div>
 
               <button
-                className="mt-4 block w-full rounded-[24px] bg-white p-4 text-left shadow-sm"
+                className="mt-3 block min-h-[154px] w-full rounded-[24px] bg-white p-4 text-left shadow-sm transition-colors hover:bg-[#FCFCFF]"
                 onClick={() => router.push(`/vault/components/${component.slug}`)}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">{component.name}</h3>
-                    <p className={cn("mt-1 text-sm leading-6 text-[#6D7285]", isActive ? "line-clamp-3" : "line-clamp-2")}>{component.description}</p>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-bold tracking-[-0.02em] text-[#171A2B]">{component.name}</h3>
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#6D7285]">{component.description}</p>
                   </div>
-                  <ArrowRight className="mt-1 shrink-0 text-[#6366F1] transition group-hover:translate-x-1" size={18} aria-hidden />
+                  <ArrowRight className="mt-1 shrink-0 text-[#6366F1] transition-transform group-hover:translate-x-1" size={18} aria-hidden />
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {component.tags.slice(0, isActive ? 5 : 3).map((tag) => (
+                <div className="mt-4 flex min-h-7 flex-wrap gap-2">
+                  {component.tags.filter((tag) => tag !== "2026-trend").slice(0, 3).map((tag) => (
                     <span key={tag} className="rounded-full bg-[#F3EEFF] px-2.5 py-1 text-xs font-semibold text-[#5B21B6]">{tag}</span>
                   ))}
                 </div>
