@@ -14,18 +14,15 @@ const cards = ["Navigation", "Pricing", "Data Grid", "Profile", "Analytics"];
 
 export function ExperiencePreview({ slug }: { slug: ExperienceSlug }) {
   const experience = getExperience(slug);
-  const [played, setPlayed] = useState(false);
   if (!experience) return null;
 
   return (
     <button
       className="group block w-full text-left"
-      onMouseEnter={() => setPlayed(true)}
-      onAnimationEnd={() => setPlayed(false)}
       aria-label={`Preview ${experience.name}`}
     >
       <div className="relative min-h-32 overflow-hidden rounded-[26px] border border-white/60 bg-white/80 p-4 shadow-[0_18px_60px_rgba(23,26,43,0.08)]">
-        <MiniDemo experience={experience} played={played} />
+        <MiniDemo experience={experience} />
       </div>
     </button>
   );
@@ -339,23 +336,25 @@ function BeforeAfterScrubber({ experience }: { experience: MotionExperience }) {
   );
 }
 
-function MiniDemo({ experience, played }: { experience: MotionExperience; played: boolean }) {
+function MiniDemo({ experience }: { experience: MotionExperience }) {
+  const loop = { duration: 2.4, repeat: Infinity, ease: "easeInOut" } as const;
+
   if (experience.slug === "card-stack-navigator") {
-    return <div className="relative h-28">{[0, 1, 2].map((i) => <motion.div key={i} className="absolute inset-x-4 rounded-3xl bg-white shadow-xl" style={{ top: 8 + i * 15, height: 70, border: "1px solid #E4E7EF" }} animate={played ? { y: i === 0 ? -8 : i * -6, rotate: i === 0 ? -5 : 0 } : { y: 0, rotate: 0 }} />)}</div>;
+    return <div className="relative h-28">{[0, 1, 2].map((i) => <motion.div key={i} className="absolute inset-x-4 rounded-3xl bg-white shadow-xl" style={{ top: 8 + i * 15, height: 70, border: "1px solid #E4E7EF" }} animate={{ y: i === 0 ? [0, -10, 0] : [0, i * -5, 0], rotate: i === 0 ? [0, -5, 0] : 0 }} transition={{ ...loop, delay: i * 0.08 }} />)}</div>;
   }
   if (experience.slug === "grid-to-detail-morph") {
-    return <motion.div className="mx-auto mt-2 h-24 w-32 rounded-3xl bg-white shadow-xl" animate={played ? { width: 200, height: 108 } : { width: 128, height: 96 }} />;
+    return <motion.div className="mx-auto mt-2 h-24 w-32 rounded-3xl bg-white shadow-xl" animate={{ width: [128, 210, 128], height: [96, 108, 96] }} transition={loop} />;
   }
   if (experience.slug === "scroll-anatomy") {
-    return <div className="relative h-28">{["Container", "Nav", "User"].map((item, i) => <motion.div key={item} className="absolute left-8 right-8 top-6 rounded-2xl bg-white p-3 text-xs shadow-lg" animate={played ? { x: (i - 1) * 28, y: i * 16 } : { x: 0, y: i * 8 }}>{item}</motion.div>)}</div>;
+    return <div className="relative h-28">{["Container", "Nav", "User"].map((item, i) => <motion.div key={item} className="absolute left-8 right-8 top-6 rounded-2xl bg-white p-3 text-xs shadow-lg" animate={{ x: [0, (i - 1) * 28, 0], y: [i * 8, i * 16, i * 8] }} transition={{ ...loop, delay: i * 0.08 }}>{item}</motion.div>)}</div>;
   }
   if (experience.slug === "magnetic-component-rail") {
-    return <motion.div className="mt-5 flex gap-3" animate={played ? { x: -52 } : { x: 0 }}>{[1, 2, 3].map((item) => <div key={item} className="h-20 w-28 shrink-0 rounded-3xl bg-white shadow-lg" />)}</motion.div>;
+    return <motion.div className="mt-5 flex gap-3" animate={{ x: [0, -58, 0] }} transition={loop}>{[1, 2, 3].map((item) => <div key={item} className="h-20 w-28 shrink-0 rounded-3xl bg-white shadow-lg" />)}</motion.div>;
   }
   if (experience.slug === "split-story-scroll") {
-    return <motion.div className="mt-5 rounded-3xl bg-white p-5 shadow-lg" animate={played ? { scale: [1, 0.96, 1] } : { scale: 1 }}><span className="text-sm font-bold" style={{ color: experience.accent }}>{played ? "Success" : "Idle"}</span></motion.div>;
+    return <motion.div className="mt-5 rounded-3xl bg-white p-5 shadow-lg" animate={{ scale: [1, 0.96, 1] }} transition={loop}><motion.span className="text-sm font-bold" style={{ color: experience.accent }} animate={{ opacity: [0.62, 1, 0.62] }} transition={loop}>Live state</motion.span></motion.div>;
   }
-  return <motion.div className="mt-5 h-24 rounded-3xl shadow-xl" style={{ background: `linear-gradient(135deg, ${experience.accent}, ${experience.secondary})` }} animate={played ? { y: [-4, 12, 0], scale: [1, 0.96, 1] } : { y: 0, scale: 1 }} />;
+  return <motion.div className="mt-5 h-24 rounded-3xl shadow-xl" style={{ background: `linear-gradient(135deg, ${experience.accent}, ${experience.secondary})` }} animate={{ y: [-4, 12, -4], scale: [1, 0.96, 1] }} transition={loop} />;
 }
 
 function ProgressBar({ value, color }: { value: number; color: string }) {

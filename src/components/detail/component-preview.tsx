@@ -109,6 +109,11 @@ function MiniFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative grid h-full min-h-[132px] place-items-center overflow-hidden rounded-[24px] border border-white/70 bg-white/82 p-4 shadow-[0_18px_52px_rgba(23,26,43,0.08)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.85),transparent)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      <motion.span
+        className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.86),transparent)]"
+        animate={{ x: ["0%", "420%"] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.35 }}
+      />
       {children}
     </div>
   );
