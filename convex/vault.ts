@@ -138,19 +138,21 @@ export const seed = mutation({
     collections: v.array(v.any()),
   },
   handler: async (ctx, args) => {
-    const [componentCount, collectionCount] = await Promise.all([
-      ctx.db.query("components").take(1),
-      ctx.db.query("collections").take(1),
+    const [existingComponents, existingCollections] = await Promise.all([
+      ctx.db.query("components").collect(),
+      ctx.db.query("collections").collect(),
     ]);
+    const componentIds = new Set(existingComponents.map((component) => component.componentId));
+    const collectionIds = new Set(existingCollections.map((collection) => collection.collectionId));
 
-    if (!componentCount.length) {
-      for (const component of args.components) {
+    for (const component of args.components) {
+      if (typeof component.id === "string" && !componentIds.has(component.id)) {
         await ctx.db.insert("components", componentInsert(component));
       }
     }
 
-    if (!collectionCount.length) {
-      for (const collection of args.collections) {
+    for (const collection of args.collections) {
+      if (typeof collection.id === "string" && !collectionIds.has(collection.id)) {
         await ctx.db.insert("collections", collectionInsert(collection));
       }
     }

@@ -46,6 +46,100 @@ function makeComponent(input: Omit<VaultComponent, "userId" | "tokens" | "usage"
   };
 }
 
+type FeatureBlueprint = {
+  id: string;
+  name: string;
+  category: VaultComponent["category"];
+  description: string;
+  tags: string[];
+  previewLabel: string;
+  accent: string;
+  secondary: string;
+};
+
+const featureBlueprints: FeatureBlueprint[] = [
+  { id: "animated-save-button", name: "Button / Animated Save", category: "Buttons", description: "Save action with loading, success feedback and press animation.", tags: ["button", "motion", "save"], previewLabel: "Save", accent: "#6366F1", secondary: "#51C89B" },
+  { id: "destructive-confirm-button", name: "Button / Destructive Confirm", category: "Buttons", description: "Two-step destructive action with clear danger state.", tags: ["button", "danger", "confirm"], previewLabel: "Delete", accent: "#FF7664", secondary: "#F1BE48" },
+  { id: "floating-action-button", name: "Button / Floating Action", category: "Buttons", description: "Compact floating action for creation-heavy workspaces.", tags: ["button", "floating", "create"], previewLabel: "+", accent: "#171A2B", secondary: "#6366F1" },
+  { id: "segmented-toolbar", name: "Toolbar / Segmented", category: "Navigation", description: "Segmented toolbar for switching editing modes without layout shift.", tags: ["toolbar", "segmented", "mode"], previewLabel: "Design Code Preview", accent: "#6366F1", secondary: "#9A78FF" },
+  { id: "command-palette-trigger", name: "Search / Command Trigger", category: "Navigation", description: "Keyboard-friendly command entry with shortcut affordance.", tags: ["search", "command", "keyboard"], previewLabel: "Search...", accent: "#4C8DFF", secondary: "#6366F1" },
+  { id: "breadcrumb-trail", name: "Navigation / Breadcrumb Trail", category: "Navigation", description: "Compact breadcrumb for nested vault routes and detail pages.", tags: ["breadcrumb", "nav", "routing"], previewLabel: "Vault / Components / Button", accent: "#51C89B", secondary: "#4C8DFF" },
+  { id: "admin-side-rail", name: "Navigation / Admin Side Rail", category: "Navigation", description: "Role-aware rail for owner workflows, settings and publishing.", tags: ["admin", "nav", "role"], previewLabel: "Admin", accent: "#171A2B", secondary: "#6366F1" },
+  { id: "kanban-review-lane", name: "Board / Review Lane", category: "Data Display", description: "Review lane for draft, approved and shipped component states.", tags: ["kanban", "review", "admin"], previewLabel: "Review Lane", accent: "#F1BE48", secondary: "#51C89B" },
+  { id: "audit-log-row", name: "Log / Audit Row", category: "Data Display", description: "Timeline row for admin changes, actor, target and timestamp.", tags: ["audit", "log", "admin"], previewLabel: "Saved by Owner", accent: "#171A2B", secondary: "#51C89B" },
+  { id: "usage-meter-card", name: "Card / Usage Meter", category: "Cards", description: "Meter card for component adoption, usage and health signals.", tags: ["metric", "usage", "health"], previewLabel: "82% adopted", accent: "#51C89B", secondary: "#6366F1" },
+  { id: "token-drift-alert", name: "Alert / Token Drift", category: "Feedback", description: "Warning banner for token drift and design-system inconsistencies.", tags: ["alert", "tokens", "drift"], previewLabel: "Token drift", accent: "#F1BE48", secondary: "#FF7664" },
+  { id: "success-toast-stack", name: "Toast / Success Stack", category: "Feedback", description: "Stacked toast pattern with reduced-motion safe entry.", tags: ["toast", "success", "motion"], previewLabel: "Saved", accent: "#51C89B", secondary: "#4C8DFF" },
+  { id: "error-inline-callout", name: "Callout / Inline Error", category: "Feedback", description: "Inline validation callout with action recovery.", tags: ["error", "validation", "form"], previewLabel: "Fix required", accent: "#FF7664", secondary: "#171A2B" },
+  { id: "empty-state-panel", name: "Panel / Empty State", category: "Surfaces", description: "Useful empty state with primary action and supporting context.", tags: ["empty", "panel", "onboarding"], previewLabel: "Create first item", accent: "#6366F1", secondary: "#E978D4" },
+  { id: "inspector-drawer", name: "Drawer / Inspector", category: "Surfaces", description: "Right-side inspector drawer for props, tokens and notes.", tags: ["drawer", "inspector", "props"], previewLabel: "Inspector", accent: "#171A2B", secondary: "#9A78FF" },
+  { id: "release-modal", name: "Modal / Release Checklist", category: "Surfaces", description: "Checklist modal for release readiness and approvals.", tags: ["modal", "release", "checklist"], previewLabel: "Ready to ship", accent: "#51C89B", secondary: "#F1BE48" },
+  { id: "property-editor-field", name: "Input / Property Editor", category: "Forms", description: "Dense property editor field for component variants.", tags: ["input", "props", "editor"], previewLabel: "Variant", accent: "#6366F1", secondary: "#4C8DFF" },
+  { id: "token-picker-field", name: "Input / Token Picker", category: "Forms", description: "Searchable token picker for color, radius and spacing values.", tags: ["input", "tokens", "picker"], previewLabel: "accent.primary", accent: "#9A78FF", secondary: "#E978D4" },
+  { id: "inline-edit-title", name: "Input / Inline Edit Title", category: "Forms", description: "Inline title editing with save, cancel and focus states.", tags: ["input", "inline", "edit"], previewLabel: "Component name", accent: "#4C8DFF", secondary: "#51C89B" },
+  { id: "toggle-preferences", name: "Control / Preferences Toggle", category: "Forms", description: "Accessible toggle row for workspace preferences.", tags: ["toggle", "settings", "a11y"], previewLabel: "Autosave", accent: "#51C89B", secondary: "#171A2B" },
+  { id: "theme-swatch-grid", name: "Swatches / Theme Grid", category: "Utilities", description: "Color swatch grid with selected, hover and copied states.", tags: ["swatch", "theme", "tokens"], previewLabel: "Theme", accent: "#6366F1", secondary: "#F1BE48" },
+  { id: "avatar-group", name: "Avatar / Team Group", category: "Utilities", description: "Compact collaborator avatars for review and ownership surfaces.", tags: ["avatar", "team", "review"], previewLabel: "WC +3", accent: "#FF7664", secondary: "#6366F1" },
+  { id: "keyboard-hint-chip", name: "Chip / Keyboard Hint", category: "Utilities", description: "Shortcut chip for power-user actions and command menus.", tags: ["shortcut", "keyboard", "chip"], previewLabel: "Ctrl K", accent: "#171A2B", secondary: "#4C8DFF" },
+  { id: "copy-code-block", name: "Code / Copy Block", category: "Utilities", description: "Code block shell with copy state and filename tab.", tags: ["code", "copy", "developer"], previewLabel: "Component.tsx", accent: "#171A2B", secondary: "#51C89B" },
+  { id: "line-chart-card", name: "Chart / Line Card", category: "Charts", description: "Compact trend chart for adoption and usage deltas.", tags: ["chart", "line", "usage"], previewLabel: "Trend", accent: "#4C8DFF", secondary: "#51C89B" },
+  { id: "donut-health-chart", name: "Chart / Health Donut", category: "Charts", description: "Donut status chart for component quality checks.", tags: ["chart", "health", "quality"], previewLabel: "96%", accent: "#51C89B", secondary: "#F1BE48" },
+  { id: "bar-compare-chart", name: "Chart / Compare Bars", category: "Charts", description: "Bar comparison pattern for category counts and usage.", tags: ["chart", "bar", "compare"], previewLabel: "Bars", accent: "#6366F1", secondary: "#E978D4" },
+  { id: "scroll-reveal-section", name: "Motion / Scroll Reveal Section", category: "Motion Experiences", description: "Section reveal with staggered children and reduced-motion fallback.", tags: ["motion", "scroll", "reveal"], previewLabel: "Reveal", accent: "#6366F1", secondary: "#9A78FF" },
+  { id: "magnetic-card-hover", name: "Motion / Magnetic Card Hover", category: "Motion Experiences", description: "Pointer-aware card motion for desktop interactions.", tags: ["motion", "hover", "magnetic"], previewLabel: "Magnetic", accent: "#4C8DFF", secondary: "#51C89B" },
+  { id: "shared-layout-tabs", name: "Motion / Shared Layout Tabs", category: "Motion Experiences", description: "Tabs with animated active indicator and stable sizing.", tags: ["motion", "tabs", "layout"], previewLabel: "Tabs", accent: "#9A78FF", secondary: "#E978D4" },
+  { id: "route-progress-bar", name: "Motion / Route Progress Bar", category: "Motion Experiences", description: "Top progress animation for route transitions.", tags: ["motion", "route", "progress"], previewLabel: "Progress", accent: "#6366F1", secondary: "#E978D4" },
+  { id: "spring-drawer", name: "Motion / Spring Drawer", category: "Motion Experiences", description: "Drawer entrance with spring timing and focus return.", tags: ["motion", "drawer", "spring"], previewLabel: "Drawer", accent: "#171A2B", secondary: "#6366F1" },
+  { id: "count-up-stat", name: "Motion / Count Up Stat", category: "Motion Experiences", description: "Animated number change for dashboard metrics.", tags: ["motion", "metric", "count"], previewLabel: "1,248", accent: "#51C89B", secondary: "#4C8DFF" },
+  { id: "hover-preview-lift", name: "Motion / Preview Lift", category: "Motion Experiences", description: "Preview card lift with shadow and scale restraint.", tags: ["motion", "preview", "hover"], previewLabel: "Lift", accent: "#F1BE48", secondary: "#6366F1" },
+  { id: "focus-ring-pulse", name: "Motion / Focus Ring Pulse", category: "Motion Experiences", description: "Accessible focus pulse for keyboard navigation.", tags: ["motion", "focus", "a11y"], previewLabel: "Focus", accent: "#4C8DFF", secondary: "#171A2B" },
+  { id: "staggered-list", name: "Motion / Staggered List", category: "Motion Experiences", description: "List reveal pattern for search results and rows.", tags: ["motion", "list", "stagger"], previewLabel: "List", accent: "#6366F1", secondary: "#51C89B" },
+  { id: "loading-skeleton", name: "Motion / Loading Skeleton", category: "Motion Experiences", description: "Skeleton shimmer with low-contrast motion.", tags: ["motion", "loading", "skeleton"], previewLabel: "Loading", accent: "#E4E7EF", secondary: "#9A9FB1" },
+  { id: "reorder-handle-row", name: "Motion / Reorder Handle Row", category: "Motion Experiences", description: "Drag-friendly row with handle, lift and drop states.", tags: ["motion", "reorder", "drag"], previewLabel: "Drag", accent: "#171A2B", secondary: "#F1BE48" },
+  { id: "spotlight-card", name: "Motion / Spotlight Card", category: "Motion Experiences", description: "Pointer spotlight card for premium component showcases.", tags: ["motion", "spotlight", "card"], previewLabel: "Spotlight", accent: "#9A78FF", secondary: "#6366F1" },
+  { id: "admin-sync-badge", name: "Badge / Admin Sync", category: "Feedback", description: "Live sync badge for backend state and save activity.", tags: ["badge", "sync", "admin"], previewLabel: "Synced", accent: "#51C89B", secondary: "#171A2B" },
+];
+
+const featureComponents = featureBlueprints.map((feature, index) =>
+  makeComponent({
+    id: `feature-${feature.id}`,
+    name: feature.name,
+    slug: `feature-${feature.id}`,
+    description: feature.description,
+    category: feature.category,
+    framework: "React",
+    language: "tsx",
+    version: `v1.${index % 4}.0`,
+    isFavorite: index % 11 === 0,
+    updatedAt: `2026-07-28T${String(8 + Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 12).padStart(2, "0")}:00.000Z`,
+    tags: feature.tags,
+    previewHtml: `<article class="vault-feature-preview" style="--accent:${feature.accent};--secondary:${feature.secondary}"><span>${feature.category}</span><strong>${feature.previewLabel}</strong><small>${feature.tags.slice(0, 2).join(" / ")}</small></article>`,
+    code: `export function ${feature.id.replace(/(^|-)([a-z])/g, (_, __, letter: string) => letter.toUpperCase())}() {
+  return (
+    <article className="vault-feature-preview">
+      <span>${feature.category}</span>
+      <strong>${feature.previewLabel}</strong>
+      <small>${feature.description}</small>
+    </article>
+  );
+}`,
+    styles: `.vault-feature-preview {
+  display: grid;
+  gap: 8px;
+  width: 220px;
+  min-height: 132px;
+  padding: 18px;
+  border: 1px solid #e4e7ef;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--secondary, #51c89b));
+  color: #ffffff;
+  box-shadow: 0 20px 54px rgba(23, 26, 43, .12);
+}`,
+    usageCode: `<${feature.id.replace(/(^|-)([a-z])/g, (_, __, letter: string) => letter.toUpperCase())} />`,
+    notes: `${feature.description} Includes hover, focus, responsive sizing and reduced-motion guidance.`,
+  }),
+);
+
 export const demoComponents: VaultComponent[] = [
   makeComponent({
     id: "button-primary",
@@ -325,6 +419,7 @@ export function Button({
     usageCode: `<PricingCard tier="Pro" price={19} highlighted />`,
     notes: "Keep the plan name literal. Do not hide billing cadence near the price.",
   }),
+  ...featureComponents,
   ...interactiveExperiences.map((experience) =>
     makeComponent({
       id: experience.slug,
@@ -389,6 +484,13 @@ export const demoCollections: Collection[] = [
     description: "Complete navigation, scroll and shared-transition patterns for interactive product storytelling.",
     componentIds: interactiveExperiences.map((experience) => experience.slug),
     updatedAt: "2026-07-27T12:00:00.000Z",
+  },
+  {
+    id: "ui-motion-expansion",
+    name: "UI + Motion Expansion",
+    description: "Forty additional admin, UI, animation, chart, form and feedback patterns for the component vault.",
+    componentIds: featureComponents.map((component) => component.id),
+    updatedAt: "2026-07-28T14:30:00.000Z",
   },
 ];
 

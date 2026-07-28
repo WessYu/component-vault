@@ -73,6 +73,27 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function mergeSeedComponents(components: VaultComponent[]) {
+  const componentIds = new Set(components.map((component) => component.id));
+  return [...components, ...demoComponents.filter((component) => !componentIds.has(component.id))];
+}
+
+function mergeSeedCollections(collections: Collection[]) {
+  const byId = new Map(collections.map((collection) => [collection.id, collection]));
+  for (const collection of demoCollections) {
+    const current = byId.get(collection.id);
+    if (!current) {
+      byId.set(collection.id, collection);
+      continue;
+    }
+    byId.set(collection.id, {
+      ...current,
+      componentIds: Array.from(new Set([...current.componentIds, ...collection.componentIds])),
+    });
+  }
+  return Array.from(byId.values());
+}
+
 export function verifyPassword(password: string, storedHash: string) {
   const [salt, hash] = storedHash.split(":");
   if (!salt || !hash) return false;
@@ -120,28 +141,47 @@ export async function ensureVaultSeed() {
 }
 
 export async function readVaultDb(): Promise<VaultDatabase> {
-  await ensureVaultSeed();
-  const payload = (await fetchQuery(api.vault.list, {}, convexOptions())) as {
-    components: VaultComponent[];
-    collections: Collection[];
-  };
+  try {
+    await ensureVaultSeed();
+    const payload = (await fetchQuery(api.vault.list, {}, convexOptions())) as {
+      components: VaultComponent[];
+      collections: Collection[];
+    };
 
-  return {
-    users: [],
-    sessions: [],
-    components: payload.components,
-    collections: payload.collections,
-  };
+    return {
+      users: [],
+      sessions: [],
+      components: mergeSeedComponents(payload.components),
+      collections: mergeSeedCollections(payload.collections),
+    };
+  } catch {
+    return {
+      users: [],
+      sessions: [],
+      components: demoComponents,
+      collections: demoCollections,
+    };
+  }
 }
 
 export async function listVaultComponents() {
-  await ensureVaultSeed();
-  return (await fetchQuery(api.vault.listComponents, {}, convexOptions())) as VaultComponent[];
+  try {
+    await ensureVaultSeed();
+    const components = (await fetchQuery(api.vault.listComponents, {}, convexOptions())) as VaultComponent[];
+    return mergeSeedComponents(components);
+  } catch {
+    return demoComponents;
+  }
 }
 
 export async function getVaultComponent(id: string) {
-  await ensureVaultSeed();
-  return (await fetchQuery(api.vault.getComponent, { id }, convexOptions())) as VaultComponent | null;
+  try {
+    await ensureVaultSeed();
+    const component = (await fetchQuery(api.vault.getComponent, { id }, convexOptions())) as VaultComponent | null;
+    return component ?? demoComponents.find((item) => item.id === id || item.slug === id) ?? null;
+  } catch {
+    return demoComponents.find((item) => item.id === id || item.slug === id) ?? null;
+  }
 }
 
 export async function createVaultComponent(component: VaultComponent) {
@@ -160,8 +200,12 @@ export async function toggleVaultFavorite(id: string) {
 }
 
 export async function getFavoriteComponentIds(sessionId?: string) {
-  await ensureVaultSeed();
-  return (await fetchQuery(api.auth.getFavoritesBySession, { sessionId }, convexOptions())) as string[];
+  try {
+    await ensureVaultSeed();
+    return (await fetchQuery(api.auth.getFavoritesBySession, { sessionId }, convexOptions())) as string[];
+  } catch {
+    return [];
+  }
 }
 
 export async function toggleUserFavorite(sessionId: string, componentId: string) {
@@ -185,13 +229,23 @@ export async function deleteVaultComponent(id: string) {
 }
 
 export async function listVaultCollections() {
-  await ensureVaultSeed();
-  return (await fetchQuery(api.vault.listCollections, {}, convexOptions())) as Collection[];
+  try {
+    await ensureVaultSeed();
+    const collections = (await fetchQuery(api.vault.listCollections, {}, convexOptions())) as Collection[];
+    return mergeSeedCollections(collections);
+  } catch {
+    return demoCollections;
+  }
 }
 
 export async function getVaultCollection(id: string) {
-  await ensureVaultSeed();
-  return (await fetchQuery(api.vault.getCollection, { id }, convexOptions())) as Collection | null;
+  try {
+    await ensureVaultSeed();
+    const collection = (await fetchQuery(api.vault.getCollection, { id }, convexOptions())) as Collection | null;
+    return collection ?? demoCollections.find((item) => item.id === id) ?? null;
+  } catch {
+    return demoCollections.find((item) => item.id === id) ?? null;
+  }
 }
 
 export async function createVaultCollection(collection: Collection) {
