@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, CheckCircle2, LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { localLogin, localRegister, requestLocalPasswordReset } from "@/services/vault-service";
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from "./auth-schema";
+
+const rememberedEmailKey = "component-vault-login-email";
 
 type AuthFormProps = {
   mode: "login" | "register";
@@ -19,14 +21,24 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState(true);
   const schema = mode === "login" ? loginSchema : registerSchema;
   const form = useForm<LoginInput | RegisterInput>({
     resolver: zodResolver(schema),
     defaultValues:
       mode === "login"
-        ? { email: "demo@componentvault.dev", password: "vault-demo" }
+        ? { email: "", password: "" }
         : { name: "", email: "", password: "" },
   });
+
+  useEffect(() => {
+    if (mode !== "login") return;
+    const rememberedEmail = window.localStorage.getItem(rememberedEmailKey);
+    if (rememberedEmail) {
+      form.setValue("email", rememberedEmail, { shouldValidate: false });
+      setRememberLogin(true);
+    }
+  }, [form, mode]);
 
   async function onSubmit(values: LoginInput | RegisterInput) {
     setMessage(null);
@@ -48,13 +60,21 @@ export function AuthForm({ mode }: AuthFormProps) {
           return;
         }
       } else if (mode === "login") {
-        await localLogin({ email: values.email, password: values.password });
+        await localLogin({ email: values.email, password: values.password, remember: rememberLogin });
       } else {
         await localRegister({
           name: "name" in values ? values.name : "Vault User",
           email: values.email,
           password: values.password,
         });
+      }
+
+      if (mode === "login") {
+        if (rememberLogin) {
+          window.localStorage.setItem(rememberedEmailKey, values.email.trim().toLowerCase());
+        } else {
+          window.localStorage.removeItem(rememberedEmailKey);
+        }
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to authenticate.");
@@ -148,7 +168,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8" autoComplete="on">
             <div className="flex items-start gap-3">
               <span className="grid size-12 place-items-center rounded-2xl bg-[#EEF0FF] text-[#6366F1]">
                 <Icon size={20} aria-hidden />
@@ -163,31 +183,48 @@ export function AuthForm({ mode }: AuthFormProps) {
               {mode === "register" ? (
                 <label className="block text-sm font-semibold text-[#171A2B]">
                   Name
-                  <input className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" {...form.register("name" as keyof RegisterInput)} />
+                  <input autoComplete="name" className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" {...form.register("name" as keyof RegisterInput)} />
                   {"name" in form.formState.errors ? <span className="mt-1 block text-xs text-[#EF4444]">{form.formState.errors.name?.message}</span> : null}
                 </label>
               ) : null}
 
               <label className="block text-sm font-semibold text-[#171A2B]">
                 Email
-                <input className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" type="email" {...form.register("email")} />
+                <input autoComplete="username" className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" type="email" {...form.register("email")} />
                 <span className="mt-1 block text-xs text-[#EF4444]">{form.formState.errors.email?.message}</span>
               </label>
 
               <label className="block text-sm font-semibold text-[#171A2B]">
                 Password
-                <input className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" type="password" {...form.register("password")} />
+                <input autoComplete={mode === "login" ? "current-password" : "new-password"} className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white" type="password" {...form.register("password")} />
                 <span className="mt-1 block text-xs text-[#EF4444]">{form.formState.errors.password?.message}</span>
               </label>
             </div>
 
+            {mode === "login" ? (
+              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-4 py-3 text-sm text-[#171A2B] transition hover:bg-[#F7F8FC]">
+                <input
+                  type="checkbox"
+                  checked={rememberLogin}
+                  onChange={(event) => setRememberLogin(event.target.checked)}
+                  className="size-4 accent-[#6366F1]"
+                />
+                <span>
+                  <span className="block font-semibold">Lembrar de mim</span>
+                  <span className="mt-0.5 block text-xs font-normal text-[#6D7285]">Mantém sua sessão e lembra seu e-mail neste dispositivo.</span>
+                </span>
+              </label>
+            ) : null}
+
             <div className="mt-5 rounded-3xl border border-[#E4E7EF] bg-[#F7F8FC] p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#171A2B]">
                 <LockKeyhole size={16} aria-hidden />
-                {isSupabaseConfigured ? "Supabase connected" : "Local backend session"}
+                {isSupabaseConfigured ? "Supabase connected" : "Secure backend session"}
               </div>
               <p className="mt-2 text-sm leading-6 text-[#6D7285]">
-                {isSupabaseConfigured ? "Authentication is handled by the configured Supabase project." : "The Next backend creates a httpOnly session cookie for this workspace."}
+                {isSupabaseConfigured
+                  ? "Authentication is handled by the configured Supabase project."
+                  : "A senha nunca é salva no navegador pelo Component Vault. A sessão usa um cookie httpOnly e o navegador pode oferecer o próprio gerenciador de senhas."}
               </p>
             </div>
 
