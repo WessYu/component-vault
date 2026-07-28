@@ -18,6 +18,12 @@ const items = [
   { label: "Settings", href: "/vault/settings", icon: Settings },
 ];
 
+const waterPaths = [
+  "M39 39 C73 43 100 55 101 86 C103 122 82 148 37 164",
+  "M39 39 C86 44 127 60 128 99 C130 146 97 181 31 199",
+  "M39 39 C102 45 153 65 154 113 C156 170 113 214 26 238",
+];
+
 export function NavigationRail({ active = "Library", expanded, onToggle }: { active?: string; expanded: boolean; onToggle: () => void }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
@@ -40,8 +46,8 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
     if (navigationTimer.current) clearTimeout(navigationTimer.current);
 
     setRippleId((value) => value + 1 || 1);
-    cleanupTimer.current = setTimeout(() => setRippleId(0), 820);
-    navigationTimer.current = setTimeout(() => router.push("/vault/components"), 420);
+    cleanupTimer.current = setTimeout(() => setRippleId(0), 1250);
+    navigationTimer.current = setTimeout(() => router.push("/vault/components"), 1080);
   }
 
   return (
@@ -54,37 +60,67 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
 
       <AnimatePresence>
         {rippleId ? (
-          <motion.div key={rippleId} className="pointer-events-none absolute inset-0 z-20 overflow-visible" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.span
-              className="absolute left-10 top-10 size-14 rounded-full bg-[radial-gradient(circle,rgba(54,201,255,0.18)_0%,rgba(54,201,255,0.08)_42%,transparent_72%)]"
+          <motion.div key={rippleId} className="pointer-events-none fixed inset-0 z-[100]" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div
+              className="fixed left-10 top-10 size-20 rounded-full bg-[radial-gradient(circle,rgba(65,211,255,0.34)_0%,rgba(65,211,255,0.14)_38%,transparent_72%)] blur-[1px]"
               style={{ x: "-50%", y: "-50%" }}
-              initial={{ scale: 0.35, opacity: 0.9 }}
-              animate={{ scale: 5.4, opacity: 0 }}
-              transition={{ duration: 0.72, ease: [0.2, 0.7, 0.2, 1] }}
+              initial={{ scale: 0.35, opacity: 0.95 }}
+              animate={{ scale: 4.8, opacity: 0 }}
+              transition={{ duration: 0.92, ease: [0.16, 0.78, 0.2, 1] }}
             />
-            {[0, 0.075, 0.15].map((delay, index) => (
+
+            <svg className="fixed left-0 top-0 h-[270px] w-[360px] overflow-visible" viewBox="0 0 360 270" fill="none" aria-hidden>
+              <defs>
+                <linearGradient id={`water-stroke-${rippleId}`} x1="38" y1="38" x2="170" y2="238" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#39D7FF" />
+                  <stop offset="0.55" stopColor="#30C4FF" />
+                  <stop offset="1" stopColor="#46AFFF" stopOpacity="0.25" />
+                </linearGradient>
+                <filter id={`water-glow-${rippleId}`} x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2.6" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {waterPaths.map((path, index) => (
+                <motion.path
+                  key={path}
+                  d={path}
+                  stroke={`url(#water-stroke-${rippleId})`}
+                  strokeWidth={index === 0 ? 5.5 : 5}
+                  strokeLinecap="round"
+                  filter={`url(#water-glow-${rippleId})`}
+                  initial={{ pathLength: 0, opacity: 0, pathOffset: 0 }}
+                  animate={{ pathLength: [0, 1, 1], opacity: [0, 1, 0], pathOffset: [0, 0, 0.12] }}
+                  transition={{ duration: 1.02, delay: index * 0.07, times: [0, 0.62, 1], ease: [0.2, 0.72, 0.2, 1] }}
+                />
+              ))}
+
+              {[0, 1, 2].map((index) => (
+                <motion.circle
+                  key={index}
+                  cx={42 + index * 5}
+                  cy={42 + index * 2}
+                  r={5 - index}
+                  fill="#48D8FF"
+                  initial={{ opacity: 0.9, scale: 0.4, x: 0, y: 0 }}
+                  animate={{ opacity: [0.9, 0.85, 0], scale: [0.4, 1, 0.7], x: 78 + index * 36, y: 74 + index * 48 }}
+                  transition={{ duration: 0.8, delay: 0.08 + index * 0.1, ease: "easeOut" }}
+                />
+              ))}
+            </svg>
+
+            {[0, 0.09, 0.18].map((delay, index) => (
               <motion.span
                 key={delay}
-                className="absolute left-10 top-10 rounded-full border-2 border-[#36C9FF]/80 shadow-[0_0_18px_rgba(54,201,255,0.18)]"
-                style={{ width: 50 + index * 14, height: 50 + index * 14, x: "-50%", y: "-50%" }}
-                initial={{ scale: 0.3, opacity: 0.72 }}
-                animate={{ scale: 4.7 + index * 0.22, opacity: [0.72, 0.52, 0] }}
-                transition={{ duration: 0.68 + index * 0.06, delay, ease: [0.18, 0.72, 0.22, 1] }}
-              />
-            ))}
-            {[
-              { x: 38, y: 36, dx: 68, dy: 94, size: 7, delay: 0.02 },
-              { x: 45, y: 42, dx: 98, dy: 58, size: 5, delay: 0.09 },
-              { x: 34, y: 44, dx: 42, dy: 130, size: 6, delay: 0.13 },
-              { x: 42, y: 39, dx: 124, dy: 118, size: 4, delay: 0.18 },
-            ].map((drop, index) => (
-              <motion.span
-                key={index}
-                className="absolute rounded-full bg-[#43D2FF] shadow-[0_0_12px_rgba(67,210,255,0.45)]"
-                style={{ left: drop.x, top: drop.y, width: drop.size, height: drop.size }}
-                initial={{ x: 0, y: 0, scale: 0.7, opacity: 0.85 }}
-                animate={{ x: drop.dx, y: drop.dy, scale: [0.7, 1.05, 0.5], opacity: [0.85, 0.7, 0] }}
-                transition={{ duration: 0.62, delay: drop.delay, ease: "easeOut" }}
+                className="fixed left-10 top-10 rounded-full border-[3px] border-[#43D2FF]/90 shadow-[0_0_26px_rgba(67,210,255,0.42)]"
+                style={{ width: 48 + index * 14, height: 48 + index * 14, x: "-50%", y: "-50%" }}
+                initial={{ scale: 0.45, opacity: 0.9 }}
+                animate={{ scale: 3.8 + index * 0.28, opacity: [0.9, 0.55, 0] }}
+                transition={{ duration: 0.88, delay, ease: [0.18, 0.72, 0.22, 1] }}
               />
             ))}
           </motion.div>
@@ -95,15 +131,16 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
         <Link href="/vault/components" onClick={handleBrandClick} className={cn("group flex items-center gap-3 rounded-2xl p-2", !expanded && "justify-center")} aria-label="Component Vault home">
           <motion.span
             className="relative"
-            whileHover={reduceMotion ? undefined : { scale: 1.035 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-            transition={fastMotion}
+            whileHover={reduceMotion ? undefined : { scale: 1.045 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.9 }}
+            animate={rippleId ? { rotate: [0, -4, 4, -2, 0], scale: [1, 0.94, 1.08, 1] } : undefined}
+            transition={rippleId ? { duration: 0.52 } : fastMotion}
           >
             <BrandMark />
             <motion.span
-              className="pointer-events-none absolute -inset-1 rounded-[20px] border border-[#43D2FF]/0"
-              animate={rippleId ? { borderColor: ["rgba(67,210,255,0)", "rgba(67,210,255,0.7)", "rgba(67,210,255,0)"], scale: [0.9, 1.18, 1.28] } : undefined}
-              transition={{ duration: 0.46 }}
+              className="pointer-events-none absolute -inset-1 rounded-[20px] border-2 border-[#43D2FF]/0"
+              animate={rippleId ? { borderColor: ["rgba(67,210,255,0)", "rgba(67,210,255,0.95)", "rgba(67,210,255,0)"], scale: [0.88, 1.22, 1.35] } : undefined}
+              transition={{ duration: 0.52 }}
             />
           </motion.span>
           <AnimatePresence initial={false}>
@@ -152,11 +189,7 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
                   ) : (
                     <span className="absolute inset-0 rounded-2xl bg-[#F2F4FA] opacity-0 transition-opacity duration-100 group-hover:opacity-100" />
                   )}
-                  <motion.span
-                    className="relative z-10 grid size-5 shrink-0 place-items-center"
-                    whileHover={reduceMotion ? undefined : { scale: 1.06 }}
-                    transition={fastMotion}
-                  >
+                  <motion.span className="relative z-10 grid size-5 shrink-0 place-items-center" whileHover={reduceMotion ? undefined : { scale: 1.06 }} transition={fastMotion}>
                     <Icon size={18} aria-hidden />
                   </motion.span>
                   <AnimatePresence initial={false}>
