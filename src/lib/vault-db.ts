@@ -55,6 +55,9 @@ const demoUserId = "demo-user";
 const sessionMs = 1000 * 60 * 60 * 24 * 14;
 const passwordResetMs = 1000 * 60 * 30;
 let seeded = false;
+const fallbackUsers = new Map<string, VaultUser>();
+const fallbackSessions = new Map<string, VaultSession>();
+const fallbackSessionPrefix = "fallback.";
 
 export function getConvexUrl() {
   return process.env.NEXT_PUBLIC_CONVEX_URL || "https://quixotic-hamster-78.convex.cloud";
@@ -71,6 +74,72 @@ function hashPassword(password: string, salt = randomBytes(16).toString("hex")) 
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function fallbackDemoUser() {
+  return {
+    id: demoUserId,
+    name: "Demo Operator",
+    email: "demo@componentvault.dev",
+    passwordHash: hashPassword("vault-demo", "component-vault-demo-salt"),
+    createdAt: new Date("2026-07-27T12:00:00.000Z").toISOString(),
+  } satisfies VaultUser;
+}
+
+function canUseLocalFallback() {
+  return process.env.NODE_ENV !== "production";
+}
+
+function ensureFallbackDemoUser() {
+  const demo = fallbackDemoUser();
+  if (!fallbackUsers.has(demo.email)) fallbackUsers.set(demo.email, demo);
+  return demo;
+}
+
+function fallbackUserById(userId: string) {
+  ensureFallbackDemoUser();
+  return Array.from(fallbackUsers.values()).find((user) => user.id === userId || user.userId === userId) ?? null;
+}
+
+function signFallbackSession(userId: string, email: string, expiresAt: string) {
+  return createHash("sha256").update(`${userId}:${email}:${expiresAt}:component-vault-local-fallback`).digest("hex");
+}
+
+function createFallbackSessionId(user: VaultUser, expiresAt: string) {
+  const payload = {
+    userId: user.id || user.userId || demoUserId,
+    name: user.name,
+    email: user.email,
+    expiresAt,
+    signature: signFallbackSession(user.id || user.userId || demoUserId, user.email, expiresAt),
+  };
+  return `${fallbackSessionPrefix}${Buffer.from(JSON.stringify(payload)).toString("base64url")}`;
+}
+
+function readFallbackSessionUser(sessionId: string) {
+  if (!canUseLocalFallback()) return null;
+  if (!sessionId.startsWith(fallbackSessionPrefix)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(sessionId.slice(fallbackSessionPrefix.length), "base64url").toString("utf8")) as {
+      userId?: string;
+      name?: string;
+      email?: string;
+      expiresAt?: string;
+      signature?: string;
+    };
+    if (!payload.userId || !payload.name || !payload.email || !payload.expiresAt || !payload.signature) return null;
+    if (new Date(payload.expiresAt).getTime() <= Date.now()) return null;
+    if (payload.signature !== signFallbackSession(payload.userId, payload.email, payload.expiresAt)) return null;
+    return {
+      id: payload.userId,
+      name: payload.name,
+      email: payload.email,
+      createdAt: new Date("2026-07-27T12:00:00.000Z").toISOString(),
+      passwordHash: payload.email === "demo@componentvault.dev" ? fallbackDemoUser().passwordHash : undefined,
+    } satisfies VaultUser;
+  } catch {
+    return null;
+  }
 }
 
 function mergeSeedComponents(components: VaultComponent[]) {
@@ -264,54 +333,96 @@ export async function deleteVaultCollection(id: string) {
 }
 
 export async function getUserByEmail(email: string) {
-  await ensureVaultSeed();
-  const user = (await fetchQuery(api.auth.getUserByEmail, { email }, convexOptions())) as VaultUser | null;
-  return user ? { ...user, id: user.id || user.userId || demoUserId } : null;
+  const normalizedEmail = email.trim().toLowerCase();
+  try {
+    await ensureVaultSeed();
+    const user = (await fetchQuery(api.auth.getUserByEmail, { email: normalizedEmail }, convexOptions())) as VaultUser | null;
+    return user ? { ...user, id: user.id || user.userId || demoUserId } : null;
+  } catch {
+    if (!canUseLocalFallback()) return null;
+    ensureFallbackDemoUser();
+    return fallbackUsers.get(normalizedEmail) ?? null;
+  }
 }
 
 export async function createLocalUser({ name, email, password }: { name: string; email: string; password: string }) {
-  await ensureVaultSeed();
   const normalizedEmail = email.trim().toLowerCase();
-  const user = (await fetchMutation(
-    api.auth.createUser,
-    {
-      userId: randomUUID(),
+  try {
+    await ensureVaultSeed();
+    const user = (await fetchMutation(
+      api.auth.createUser,
+      {
+        userId: randomUUID(),
+        name,
+        email: normalizedEmail,
+        passwordHash: hashPassword(password),
+        createdAt: new Date().toISOString(),
+      },
+      convexOptions(),
+    )) as VaultUser;
+
+    return { ...user, id: user.id || user.userId || demoUserId };
+  } catch {
+    if (!canUseLocalFallback()) throw new Error("Unable to register user.");
+    ensureFallbackDemoUser();
+    if (fallbackUsers.has(normalizedEmail)) throw new Error("Email already registered.");
+    const user: VaultUser = {
+      id: randomUUID(),
       name,
       email: normalizedEmail,
       passwordHash: hashPassword(password),
       createdAt: new Date().toISOString(),
-    },
-    convexOptions(),
-  )) as VaultUser;
-
-  return { ...user, id: user.id || user.userId || demoUserId };
+    };
+    fallbackUsers.set(normalizedEmail, user);
+    return user;
+  }
 }
 
 export async function createLocalSession(userId: string) {
-  await ensureVaultSeed();
   const now = Date.now();
-  const session = (await fetchMutation(
-    api.auth.createSession,
-    {
-      sessionId: randomUUID(),
-      userId,
-      createdAt: new Date(now).toISOString(),
-      expiresAt: new Date(now + sessionMs).toISOString(),
-    },
-    convexOptions(),
-  )) as VaultSession;
+  const sessionInput = {
+    sessionId: randomUUID(),
+    userId,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + sessionMs).toISOString(),
+  };
 
-  return { ...session, id: session.id || session.sessionId || "" };
+  try {
+    await ensureVaultSeed();
+    const session = (await fetchMutation(api.auth.createSession, sessionInput, convexOptions())) as VaultSession;
+    return { ...session, id: session.id || session.sessionId || "" };
+  } catch {
+    if (!canUseLocalFallback()) throw new Error("Unable to create session.");
+    const user = fallbackUserById(userId) ?? ensureFallbackDemoUser();
+    const sessionId = createFallbackSessionId(user, sessionInput.expiresAt);
+    const session: VaultSession = { id: sessionId, sessionId, userId: user.id, createdAt: sessionInput.createdAt, expiresAt: sessionInput.expiresAt };
+    fallbackSessions.set(session.id, session);
+    return session;
+  }
 }
 
 export async function destroyLocalSession(sessionId: string) {
-  await fetchMutation(api.auth.destroySession, { sessionId }, convexOptions());
+  fallbackSessions.delete(sessionId);
+  try {
+    await fetchMutation(api.auth.destroySession, { sessionId }, convexOptions());
+  } catch {
+    return;
+  }
 }
 
 export async function getUserBySession(sessionId?: string) {
-  await ensureVaultSeed();
-  const user = (await fetchQuery(api.auth.getUserBySession, { sessionId }, convexOptions())) as VaultUser | null;
-  return user ? { ...user, id: user.id || user.userId || demoUserId } : null;
+  if (!sessionId) return null;
+  const fallbackUser = readFallbackSessionUser(sessionId);
+  if (fallbackUser) return fallbackUser;
+  try {
+    await ensureVaultSeed();
+    const user = (await fetchQuery(api.auth.getUserBySession, { sessionId }, convexOptions())) as VaultUser | null;
+    return user ? { ...user, id: user.id || user.userId || demoUserId } : null;
+  } catch {
+    const session = fallbackSessions.get(sessionId);
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
+    return fallbackUserById(session.userId);
+  }
 }
 
 export async function createPasswordReset(email: string) {

@@ -148,8 +148,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
                   <option>Newest</option><option>Name</option><option>Most used</option>
                 </motion.select>
                 <div className="relative flex w-fit rounded-2xl bg-white p-1 shadow-sm ring-1 ring-[#E4E7EF]">
-                  {view === "grid" ? <motion.span layoutId="component-view-toggle" className="absolute left-1 top-1 size-9 rounded-xl bg-[#EEF0FF]" transition={{ type: "spring", stiffness: 360, damping: 30 }} /> : null}
-                  {view === "list" ? <motion.span layoutId="component-view-toggle" className="absolute right-1 top-1 size-9 rounded-xl bg-[#EEF0FF]" transition={{ type: "spring", stiffness: 360, damping: 30 }} /> : null}
+                  <motion.span className="absolute left-1 top-1 size-9 rounded-xl bg-[#EEF0FF]" initial={false} animate={{ x: view === "grid" ? 0 : 36 }} transition={{ type: "spring", stiffness: 360, damping: 30 }} />
                   <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "grid" && "text-[#6366F1]")} onClick={() => setView("grid")} aria-label="Grid view"><Grid2X2 size={16} aria-hidden /></button>
                   <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "list" && "text-[#6366F1]")} onClick={() => setView("list")} aria-label="List view"><List size={16} aria-hidden /></button>
                 </div>
