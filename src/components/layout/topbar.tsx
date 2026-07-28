@@ -72,6 +72,10 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
     if (paletteOpen) window.setTimeout(() => inputRef.current?.focus(), 20);
   }, [paletteOpen]);
 
+  const initial = user?.name?.trim().charAt(0).toUpperCase() || "?";
+  const favoriteCount = components.filter((component) => component.isFavorite).length;
+  const isAdmin = user?.role === "admin";
+
   const results = useMemo(() => {
     const term = query.toLowerCase();
     const componentResults = components
@@ -82,8 +86,9 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
       .filter((collection) => collection.name.toLowerCase().includes(term))
       .slice(0, 3)
       .map((collection) => ({ label: collection.name, meta: "Collection", href: `/vault/collections/${collection.id}` }));
-    return [...componentResults, ...collectionResults];
-  }, [collections, components, query]);
+    const adminResult = isAdmin && "admin workspace painel".includes(term) ? [{ label: "Admin Studio", meta: "Owner workspace", href: "/vault/admin" }] : [];
+    return [...adminResult, ...componentResults, ...collectionResults];
+  }, [collections, components, isAdmin, query]);
 
   async function handleCreate() {
     if (!user) {
@@ -121,10 +126,6 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
     router.refresh();
   }
 
-  const initial = user?.name?.trim().charAt(0).toUpperCase() || "?";
-  const favoriteCount = components.filter((component) => component.isFavorite).length;
-  const isAdmin = user?.role === "admin";
-
   return (
     <>
       <motion.header
@@ -158,6 +159,16 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
         >
           <SlidersHorizontal size={17} aria-hidden />
         </motion.button>
+
+        {isAdmin ? (
+          <Link
+            href="/vault/admin"
+            className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#C9C7FF] bg-[#F7F7FF] px-3 text-sm font-semibold text-[#6366F1] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EEF0FF]"
+          >
+            <ShieldCheck size={16} aria-hidden />
+            <span className="hidden md:inline">Admin</span>
+          </Link>
+        ) : null}
 
         <motion.button
           className="group inline-flex min-h-10 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition-colors duration-150 hover:bg-[#5558e8]"
