@@ -1,13 +1,29 @@
 import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
-function publicUser(user: { userId: string; name: string; email: string; createdAt: string }) {
+type PublicUserInput = {
+  userId: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  favoriteComponentIds?: string[];
+};
+
+function publicUser(user: PublicUserInput) {
   return {
     id: user.userId,
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
+    favoriteComponentIds: user.favoriteComponentIds ?? [],
   };
+}
+
+async function userFromSession(ctx: any, sessionId?: string) {
+  if (!sessionId) return null;
+  const session = await ctx.db.query("sessions").withIndex("by_session_id", (q: any) => q.eq("sessionId", sessionId)).unique();
+  if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
+  return await ctx.db.query("users").withIndex("by_user_id", (q: any) => q.eq("userId", session.userId)).unique();
 }
 
 export const getUserByEmail = query({
@@ -20,11 +36,32 @@ export const getUserByEmail = query({
 export const getUserBySession = query({
   args: { sessionId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    if (!args.sessionId) return null;
-    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
-    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
-    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
+    const user = await userFromSession(ctx, args.sessionId);
     return user ? publicUser(user) : null;
+  },
+});
+
+export const getFavoritesBySession = query({
+  args: { sessionId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await userFromSession(ctx, args.sessionId);
+    return user?.favoriteComponentIds ?? [];
+  },
+});
+
+export const toggleFavoriteBySession = mutation({
+  args: { sessionId: v.string(), componentId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await userFromSession(ctx, args.sessionId);
+    if (!user) return null;
+
+    const current = user.favoriteComponentIds ?? [];
+    const favoriteComponentIds = current.includes(args.componentId)
+      ? current.filter((id: string) => id !== args.componentId)
+      : [...current, args.componentId];
+
+    await ctx.db.patch(user._id, { favoriteComponentIds });
+    return favoriteComponentIds;
   },
 });
 
@@ -39,8 +76,9 @@ export const ensureDemoUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) return publicUser(existing);
-    await ctx.db.insert("users", args);
-    return publicUser(args);
+    const user = { ...args, favoriteComponentIds: [] as string[] };
+    await ctx.db.insert("users", user);
+    return publicUser(user);
   },
 });
 
@@ -55,8 +93,9 @@ export const createUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) throw new Error("Email already registered.");
-    await ctx.db.insert("users", args);
-    return publicUser(args);
+    const user = { ...args, favoriteComponentIds: [] as string[] };
+    await ctx.db.insert("users", user);
+    return publicUser(user);
   },
 });
 
@@ -71,9 +110,7 @@ export const createSession = mutation({
     const sessions = await ctx.db.query("sessions").withIndex("by_user_id", (q) => q.eq("userId", args.userId)).collect();
     const now = Date.now();
     for (const session of sessions) {
-      if (new Date(session.expiresAt).getTime() <= now) {
-        await ctx.db.delete(session._id);
-      }
+      if (new Date(session.expiresAt).getTime() <= now) await ctx.db.delete(session._id);
     }
     await ctx.db.insert("sessions", args);
     return args;
@@ -102,9 +139,7 @@ export const createPasswordReset = mutation({
     const resets = await ctx.db.query("passwordResets").collect();
     const now = Date.now();
     for (const reset of resets) {
-      if (reset.usedAt || new Date(reset.expiresAt).getTime() <= now) {
-        await ctx.db.delete(reset._id);
-      }
+      if (reset.usedAt || new Date(reset.expiresAt).getTime() <= now) await ctx.db.delete(reset._id);
     }
     if (!user) return null;
     await ctx.db.insert("passwordResets", {
@@ -126,9 +161,7 @@ export const resetPassword = mutation({
   },
   handler: async (ctx, args) => {
     const reset = await ctx.db.query("passwordResets").withIndex("by_token_hash", (q) => q.eq("tokenHash", args.tokenHash)).unique();
-    if (!reset || reset.usedAt || new Date(reset.expiresAt).getTime() <= Date.now()) {
-      throw new Error("Password reset link is invalid or expired.");
-    }
+    if (!reset || reset.usedAt || new Date(reset.expiresAt).getTime() <= Date.now()) throw new Error("Password reset link is invalid or expired.");
     const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", reset.userId)).unique();
     if (!user) throw new Error("User not found.");
 
@@ -136,9 +169,7 @@ export const resetPassword = mutation({
     await ctx.db.patch(reset._id, { usedAt: args.usedAt });
 
     const sessions = await ctx.db.query("sessions").withIndex("by_user_id", (q) => q.eq("userId", user.userId)).collect();
-    for (const session of sessions) {
-      await ctx.db.delete(session._id);
-    }
+    for (const session of sessions) await ctx.db.delete(session._id);
 
     return publicUser(user);
   },
