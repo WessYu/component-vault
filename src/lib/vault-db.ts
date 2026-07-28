@@ -4,6 +4,26 @@ import { anyApi } from "convex/server";
 import { demoCollections, demoComponents } from "@/services/demo-data";
 import type { Collection, VaultComponent } from "@/types/vault";
 
+export type WorkspacePreferences = {
+  gridSize: number;
+  defaultViewport: "Desktop" | "Tablet" | "Mobile";
+  autosaveDebounce: number;
+  previewTheme: "Light" | "Dark";
+  componentReviewRequests: boolean;
+  tokenDriftAlerts: boolean;
+  weeklyUsageDigest: boolean;
+};
+
+export const defaultWorkspacePreferences: WorkspacePreferences = {
+  gridSize: 8,
+  defaultViewport: "Desktop",
+  autosaveDebounce: 900,
+  previewTheme: "Light",
+  componentReviewRequests: true,
+  tokenDriftAlerts: true,
+  weeklyUsageDigest: false,
+};
+
 export type VaultUser = {
   id: string;
   userId?: string;
@@ -12,6 +32,7 @@ export type VaultUser = {
   passwordHash?: string;
   createdAt: string;
   favoriteComponentIds?: string[];
+  workspacePreferences?: WorkspacePreferences;
 };
 
 export type VaultSession = {
@@ -68,6 +89,7 @@ export function publicUser(user: VaultUser) {
     email: user.email,
     createdAt: user.createdAt,
     favoriteComponentIds: user.favoriteComponentIds ?? [],
+    workspacePreferences: user.workspacePreferences ?? defaultWorkspacePreferences,
   };
 }
 
@@ -145,6 +167,16 @@ export async function getFavoriteComponentIds(sessionId?: string) {
 export async function toggleUserFavorite(sessionId: string, componentId: string) {
   await ensureVaultSeed();
   return (await fetchMutation(api.auth.toggleFavoriteBySession, { sessionId, componentId }, convexOptions())) as string[] | null;
+}
+
+export async function getWorkspacePreferences(sessionId?: string) {
+  await ensureVaultSeed();
+  return (await fetchQuery(api.auth.getWorkspacePreferencesBySession, { sessionId }, convexOptions())) as WorkspacePreferences | null;
+}
+
+export async function updateWorkspacePreferences(sessionId: string, preferences: WorkspacePreferences) {
+  await ensureVaultSeed();
+  return (await fetchMutation(api.auth.updateWorkspacePreferencesBySession, { sessionId, preferences }, convexOptions())) as WorkspacePreferences | null;
 }
 
 export async function deleteVaultComponent(id: string) {
