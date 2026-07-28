@@ -1,51 +1,69 @@
 "use client";
 
 import { Check, Copy, Pencil, Save, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useVaultStore } from "@/stores/vault-store";
+import { cn } from "@/lib/utils";
 import type { VaultComponent } from "@/types/vault";
+
+type CodeField = "code" | "styles" | "usageCode";
+
+const files: Array<{ field: CodeField; label: string }> = [
+  { field: "code", label: "Component.tsx" },
+  { field: "styles", label: "styles.css" },
+  { field: "usageCode", label: "usage.tsx" },
+];
 
 export function CodeViewer({ component }: { component: VaultComponent }) {
   const updateCode = useVaultStore((state) => state.updateCode);
+  const [activeField, setActiveField] = useState<CodeField>("code");
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [draft, setDraft] = useState(component.code);
+  const source = useMemo(() => component[activeField], [activeField, component]);
+  const [draft, setDraft] = useState(source);
 
   useEffect(() => {
-    if (!editing) setDraft(component.code);
-  }, [component.code, editing]);
+    setEditing(false);
+    setDraft(source);
+  }, [activeField, component.id, source]);
 
   async function copy() {
-    await navigator.clipboard.writeText(editing ? draft : component.code);
+    await navigator.clipboard.writeText(editing ? draft : source);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1300);
   }
 
   async function save() {
-    if (draft === component.code) {
+    if (draft === source) {
       setEditing(false);
       return;
     }
     setSaving(true);
-    await updateCode(component.id, "code", draft);
+    await updateCode(component.id, activeField, draft);
     setSaving(false);
     setEditing(false);
   }
 
   function cancel() {
-    setDraft(component.code);
+    setDraft(source);
     setEditing(false);
   }
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <select className="h-9 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm text-[#6D7285]" defaultValue={component.framework}>
-          <option>React</option>
-          <option>HTML</option>
-          <option>Tailwind</option>
-        </select>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex overflow-x-auto rounded-2xl bg-[#F2F4FA] p-1">
+          {files.map((file) => (
+            <button
+              key={file.field}
+              className={cn("min-h-8 whitespace-nowrap rounded-xl px-3 text-xs font-semibold text-[#6D7285]", activeField === file.field && "bg-white text-[#6366F1] shadow-sm")}
+              onClick={() => setActiveField(file.field)}
+            >
+              {file.label}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-2">
           {editing ? (
             <>
@@ -74,10 +92,10 @@ export function CodeViewer({ component }: { component: VaultComponent }) {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           spellCheck={false}
-          aria-label={`Edit ${component.name} code`}
+          aria-label={`Edit ${files.find((file) => file.field === activeField)?.label}`}
         />
       ) : (
-        <pre className="max-h-[360px] overflow-auto rounded-3xl bg-[#171A2B] p-5 text-sm leading-6 text-[#EEF0FF]"><code>{component.code}</code></pre>
+        <pre className="max-h-[360px] overflow-auto rounded-3xl bg-[#171A2B] p-5 text-sm leading-6 text-[#EEF0FF]"><code>{source || "// No content yet"}</code></pre>
       )}
     </div>
   );
