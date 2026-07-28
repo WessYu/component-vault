@@ -19,13 +19,6 @@ function publicUser(user: PublicUserInput) {
   };
 }
 
-async function userFromSession(ctx: any, sessionId?: string) {
-  if (!sessionId) return null;
-  const session = await ctx.db.query("sessions").withIndex("by_session_id", (q: any) => q.eq("sessionId", sessionId)).unique();
-  if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
-  return await ctx.db.query("users").withIndex("by_user_id", (q: any) => q.eq("userId", session.userId)).unique();
-}
-
 export const getUserByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
@@ -36,7 +29,10 @@ export const getUserByEmail = query({
 export const getUserBySession = query({
   args: { sessionId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const user = await userFromSession(ctx, args.sessionId);
+    if (!args.sessionId) return null;
+    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
+    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
     return user ? publicUser(user) : null;
   },
 });
@@ -44,7 +40,10 @@ export const getUserBySession = query({
 export const getFavoritesBySession = query({
   args: { sessionId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const user = await userFromSession(ctx, args.sessionId);
+    if (!args.sessionId) return [];
+    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return [];
+    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
     return user?.favoriteComponentIds ?? [];
   },
 });
@@ -52,12 +51,14 @@ export const getFavoritesBySession = query({
 export const toggleFavoriteBySession = mutation({
   args: { sessionId: v.string(), componentId: v.string() },
   handler: async (ctx, args) => {
-    const user = await userFromSession(ctx, args.sessionId);
+    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId)).unique();
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
+    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
     if (!user) return null;
 
     const current = user.favoriteComponentIds ?? [];
     const favoriteComponentIds = current.includes(args.componentId)
-      ? current.filter((id: string) => id !== args.componentId)
+      ? current.filter((id) => id !== args.componentId)
       : [...current, args.componentId];
 
     await ctx.db.patch(user._id, { favoriteComponentIds });
