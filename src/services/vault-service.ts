@@ -56,6 +56,13 @@ export async function updateComponent(id: string, input: Partial<VaultComponent>
   return payload.component;
 }
 
+export async function deleteComponent(id: string) {
+  const payload = await requestJson<{ component: VaultComponent }>(`/api/vault/components/${id}`, {
+    method: "DELETE",
+  });
+  return payload.component;
+}
+
 export async function toggleComponentFavorite(id: string) {
   const payload = await requestJson<{ component: VaultComponent }>(`/api/vault/components/${id}/favorite`, {
     method: "POST",
@@ -75,6 +82,13 @@ export async function updateCollection(id: string, input: Partial<Collection>) {
   const payload = await requestJson<{ collection: Collection }>(`/api/vault/collections/${id}`, {
     method: "PATCH",
     body: JSON.stringify(input),
+  });
+  return payload.collection;
+}
+
+export async function deleteCollection(id: string) {
+  const payload = await requestJson<{ collection: Collection }>(`/api/vault/collections/${id}`, {
+    method: "DELETE",
   });
   return payload.collection;
 }

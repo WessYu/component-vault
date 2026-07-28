@@ -6,9 +6,12 @@ import { demoCollections, demoComponents } from "@/services/demo-data";
 import {
   createCollection as createCollectionRequest,
   createComponent as createComponentRequest,
+  deleteCollection as deleteCollectionRequest,
+  deleteComponent as deleteComponentRequest,
   getVaultData,
   toggleComponentFavorite,
-  updateComponent,
+  updateCollection as updateCollectionRequest,
+  updateComponent as updateComponentRequest,
 } from "@/services/vault-service";
 
 type EditorTab = "Component.tsx" | "styles.css" | "usage.tsx" | "notes.md";
@@ -67,7 +70,12 @@ type VaultState = {
   setViewMode: (mode: "grid" | "list") => void;
   loadVault: (force?: boolean) => Promise<void>;
   createComponent: (input?: Partial<VaultComponent>) => Promise<VaultComponent | null>;
+  updateComponentDetails: (id: string, patch: Partial<VaultComponent>) => Promise<VaultComponent | null>;
+  deleteComponent: (id: string) => Promise<boolean>;
   createCollection: (input?: Partial<Collection>) => Promise<Collection | null>;
+  updateCollection: (id: string, patch: Partial<Collection>) => Promise<Collection | null>;
+  deleteCollection: (id: string) => Promise<boolean>;
+  toggleCollectionComponent: (collectionId: string, componentId: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   updateCode: (id: string, field: "code" | "styles" | "usageCode" | "notes", value: string) => Promise<void>;
   setGridEnabled: (value: boolean) => void;
@@ -127,10 +135,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     if (!selected) return;
     set({
       activeComponentSlug: selected.slug,
-      previewState: selected?.props.state ?? "Default",
-      previewVariant: selected?.props.variant ?? "Primary",
+      previewState: selected.props.state ?? "Default",
+      previewVariant: selected.props.variant ?? "Primary",
     });
-    get().addLog(`${selected?.name ?? "Component"} selected.`);
+    get().addLog(`${selected.name} selected.`);
   },
   setActiveWindow: (window) => set({ activeWindow: window }),
   toggleWindow: (window, action) =>
@@ -189,10 +197,61 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         activeComponentSlug: component.slug,
         isSyncing: false,
       }));
+      get().addLog(`${component.name} created in Convex.`);
       return component;
     } catch (error) {
       set({ backendError: error instanceof Error ? error.message : "Unable to create component.", isSyncing: false });
       return null;
+    }
+  },
+  updateComponentDetails: async (id, patch) => {
+    const previous = get().components;
+    const current = previous.find((component) => component.id === id || component.slug === id);
+    if (!current) return null;
+    const optimistic = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    set((state) => ({
+      components: state.components.map((component) => (component.id === current.id ? optimistic : component)),
+      activeComponentSlug: patch.slug ?? state.activeComponentSlug,
+      backendError: null,
+    }));
+    try {
+      const component = await updateComponentRequest(current.id, { ...patch, updatedAt: optimistic.updatedAt });
+      set((state) => ({
+        components: state.components.map((item) => (item.id === component.id ? component : item)),
+        activeComponentSlug: component.slug,
+      }));
+      get().addLog(`${component.name} saved to Convex.`);
+      return component;
+    } catch (error) {
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to save component." });
+      return null;
+    }
+  },
+  deleteComponent: async (id) => {
+    const previousComponents = get().components;
+    const previousCollections = get().collections;
+    const current = previousComponents.find((component) => component.id === id || component.slug === id);
+    if (!current) return false;
+    set((state) => ({
+      components: state.components.filter((component) => component.id !== current.id),
+      collections: state.collections.map((collection) => ({
+        ...collection,
+        componentIds: collection.componentIds.filter((componentId) => componentId !== current.id),
+      })),
+      activeComponentSlug: state.components.find((component) => component.id !== current.id)?.slug ?? "",
+      backendError: null,
+    }));
+    try {
+      await deleteComponentRequest(current.id);
+      get().addLog(`${current.name} deleted from Convex.`);
+      return true;
+    } catch (error) {
+      set({
+        components: previousComponents,
+        collections: previousCollections,
+        backendError: error instanceof Error ? error.message : "Unable to delete component.",
+      });
+      return false;
     }
   },
   createCollection: async (input = {}) => {
@@ -203,11 +262,53 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)],
         isSyncing: false,
       }));
+      get().addLog(`${collection.name} created in Convex.`);
       return collection;
     } catch (error) {
       set({ backendError: error instanceof Error ? error.message : "Unable to create collection.", isSyncing: false });
       return null;
     }
+  },
+  updateCollection: async (id, patch) => {
+    const previous = get().collections;
+    const current = previous.find((collection) => collection.id === id);
+    if (!current) return null;
+    const optimistic = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    set((state) => ({
+      collections: state.collections.map((collection) => (collection.id === id ? optimistic : collection)),
+      backendError: null,
+    }));
+    try {
+      const collection = await updateCollectionRequest(id, { ...patch, updatedAt: optimistic.updatedAt });
+      set((state) => ({ collections: state.collections.map((item) => (item.id === collection.id ? collection : item)) }));
+      get().addLog(`${collection.name} saved to Convex.`);
+      return collection;
+    } catch (error) {
+      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to save collection." });
+      return null;
+    }
+  },
+  deleteCollection: async (id) => {
+    const previous = get().collections;
+    const current = previous.find((collection) => collection.id === id);
+    if (!current) return false;
+    set((state) => ({ collections: state.collections.filter((collection) => collection.id !== id), backendError: null }));
+    try {
+      await deleteCollectionRequest(id);
+      get().addLog(`${current.name} deleted from Convex.`);
+      return true;
+    } catch (error) {
+      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to delete collection." });
+      return false;
+    }
+  },
+  toggleCollectionComponent: async (collectionId, componentId) => {
+    const collection = get().collections.find((item) => item.id === collectionId);
+    if (!collection) return;
+    const componentIds = collection.componentIds.includes(componentId)
+      ? collection.componentIds.filter((id) => id !== componentId)
+      : [...collection.componentIds, componentId];
+    await get().updateCollection(collectionId, { componentIds });
   },
   toggleFavorite: async (id) => {
     const previous = get().components;
@@ -227,22 +328,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
   updateCode: async (id, field, value) => {
-    const previous = get().components;
-    const updatedAt = new Date().toISOString();
-    set((state) => ({
-      components: state.components.map((component) =>
-        component.id === id ? { ...component, [field]: value, updatedAt } : component,
-      ),
-      backendError: null,
-    }));
-    try {
-      const component = await updateComponent(id, { [field]: value, updatedAt });
-      set((state) => ({
-        components: state.components.map((item) => (item.id === component.id ? component : item)),
-      }));
-    } catch (error) {
-      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to save component." });
-    }
+    await get().updateComponentDetails(id, { [field]: value } as Partial<VaultComponent>);
   },
   setGridEnabled: (value) => set({ gridEnabled: value }),
   setGuidesEnabled: (value) => set({ guidesEnabled: value }),
