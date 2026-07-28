@@ -47,10 +47,10 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
 
   return (
     <motion.div
-      layout
+      layout={!compact}
       className={cn(
-        "relative grid min-h-[220px] place-items-center overflow-hidden rounded-[28px] border p-5",
-        compact ? "min-h-[170px]" : "min-h-[430px]",
+        "relative grid place-items-center overflow-hidden rounded-[28px] border",
+        compact ? "h-[176px] min-h-0 p-3" : "min-h-[430px] p-5",
         theme === "Dark" ? "border-[#25283A] bg-[#171A2B]" : "border-[#E4E7EF] bg-white",
       )}
       style={{
@@ -60,9 +60,9 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
         backgroundSize: theme === "Dark" ? "auto" : "22px 22px, auto",
       }}
     >
-      <div className={cn("w-full transition-all duration-200", width)}>
+      <div className={cn("w-full transition-all duration-200", width, compact && "h-full max-w-none overflow-hidden")}>
         {isEmergingTrend ? (
-          <EmergingTrendPreview slug={component.slug} />
+          <EmergingTrendPreview slug={component.slug} compact={compact} />
         ) : component.slug === "table-data-grid" ? (
           <DataTablePreview compact={compact} options={tableOptions} />
         ) : component.category === "Motion Experiences" && getExperience(component.slug) ? (
