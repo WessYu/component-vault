@@ -1,7 +1,9 @@
 # Component Vault
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/WessYu/WessYu/main/readme-assets/component-vault-cover.svg" alt="Component Vault" width="100%" />
+  <a href="https://component-vault-dun.vercel.app/">
+    <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/landing.svg" alt="Landing atual do Component Vault" width="100%" />
+  </a>
 </p>
 
 <p align="center">
@@ -9,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://component-vault-dun.vercel.app/">Live Demo</a> ·
+  <a href="https://component-vault-dun.vercel.app/"><strong>Live Demo</strong></a> ·
   <a href="https://wessyu-arquivo.vercel.app/">Portfólio</a>
 </p>
 
@@ -21,16 +23,10 @@
   <img src="https://img.shields.io/badge/Vercel-111111?style=flat-square&logo=vercel" />
 </p>
 
-## Demo
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/WessYu/WessYu/main/readme-assets/component-vault-demo.gif" alt="Fluxo animado do Component Vault" width="720" />
-</p>
-
 ## Interface
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/overview.svg" alt="Interface do Component Vault" width="100%" />
+  <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/overview.svg" alt="Workspace do Component Vault" width="100%" />
 </p>
 
 ## Sobre
