@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
+import { memo, useRef } from "react";
 import { EmergingTrendPreview } from "@/components/trends/emerging-trend-preview";
 import { categoryStyle } from "@/components/library/category-style";
 import { ExperiencePreview } from "@/components/experiences/shared/experience-shell";
@@ -40,7 +41,9 @@ type PreviewProps = {
   };
 };
 
-export function ComponentPreview({ component, compact = false, viewport = "Desktop", theme = "Light", tableOptions, pricingOptions }: PreviewProps) {
+export const ComponentPreview = memo(function ComponentPreview({ component, compact = false, viewport = "Desktop", theme = "Light", tableOptions, pricingOptions }: PreviewProps) {
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const isNearViewport = useInView(previewRef, { amount: 0.01, margin: "900px 0px 900px 0px", initial: true });
   const style = categoryStyle(component);
   const width = viewport === "Mobile" ? "max-w-[310px]" : viewport === "Tablet" ? "max-w-[560px]" : "max-w-[900px]";
   const isEmergingTrend = component.tags.includes("2026-trend") || component.slug.startsWith("trend-");
@@ -49,10 +52,11 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
 
   return (
     <motion.div
+      ref={previewRef}
       layout={!compact}
       className={cn(
         "relative grid place-items-center overflow-hidden rounded-[28px] border",
-        compact ? "h-[176px] min-h-0 p-3" : "min-h-[430px] p-5",
+        compact ? "h-[176px] min-h-0 p-3 [contain-intrinsic-size:176px] [content-visibility:auto]" : "min-h-[430px] p-5",
         theme === "Dark" ? "border-[#25283A] bg-[#171A2B]" : "border-[#E4E7EF] bg-white",
       )}
       style={{
@@ -63,7 +67,7 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
       }}
     >
       <div className={cn("w-full transition-all duration-200", width, compact && "h-full max-w-none overflow-hidden")}>
-        {shouldUseMinimalPreview ? (
+        {compact && !isNearViewport ? null : shouldUseMinimalPreview ? (
           <MinimalLivePreview component={component} />
         ) : isEmergingTrend ? (
           <EmergingTrendPreview slug={component.slug} compact={compact} />
@@ -89,7 +93,7 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
       </div>
     </motion.div>
   );
-}
+});
 
 function MinimalLivePreview({ component }: { component: VaultComponent }) {
   const style = categoryStyle(component);
