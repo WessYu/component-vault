@@ -4,9 +4,10 @@ import { createLocalSession, getUserByEmail, publicUser, verifyPassword } from "
 const cookieName = "component-vault-session";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { email?: string; password?: string };
+  const body = (await request.json()) as { email?: string; password?: string; remember?: boolean };
   const email = body.email?.trim().toLowerCase();
   const password = body.password ?? "";
+  const remember = body.remember !== false;
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    expires: new Date(session.expiresAt),
+    ...(remember ? { expires: new Date(session.expiresAt) } : {}),
   });
   return response;
 }
