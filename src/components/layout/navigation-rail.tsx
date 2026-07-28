@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Box, ChevronLeft, Heart, LayoutGrid, Settings, Sparkles, SwatchBook } from "lucide-react";
+import { Archive, Box, ChevronLeft, Heart, LayoutGrid, Settings, ShieldCheck, Sparkles, SwatchBook } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { fastMotion, motionEase } from "@/components/motion/site-motion";
@@ -11,6 +11,7 @@ const items = [
   { label: "Collections", href: "/vault/collections", icon: Archive },
   { label: "Favorites", href: "/vault/favorites", icon: Heart },
   { label: "Tokens", href: "/vault/tokens", icon: SwatchBook },
+  { label: "Admin", href: "/vault/admin", icon: ShieldCheck },
   { label: "Settings", href: "/vault/settings", icon: Settings },
 ];
 
