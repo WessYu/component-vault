@@ -17,7 +17,6 @@ import { useVaultStore } from "@/stores/vault-store";
 import type { ComponentCategory, VaultComponent } from "@/types/vault";
 
 const categories: ComponentCategory[] = ["Buttons", "Cards", "Forms", "Navigation", "Data Display", "Feedback", "Surfaces", "Charts", "Utilities", "Motion Experiences"];
-
 type ComponentDraft = Pick<VaultComponent, "name" | "slug" | "description" | "category" | "version" | "isPublic" | "tags">;
 
 export function ComponentDetailWorkspace({ slug }: { slug: string }) {
@@ -27,7 +26,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
   const toggleFavorite = useVaultStore((state) => state.toggleFavorite);
   const updateComponentDetails = useVaultStore((state) => state.updateComponentDetails);
   const deleteComponent = useVaultStore((state) => state.deleteComponent);
-  const component = components.find((item) => item.slug === slug);
+  const component = components.find((item) => item.slug === slug)!;
   const [viewport, setViewport] = useState<"Desktop" | "Tablet" | "Mobile">("Desktop");
   const [theme, setTheme] = useState<"Light" | "Dark">("Light");
   const [activeTab, setActiveTab] = useState<DetailTab>("Code");
@@ -37,26 +36,12 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
   const [tableOptions, setTableOptions] = useState<TableOptions>(() => defaultTableOptions());
   const [pricingOptions, setPricingOptions] = useState<PricingOptions>(() => defaultPricingOptions());
-  const [draft, setDraft] = useState<ComponentDraft>({
-    name: "",
-    slug: "",
-    description: "",
-    category: "Utilities",
-    version: "v1.0.0",
-    isPublic: false,
-    tags: [],
-  });
+  const [draft, setDraft] = useState<ComponentDraft>({ name: "", slug: "", description: "", category: "Utilities", version: "v1.0.0", isPublic: false, tags: [] });
 
-  useEffect(() => {
-    setActiveComponentSlug(slug);
-  }, [setActiveComponentSlug, slug]);
-
+  useEffect(() => { setActiveComponentSlug(slug); }, [setActiveComponentSlug, slug]);
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setCustomizeOpen(false);
-        setEditOpen(false);
-      }
+      if (event.key === "Escape") { setCustomizeOpen(false); setEditOpen(false); }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -69,9 +54,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
           <div>
             <p className="text-sm font-semibold text-[#FF7664]">Component not found</p>
             <h1 className="mt-2 text-3xl font-bold">{slug}</h1>
-            <Link className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">
-              Back to library
-            </Link>
+            <Link className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">Back to library</Link>
           </div>
         </div>
       </AppShell>
@@ -88,15 +71,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
   }
 
   function openEditor() {
-    setDraft({
-      name: component.name,
-      slug: component.slug,
-      description: component.description,
-      category: component.category,
-      version: component.version,
-      isPublic: component.isPublic,
-      tags: component.tags,
-    });
+    setDraft({ name: component.name, slug: component.slug, description: component.description, category: component.category, version: component.version, isPublic: component.isPublic, tags: component.tags });
     setEditOpen(true);
   }
 
@@ -104,13 +79,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
     const nextSlug = draft.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     if (!draft.name.trim() || !nextSlug) return;
     setSavingMeta(true);
-    const updated = await updateComponentDetails(component.id, {
-      ...draft,
-      name: draft.name.trim(),
-      slug: nextSlug,
-      description: draft.description.trim(),
-      tags: draft.tags.map((tag) => tag.trim()).filter(Boolean),
-    });
+    const updated = await updateComponentDetails(component.id, { ...draft, name: draft.name.trim(), slug: nextSlug, description: draft.description.trim(), tags: draft.tags.map((tag) => tag.trim()).filter(Boolean) });
     setSavingMeta(false);
     if (!updated) return;
     setEditOpen(false);
@@ -119,8 +88,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
 
   async function removeComponent() {
     if (!window.confirm(`Delete “${component.name}” permanently?`)) return;
-    const deleted = await deleteComponent(component.id);
-    if (deleted) router.push("/vault/components");
+    if (await deleteComponent(component.id)) router.push("/vault/components");
   }
 
   return (
@@ -128,18 +96,14 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
       <section className="px-4 py-6 md:px-7">
         <div className="mx-auto max-w-[1460px]">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-[#6D7285]" aria-label="Breadcrumb">
-            <Link href="/vault/components" className="hover:text-[#171A2B]">All Components</Link>
-            <ChevronRight size={14} aria-hidden />
-            <Link href="/vault/components" className="hover:text-[#171A2B]">{visualCategory(component)}</Link>
-            <ChevronRight size={14} aria-hidden />
+            <Link href="/vault/components" className="hover:text-[#171A2B]">All Components</Link><ChevronRight size={14} aria-hidden />
+            <Link href="/vault/components" className="hover:text-[#171A2B]">{visualCategory(component)}</Link><ChevronRight size={14} aria-hidden />
             <span className="font-medium text-[#171A2B]">{component.name}</span>
           </nav>
 
           <div className="mt-5 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-3xl">
-              <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ background: style.soft, color: style.text }}>
-                {visualCategory(component)}
-              </span>
+              <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ background: style.soft, color: style.text }}>{visualCategory(component)}</span>
               <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-6xl">{component.name}</h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#6D7285]">{component.description}</p>
               <div className="mt-5 flex flex-wrap gap-2 text-sm">
@@ -149,34 +113,17 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button className="grid size-11 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm" onClick={() => toggleFavorite(component.id)} aria-label="Favorite component">
-                <Heart size={18} fill={component.isFavorite ? style.accent : "none"} color={component.isFavorite ? style.accent : "currentColor"} aria-hidden />
-              </button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={openEditor}>
-                <Pencil size={17} aria-hidden /> Edit
-              </button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={() => navigator.clipboard.writeText(window.location.href)}>
-                <Share2 size={17} aria-hidden /> Share
-              </button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={copyCode}>
-                {copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />} {copied ? "Copied" : "Copy code"}
-              </button>
-              {!isMotionExperience ? (
-                <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}>
-                  <PanelRightOpen size={17} aria-hidden /> Customize
-                </button>
-              ) : null}
-              <button className="grid size-11 place-items-center rounded-2xl border border-red-200 bg-red-50 text-red-600 shadow-sm" onClick={() => void removeComponent()} aria-label="Delete component">
-                <Trash2 size={17} aria-hidden />
-              </button>
+              <button className="grid size-11 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm" onClick={() => toggleFavorite(component.id)} aria-label="Favorite component"><Heart size={18} fill={component.isFavorite ? style.accent : "none"} color={component.isFavorite ? style.accent : "currentColor"} aria-hidden /></button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={openEditor}><Pencil size={17} aria-hidden /> Edit</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={() => navigator.clipboard.writeText(window.location.href)}><Share2 size={17} aria-hidden /> Share</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={copyCode}>{copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />} {copied ? "Copied" : "Copy code"}</button>
+              {!isMotionExperience ? <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}><PanelRightOpen size={17} aria-hidden /> Customize</button> : null}
+              <button className="grid size-11 place-items-center rounded-2xl border border-red-200 bg-red-50 text-red-600 shadow-sm" onClick={() => void removeComponent()} aria-label="Delete component"><Trash2 size={17} aria-hidden /></button>
             </div>
           </div>
 
           {isMotionExperience ? (
-            <div className="mt-8 space-y-5">
-              <ExperienceChecklist />
-              <ExperienceWorkspace slug={component.slug as ExperienceSlug} />
-            </div>
+            <div className="mt-8 space-y-5"><ExperienceChecklist /><ExperienceWorkspace slug={component.slug as ExperienceSlug} /></div>
           ) : (
             <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="min-w-0 space-y-6">
@@ -186,12 +133,8 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
                 </section>
                 <ComponentDetailTabs component={component} active={activeTab} onChange={setActiveTab} />
               </div>
-
               <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
-                <div className="mb-5 flex items-center justify-between">
-                  <div><h2 className="font-bold">Props editor</h2><p className="text-sm text-[#6D7285]">Changes update the preview.</p></div>
-                  <span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span>
-                </div>
+                <div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">Props editor</h2><p className="text-sm text-[#6D7285]">Changes update the preview.</p></div><span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span></div>
                 <PropertiesEditor component={component} tableOptions={tableOptions} setTableOptions={setTableOptions} pricingOptions={pricingOptions} setPricingOptions={setPricingOptions} />
               </aside>
             </div>
