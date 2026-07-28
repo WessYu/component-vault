@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Bell, Check, Command, Heart, LogIn, LogOut, Plus, Search, Settings, ShieldCheck, SlidersHorizontal, UserPlus, X } from "lucide-react";
+import { Check, Command, Heart, LogIn, LogOut, Plus, Search, Settings, ShieldCheck, SlidersHorizontal, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,7 +18,6 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
   const collections = useVaultStore((state) => state.collections);
   const createComponent = useVaultStore((state) => state.createComponent);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
@@ -59,7 +58,6 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
       }
       if (event.key === "Escape") {
         setPaletteOpen(false);
-        setNotificationsOpen(false);
         setAccountOpen(false);
       }
     }
@@ -110,7 +108,6 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
 
   function handleFilters() {
     setAccountOpen(false);
-    setNotificationsOpen(false);
     if (window.location.pathname !== "/vault/components" && window.location.pathname !== "/vault/favorites") {
       router.push("/vault/components#component-filters");
       return;
@@ -183,40 +180,10 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
 
         <div className="relative">
           <motion.button
-            className="relative grid size-10 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm"
-            aria-label="Open updates"
-            aria-expanded={notificationsOpen}
-            onClick={() => {
-              setNotificationsOpen((value) => !value);
-              setAccountOpen(false);
-            }}
-            whileHover={reduceMotion ? undefined : { y: -1 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-            transition={fastMotion}
-          >
-            <Bell size={17} aria-hidden />
-            <span className="absolute right-2 top-2 size-2 rounded-full bg-[#51C89B]" />
-          </motion.button>
-          <AnimatePresence>
-            {notificationsOpen ? (
-              <motion.div className="absolute right-0 top-12 w-80 rounded-3xl border border-[#E4E7EF] bg-white p-3 shadow-[0_24px_70px_rgba(23,26,43,0.14)]" initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4 }}>
-                <p className="px-2 py-2 text-sm font-bold text-[#171A2B]">Workspace updates</p>
-                <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-800"><strong>Backend connected.</strong><p className="mt-1 text-xs leading-5 text-emerald-700">Convex is ready and account data can be persisted.</p></div>
-                <div className="mt-2 rounded-2xl bg-[#F7F8FC] p-3 text-sm text-[#6D7285]"><strong className="text-[#171A2B]">Favorites</strong><p className="mt-1 text-xs leading-5">{user ? `${favoriteCount} saved to your account.` : "Sign in to keep favorites across devices."}</p></div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-
-        <div className="relative">
-          <motion.button
             className={cn("flex min-h-10 items-center gap-2 rounded-2xl border bg-white px-2 shadow-sm", isAdmin ? "border-[#C9C7FF] ring-2 ring-[#6366F1]/10" : "border-[#E4E7EF]")}
             aria-label="Account menu"
             aria-expanded={accountOpen}
-            onClick={() => {
-              setAccountOpen((value) => !value);
-              setNotificationsOpen(false);
-            }}
+            onClick={() => setAccountOpen((value) => !value)}
             whileHover={reduceMotion ? undefined : { y: -1 }}
             whileTap={reduceMotion ? undefined : { scale: 0.96 }}
             transition={fastMotion}
