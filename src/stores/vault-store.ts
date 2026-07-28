@@ -95,6 +95,24 @@ const defaultWindowState: Record<WindowKey, WindowState> = {
   terminal: { minimized: false, closed: false, maximized: false },
 };
 
+function mergeSeedComponents(components: VaultComponent[]) {
+  const byId = new Map(demoComponents.map((component) => [component.id, component]));
+  for (const component of components) byId.set(component.id, component);
+  return Array.from(byId.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+}
+
+function mergeSeedCollections(collections: Collection[]) {
+  const byId = new Map(demoCollections.map((collection) => [collection.id, collection]));
+  for (const collection of collections) {
+    const seed = byId.get(collection.id);
+    byId.set(collection.id, {
+      ...collection,
+      componentIds: Array.from(new Set([...(seed?.componentIds ?? []), ...collection.componentIds])),
+    });
+  }
+  return Array.from(byId.values());
+}
+
 export const useVaultStore = create<VaultState>((set, get) => ({
   components: demoComponents,
   collections: demoCollections,
@@ -176,8 +194,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       const payload = await getVaultData();
       set({
-        components: payload.components,
-        collections: payload.collections,
+        components: mergeSeedComponents(payload.components),
+        collections: mergeSeedCollections(payload.collections),
         isHydrated: true,
         isSyncing: false,
       });

@@ -18,7 +18,7 @@ export function ComponentGrid({
   onFavorite: (component: VaultComponent) => void;
 }) {
   return (
-    <AnimatedGrid className={view === "grid" ? "grid auto-rows-[minmax(270px,auto)] grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3" : "space-y-4"}>
+    <AnimatedGrid className={view === "grid" ? "grid auto-rows-[minmax(252px,auto)] grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "space-y-3"}>
       {components.map((component) => (
         <AnimatedGridItem key={component.slug}>
           <ComponentCard component={component} selected={selectedSlug === component.slug} view={view} onSelect={() => onSelect(component)} onFavorite={() => onFavorite(component)} />

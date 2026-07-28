@@ -38,10 +38,10 @@ export function ComponentCard({
       }}
       transition={fastMotion}
       className={cn(
-        "group relative transform-gpu overflow-hidden rounded-[28px] border bg-white shadow-[0_14px_48px_rgba(23,26,43,0.05)] transition-[border-color,box-shadow] duration-150 hover:shadow-[0_18px_54px_rgba(23,26,43,0.075)]",
+        "group relative transform-gpu overflow-hidden rounded-[24px] border bg-white shadow-[0_12px_38px_rgba(23,26,43,0.05)] transition-[border-color,box-shadow] duration-150 hover:shadow-[0_18px_54px_rgba(23,26,43,0.075)] md:rounded-[28px]",
         selected ? "ring-2 ring-[#6366F1]/35" : "border-[#E4E7EF]",
         view === "grid" && cardSpan(component),
-        view === "list" && "grid gap-4 md:grid-cols-[320px_1fr]",
+        view === "list" && "md:rounded-[24px]",
       )}
       style={{ borderColor: selected ? style.accent : undefined }}
     >
@@ -66,7 +66,7 @@ export function ComponentCard({
       />
 
       <div
-        className="relative z-10 block h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]"
+        className={cn("relative z-10 h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]", view === "list" && "md:grid md:grid-cols-[280px_1fr] md:items-stretch")}
         onClick={onSelect}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -78,7 +78,7 @@ export function ComponentCard({
         tabIndex={0}
         aria-label={`Open ${component.name}`}
       >
-        <div className={cn("overflow-hidden p-3", view === "list" && "md:p-4")}>
+        <div className={cn("overflow-hidden p-2.5 md:p-3", view === "list" && "md:p-3")}>
           <motion.div
             className="transform-gpu"
             variants={{
@@ -91,7 +91,7 @@ export function ComponentCard({
             <ComponentPreview component={component} compact />
           </motion.div>
         </div>
-        <div className="px-5 pb-5">
+        <div className={cn("px-4 pb-4 md:px-5 md:pb-5", view === "list" && "md:self-center md:p-5")}>
           <div className="flex items-center justify-between gap-3">
             <motion.span
               className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"

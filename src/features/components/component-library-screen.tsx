@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Grid2X2, List, Plus, Sparkles } from "lucide-react";
+import { Activity, Boxes, Grid2X2, Layers3, List, Monitor, Plus, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
@@ -51,6 +51,12 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
 
   const motionExperiences = filtered.filter((component) => component.category === "Motion Experiences");
   const standardComponents = filtered.filter((component) => component.category !== "Motion Experiences");
+  const libraryStats = [
+    { label: "Components", value: filtered.length, icon: Boxes },
+    { label: "Motion", value: motionExperiences.length, icon: Activity },
+    { label: "Categories", value: new Set(filtered.map((component) => visualCategory(component))).size, icon: Layers3 },
+    { label: "Frameworks", value: new Set(filtered.map((component) => component.framework)).size, icon: Monitor },
+  ];
 
   function selectComponent(component: VaultComponent) {
     setActiveComponentSlug(component.slug);
@@ -73,15 +79,15 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
 
   return (
     <AppShell active={favoriteOnly ? "Favorites" : "Library"}>
-      <section className="relative px-4 py-7 md:px-7 md:py-9">
-        <div className="mx-auto max-w-[1460px]">
+      <section className="relative px-3 py-5 sm:px-5 md:px-7 md:py-8 xl:px-8">
+        <div className="mx-auto max-w-[1680px]">
           <motion.div
-            className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+            className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] xl:items-end"
             initial={reduceMotion ? false : { opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: motionEase }}
           >
-            <div>
+            <div className="min-w-0">
               <motion.p
                 className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#E4E7EF] bg-white/75 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#6366F1] shadow-sm backdrop-blur"
                 initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
@@ -91,32 +97,54 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
                 <Sparkles size={13} aria-hidden />
                 Visual playground
               </motion.p>
-              <h1 className="text-4xl font-bold tracking-[-0.045em] text-[#171A2B] md:text-5xl">{favoriteOnly ? "Favorite Components" : "Discover Components"}</h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-[#6D7285]">Explore, inspect and reuse production-ready interface components.</p>
+              <h1 className="max-w-4xl text-3xl font-bold tracking-[-0.045em] text-[#171A2B] sm:text-4xl md:text-5xl">{favoriteOnly ? "Favorite Components" : "Discover Components"}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6D7285] md:text-base md:leading-7">Explore, inspect and reuse production-ready interface components with responsive previews and motion-safe interactions.</p>
             </div>
-            <motion.button
-              className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200"
-              onClick={() => void handleCreate()}
-              whileHover={reduceMotion ? undefined : { y: -3, scale: 1.015 }}
-              whileTap={reduceMotion ? undefined : { scale: 0.96 }}
-            >
-              <motion.span whileHover={reduceMotion ? undefined : { rotate: 90 }}><Plus size={17} aria-hidden /></motion.span>
-              New Component
-            </motion.button>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {libraryStats.map((stat, index) => {
+                  const Icon = stat.icon;
+                  return (
+                    <motion.div
+                      key={stat.label}
+                      className="min-w-0 rounded-[18px] border border-white/80 bg-white/78 p-3 shadow-[0_12px_34px_rgba(23,26,43,0.045)] backdrop-blur md:rounded-[22px] md:p-4"
+                      initial={reduceMotion ? false : { opacity: 0, y: 10, scale: 0.985 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.34, delay: 0.08 + index * 0.035, ease: motionEase }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8194]">{stat.label}</span>
+                        <Icon className="shrink-0 text-[#6366F1]" size={15} aria-hidden />
+                      </div>
+                      <strong className="mt-2 block text-2xl font-bold tracking-[-0.04em] text-[#171A2B]">{stat.value}</strong>
+                    </motion.div>
+                  );
+                })}
+              </div>
+              <motion.button
+                className="group inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#171A2B] px-4 text-sm font-semibold text-white shadow-lg shadow-[#171A2B]/10 sm:w-fit xl:justify-self-end"
+                onClick={() => void handleCreate()}
+                whileHover={reduceMotion ? undefined : { y: -3, scale: 1.012 }}
+                whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+              >
+                <motion.span whileHover={reduceMotion ? undefined : { rotate: 90 }}><Plus size={17} aria-hidden /></motion.span>
+                New Component
+              </motion.button>
+            </div>
           </motion.div>
 
           <motion.div
             id="component-filters"
-            className="mt-7 scroll-mt-24 rounded-[28px] border border-white/80 bg-white/60 p-3 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl"
+            className="mt-6 scroll-mt-24 rounded-[22px] border border-white/80 bg-white/72 p-2.5 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl md:rounded-[28px] md:p-3"
             initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.08, ease: motionEase }}
           >
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
               <CategoryFilters active={filter} onChange={setFilter} />
-              <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center xl:justify-end">
+              <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center 2xl:justify-end">
                 <ComponentSearch value={query} onChange={setQuery} />
-                <motion.select className="min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#6D7285] shadow-sm" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort components" whileFocus={reduceMotion ? undefined : { scale: 1.01 }}>
+                <motion.select className="min-h-11 w-full rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#6D7285] shadow-sm lg:w-[152px]" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort components" whileFocus={reduceMotion ? undefined : { scale: 1.01 }}>
                   <option>Newest</option><option>Name</option><option>Most used</option>
                 </motion.select>
                 <div className="relative flex w-fit rounded-2xl bg-white p-1 shadow-sm ring-1 ring-[#E4E7EF]">
@@ -129,9 +157,9 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
             </div>
           </motion.div>
 
-          <div className="mt-5 flex items-center justify-between text-sm text-[#6D7285]">
+          <div className="mt-4 flex flex-col gap-2 text-sm text-[#6D7285] sm:flex-row sm:items-center sm:justify-between">
             <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{filtered.length} results</motion.span>
+              <motion.span className="w-fit rounded-full border border-white/80 bg-white/70 px-3 py-1 font-semibold text-[#171A2B] shadow-sm backdrop-blur" key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{filtered.length} results</motion.span>
             </AnimatePresence>
             <span className="hidden sm:inline">Select a card to inspect it in the playground panel.</span>
           </div>
