@@ -1,12 +1,33 @@
 import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
+const preferencesValidator = v.object({
+  gridSize: v.number(),
+  defaultViewport: v.union(v.literal("Desktop"), v.literal("Tablet"), v.literal("Mobile")),
+  autosaveDebounce: v.number(),
+  previewTheme: v.union(v.literal("Light"), v.literal("Dark")),
+  componentReviewRequests: v.boolean(),
+  tokenDriftAlerts: v.boolean(),
+  weeklyUsageDigest: v.boolean(),
+});
+
+const defaultPreferences = {
+  gridSize: 8,
+  defaultViewport: "Desktop" as const,
+  autosaveDebounce: 900,
+  previewTheme: "Light" as const,
+  componentReviewRequests: true,
+  tokenDriftAlerts: true,
+  weeklyUsageDigest: false,
+};
+
 type PublicUserInput = {
   userId: string;
   name: string;
   email: string;
   createdAt: string;
   favoriteComponentIds?: string[];
+  workspacePreferences?: typeof defaultPreferences;
 };
 
 function publicUser(user: PublicUserInput) {
@@ -16,7 +37,15 @@ function publicUser(user: PublicUserInput) {
     email: user.email,
     createdAt: user.createdAt,
     favoriteComponentIds: user.favoriteComponentIds ?? [],
+    workspacePreferences: user.workspacePreferences ?? defaultPreferences,
   };
+}
+
+async function resolveUserBySession(ctx: any, sessionId?: string) {
+  if (!sessionId) return null;
+  const session = await ctx.db.query("sessions").withIndex("by_session_id", (q: any) => q.eq("sessionId", sessionId)).unique();
+  if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
+  return await ctx.db.query("users").withIndex("by_user_id", (q: any) => q.eq("userId", session.userId)).unique();
 }
 
 export const getUserByEmail = query({
@@ -29,10 +58,7 @@ export const getUserByEmail = query({
 export const getUserBySession = query({
   args: { sessionId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    if (!args.sessionId) return null;
-    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
-    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
-    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
+    const user = await resolveUserBySession(ctx, args.sessionId);
     return user ? publicUser(user) : null;
   },
 });
@@ -40,20 +66,40 @@ export const getUserBySession = query({
 export const getFavoritesBySession = query({
   args: { sessionId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    if (!args.sessionId) return [];
-    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId!)).unique();
-    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return [];
-    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
+    const user = await resolveUserBySession(ctx, args.sessionId);
     return (user?.favoriteComponentIds ?? []) as string[];
+  },
+});
+
+export const getWorkspacePreferencesBySession = query({
+  args: { sessionId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const user = await resolveUserBySession(ctx, args.sessionId);
+    if (!user) return null;
+    return user.workspacePreferences ?? defaultPreferences;
+  },
+});
+
+export const updateWorkspacePreferencesBySession = mutation({
+  args: { sessionId: v.string(), preferences: preferencesValidator },
+  handler: async (ctx, args) => {
+    const user = await resolveUserBySession(ctx, args.sessionId);
+    if (!user) return null;
+
+    const preferences = {
+      ...args.preferences,
+      gridSize: Math.min(32, Math.max(2, Math.round(args.preferences.gridSize))),
+      autosaveDebounce: Math.min(5000, Math.max(200, Math.round(args.preferences.autosaveDebounce))),
+    };
+    await ctx.db.patch(user._id, { workspacePreferences: preferences });
+    return preferences;
   },
 });
 
 export const toggleFavoriteBySession = mutation({
   args: { sessionId: v.string(), componentId: v.string() },
   handler: async (ctx, args) => {
-    const session = await ctx.db.query("sessions").withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId)).unique();
-    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
-    const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", session.userId)).unique();
+    const user = await resolveUserBySession(ctx, args.sessionId);
     if (!user) return null;
 
     const current: string[] = (user.favoriteComponentIds ?? []) as string[];
@@ -77,7 +123,7 @@ export const ensureDemoUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) return publicUser(existing);
-    const user = { ...args, favoriteComponentIds: [] as string[] };
+    const user = { ...args, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
     await ctx.db.insert("users", user);
     return publicUser(user);
   },
@@ -94,7 +140,7 @@ export const createUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) throw new Error("Email already registered.");
-    const user = { ...args, favoriteComponentIds: [] as string[] };
+    const user = { ...args, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
     await ctx.db.insert("users", user);
     return publicUser(user);
   },
