@@ -44,6 +44,8 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
   const style = categoryStyle(component);
   const width = viewport === "Mobile" ? "max-w-[310px]" : viewport === "Tablet" ? "max-w-[560px]" : "max-w-[900px]";
   const isEmergingTrend = component.tags.includes("2026-trend") || component.slug.startsWith("trend-");
+  const hasFullMotionExperience = component.category === "Motion Experiences" && getExperience(component.slug);
+  const shouldUseMinimalPreview = compact && !isEmergingTrend && !hasFullMotionExperience;
 
   return (
     <motion.div
@@ -61,11 +63,13 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
       }}
     >
       <div className={cn("w-full transition-all duration-200", width, compact && "h-full max-w-none overflow-hidden")}>
-        {isEmergingTrend ? (
+        {shouldUseMinimalPreview ? (
+          <MinimalLivePreview component={component} />
+        ) : isEmergingTrend ? (
           <EmergingTrendPreview slug={component.slug} compact={compact} />
         ) : component.slug === "table-data-grid" ? (
           <DataTablePreview compact={compact} options={tableOptions} />
-        ) : component.category === "Motion Experiences" && getExperience(component.slug) ? (
+        ) : hasFullMotionExperience ? (
           <ExperiencePreview slug={component.slug as ExperienceSlug} />
         ) : component.slug === "pricing-card" ? (
           <PricingPreview compact={compact} options={pricingOptions} />
@@ -84,6 +88,377 @@ export function ComponentPreview({ component, compact = false, viewport = "Deskt
         )}
       </div>
     </motion.div>
+  );
+}
+
+function MinimalLivePreview({ component }: { component: VaultComponent }) {
+  const style = categoryStyle(component);
+  const tags = new Set(component.tags);
+
+  if (component.category === "Motion Experiences") return <MiniMotionSurface style={style} tags={tags} />;
+  if (component.category === "Charts" || tags.has("chart")) return <MiniChart style={style} variant={tags.has("donut") ? "donut" : tags.has("bar") ? "bar" : "line"} />;
+  if (component.category === "Data Display" || tags.has("table") || tags.has("kanban") || tags.has("audit")) return <MiniDataSurface style={style} mode={tags.has("kanban") ? "kanban" : tags.has("audit") ? "timeline" : "table"} />;
+  if (component.category === "Forms" || component.category === "Buttons" || tags.has("input") || tags.has("button") || tags.has("toggle")) return <MiniInputSurface style={style} mode={tags.has("button") ? "button" : tags.has("toggle") ? "toggle" : "field"} />;
+  if (component.category === "Navigation" || tags.has("nav") || tags.has("toolbar") || tags.has("breadcrumb") || tags.has("command")) return <MiniNavigationSurface style={style} mode={tags.has("command") ? "command" : tags.has("breadcrumb") ? "breadcrumb" : "nav"} />;
+  if (component.category === "Feedback" || tags.has("toast") || tags.has("alert") || tags.has("loading") || tags.has("badge")) return <MiniFeedbackSurface style={style} mode={tags.has("loading") ? "skeleton" : tags.has("alert") ? "alert" : "toast"} />;
+  if (component.category === "Utilities" || tags.has("swatch") || tags.has("avatar") || tags.has("code") || tags.has("shortcut")) return <MiniUtilitySurface style={style} mode={tags.has("code") ? "code" : tags.has("avatar") ? "avatar" : tags.has("swatch") ? "swatch" : "chip"} />;
+  return <MiniCardSurface style={style} mode={component.category === "Surfaces" ? "surface" : "card"} />;
+}
+
+function MiniFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative grid h-full min-h-[132px] place-items-center overflow-hidden rounded-[24px] border border-white/70 bg-white/82 p-4 shadow-[0_18px_52px_rgba(23,26,43,0.08)]">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.85),transparent)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      {children}
+    </div>
+  );
+}
+
+function MiniMotionSurface({ style, tags }: { style: ReturnType<typeof categoryStyle>; tags: Set<string> }) {
+  if (tags.has("loading") || tags.has("skeleton")) return <MiniFeedbackSurface style={style} mode="skeleton" />;
+  if (tags.has("tabs")) return <MiniNavigationSurface style={style} mode="nav" />;
+  if (tags.has("route") || tags.has("progress")) {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[390px] rounded-2xl border border-[#E4E7EF] bg-white p-4 shadow-sm">
+          <span className="block h-2 w-20 rounded-full bg-[#E8EBF2]" />
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#EEF0F6]">
+            <motion.span className="block h-full rounded-full" style={{ background: style.accent }} animate={{ width: ["12%", "84%", "28%"] }} transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut" }} />
+          </div>
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("count") || tags.has("metric")) return <MiniChart style={style} variant="line" />;
+  if (tags.has("drawer")) {
+    return (
+      <MiniFrame>
+        <div className="relative h-28 w-full max-w-[390px] overflow-hidden rounded-[24px] border border-[#E4E7EF] bg-[#F7F8FC]">
+          <motion.div className="absolute bottom-0 right-0 top-0 w-44 rounded-l-[28px] border-l border-[#E4E7EF] bg-white p-4 shadow-2xl" animate={{ x: [28, 0, 28] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}>
+            <span className="block h-3 w-20 rounded-full" style={{ background: `${style.accent}55` }} />
+            <span className="mt-4 block h-2.5 w-28 rounded-full bg-[#E8EBF2]" />
+          </motion.div>
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("reorder") || tags.has("drag")) {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[380px] space-y-2">
+          {[0, 1, 2].map((row) => (
+            <motion.div key={row} className="flex h-10 items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-3 shadow-sm" animate={{ y: row === 1 ? [0, -8, 0] : 0, boxShadow: row === 1 ? "0 18px 32px rgba(23,26,43,0.14)" : "0 1px 2px rgba(23,26,43,0.05)" }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="grid gap-1">{[0, 1].map((dot) => <span key={dot} className="h-1 w-4 rounded-full bg-[#CBD1DE]" />)}</span>
+              <span className="h-3 flex-1 rounded-full bg-[#E8EBF2]" />
+            </motion.div>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("focus")) {
+    return (
+      <MiniFrame>
+        <motion.button className="relative h-16 w-[min(320px,84%)] rounded-[22px] border bg-white shadow-lg" style={{ borderColor: style.accent }} animate={{ boxShadow: [`0 0 0 0 ${style.accent}33`, `0 0 0 10px ${style.accent}00`, `0 0 0 0 ${style.accent}33`] }} transition={{ duration: 1.8, repeat: Infinity }}>
+          <span className="mx-auto block h-3 w-24 rounded-full" style={{ background: `${style.accent}55` }} />
+        </motion.button>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("magnetic") || tags.has("hover")) {
+    return (
+      <MiniFrame>
+        <div className="flex w-full max-w-[360px] items-center justify-center gap-3">
+          {[0, 1, 2].map((item) => (
+            <motion.div key={item} className="h-20 w-24 rounded-[24px] border border-[#E4E7EF] bg-white shadow-lg" animate={{ y: item === 1 ? [-2, -12, -2] : 0, scale: item === 1 ? [1, 1.06, 1] : 1 }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="m-4 block h-2.5 rounded-full" style={{ background: item === 1 ? `${style.accent}55` : "#E8EBF2" }} />
+            </motion.div>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("scroll") || tags.has("reveal") || tags.has("list") || tags.has("stagger")) {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[380px] space-y-3">
+          {[0, 1, 2].map((row) => (
+            <motion.div key={row} className="h-8 rounded-2xl bg-white shadow-sm" animate={{ x: [-18, 0, 0], opacity: [0.35, 1, 1] }} transition={{ duration: 1.8, delay: row * 0.18, repeat: Infinity, ease: "easeInOut" }}>
+              <span className="ml-4 block h-full w-1/2 rounded-full" style={{ background: row === 0 ? `${style.accent}35` : "#E8EBF2" }} />
+            </motion.div>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (tags.has("spotlight")) {
+    return (
+      <MiniFrame>
+        <div className="relative h-28 w-full max-w-[390px] overflow-hidden rounded-[24px] border border-[#E4E7EF] bg-white">
+          <motion.span className="absolute size-32 rounded-full blur-2xl" style={{ background: `${style.accent}44` }} animate={{ x: [10, 230, 80], y: [8, 42, 18] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }} />
+          <span className="absolute inset-x-8 bottom-8 h-12 rounded-[20px] shadow-lg" style={{ background: `linear-gradient(135deg, ${style.accent}, #E978D4)` }} />
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return <MiniCardSurface style={style} mode="card" />;
+}
+
+function MiniDataSurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "table" | "kanban" | "timeline" }) {
+  if (mode === "kanban") {
+    return (
+      <MiniFrame>
+        <div className="grid w-full max-w-[360px] grid-cols-3 gap-2">
+          {[0, 1, 2].map((column) => (
+            <div key={column} className="rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] p-2">
+              <span className="block h-2 w-12 rounded-full" style={{ background: column === 1 ? style.accent : "#D8DDE8" }} />
+              {[0, 1].map((card) => (
+                <motion.span key={card} className="mt-2 block h-8 rounded-xl bg-white shadow-sm" animate={{ y: card === 0 && column === 1 ? [0, -3, 0] : 0 }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "timeline") {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[360px] space-y-3">
+          {["Saved", "Reviewed", "Shipped"].map((item, index) => (
+            <motion.div key={item} className="grid grid-cols-[18px_1fr_auto] items-center gap-3" animate={{ opacity: [0.72, 1, 0.72] }} transition={{ duration: 1.8, delay: index * 0.22, repeat: Infinity }}>
+              <span className="size-3 rounded-full" style={{ background: index === 0 ? style.accent : "#D8DDE8" }} />
+              <span className="h-3 rounded-full bg-[#E8EBF2]" />
+              <span className="h-3 w-9 rounded-full bg-[#F0F2F7]" />
+            </motion.div>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <div className="w-full max-w-[390px] overflow-hidden rounded-2xl border border-[#E4E7EF] bg-white">
+        <div className="grid grid-cols-[1.2fr_0.8fr_0.7fr] gap-3 border-b border-[#EEF0F6] bg-[#F7F8FC] px-4 py-3">
+          {[0, 1, 2].map((item) => <span key={item} className="h-2 rounded-full bg-[#D8DDE8]" />)}
+        </div>
+        {[0, 1, 2].map((row) => (
+          <motion.div key={row} className="grid grid-cols-[1.2fr_0.8fr_0.7fr] gap-3 border-b border-[#F0F2F7] px-4 py-3 last:border-0" animate={{ opacity: row === 1 ? [0.75, 1, 0.75] : 1 }} transition={{ duration: 1.7, repeat: Infinity }}>
+            <span className="h-3 rounded-full bg-[#E8EBF2]" />
+            <span className="h-3 rounded-full" style={{ background: `${style.accent}24` }} />
+            <span className="h-3 rounded-full bg-[#E8EBF2]" />
+          </motion.div>
+        ))}
+      </div>
+    </MiniFrame>
+  );
+}
+
+function MiniInputSurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "field" | "button" | "toggle" }) {
+  if (mode === "button") {
+    return (
+      <MiniFrame>
+        <motion.button className="h-16 w-[min(330px,88%)] rounded-[22px] shadow-[0_18px_34px_rgba(23,26,43,0.12)]" style={{ background: `linear-gradient(135deg, ${style.accent}, ${style.text})` }} animate={{ scale: [1, 0.985, 1] }} transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}>
+          <span className="mx-auto block h-3 w-24 rounded-full bg-white/78" />
+        </motion.button>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "toggle") {
+    return (
+      <MiniFrame>
+        <div className="flex w-full max-w-[340px] items-center justify-between rounded-2xl border border-[#E4E7EF] bg-white px-4 py-4 shadow-sm">
+          <div className="space-y-2"><span className="block h-3 w-28 rounded-full bg-[#D8DDE8]" /><span className="block h-2 w-20 rounded-full bg-[#EEF0F6]" /></div>
+          <span className="relative h-8 w-14 rounded-full" style={{ background: `${style.accent}25` }}><motion.span className="absolute top-1 size-6 rounded-full shadow-md" style={{ background: style.accent }} animate={{ x: [4, 22, 4] }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }} /></span>
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <div className="w-full max-w-[360px] rounded-2xl border border-[#E4E7EF] bg-white p-4 shadow-sm">
+        <span className="block h-2.5 w-20 rounded-full bg-[#D8DDE8]" />
+        <div className="mt-3 flex h-12 items-center rounded-2xl border border-[#D4D8E3] px-4">
+          <motion.span className="h-3 rounded-full" style={{ background: `${style.accent}55` }} animate={{ width: ["34%", "64%", "42%"] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
+        </div>
+      </div>
+    </MiniFrame>
+  );
+}
+
+function MiniNavigationSurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "nav" | "breadcrumb" | "command" }) {
+  if (mode === "command") {
+    return (
+      <MiniFrame>
+        <motion.div className="flex h-14 w-[min(360px,90%)] items-center gap-3 rounded-full border border-[#E4E7EF] bg-white px-5 shadow-lg" animate={{ width: ["72%", "90%", "72%"] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}>
+          <span className="size-3 rounded-full" style={{ background: style.accent }} />
+          <span className="h-3 flex-1 rounded-full bg-[#E8EBF2]" />
+          <span className="h-6 w-12 rounded-full bg-[#F3EEFF]" />
+        </motion.div>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "breadcrumb") {
+    return (
+      <MiniFrame>
+        <div className="flex w-full max-w-[390px] items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 py-4 shadow-sm">
+          {[70, 92, 130].map((width, index) => <span key={width} className="h-3 rounded-full" style={{ width, background: index === 2 ? `${style.accent}42` : "#E8EBF2" }} />)}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <nav className="flex w-full max-w-[420px] items-center gap-4 rounded-full border border-[#E4E7EF] bg-white px-4 py-3 shadow-lg">
+        <span className="size-8 rounded-2xl" style={{ background: style.accent }} />
+        {[0, 1, 2].map((item) => <span key={item} className="h-3 flex-1 rounded-full bg-[#E8EBF2]" />)}
+        <motion.span className="size-8 rounded-full bg-[#F1BE48]" animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 1.8, repeat: Infinity }} />
+      </nav>
+    </MiniFrame>
+  );
+}
+
+function MiniFeedbackSurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "toast" | "alert" | "skeleton" }) {
+  if (mode === "skeleton") {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[390px] rounded-2xl border border-[#E4E7EF] bg-white p-4 shadow-sm">
+          {[0, 1, 2].map((row) => (
+            <span key={row} className="mt-3 block h-4 overflow-hidden rounded-full bg-[#EEF0F6] first:mt-0">
+              <motion.span className="block h-full w-1/2 rounded-full bg-white/80" animate={{ x: ["-100%", "240%"] }} transition={{ duration: 1.4, repeat: Infinity, delay: row * 0.08, ease: "easeInOut" }} />
+            </span>
+          ))}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "alert") {
+    return (
+      <MiniFrame>
+        <motion.div className="grid w-full max-w-[360px] grid-cols-[36px_1fr] gap-3 rounded-2xl border bg-white p-4 shadow-lg" style={{ borderColor: `${style.accent}55` }} animate={{ y: [0, -4, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
+          <span className="size-9 rounded-2xl" style={{ background: `${style.accent}24` }} />
+          <div className="space-y-2"><span className="block h-3 w-32 rounded-full" style={{ background: `${style.accent}45` }} /><span className="block h-2.5 w-44 rounded-full bg-[#E8EBF2]" /></div>
+        </motion.div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <div className="relative h-28 w-full max-w-[360px]">
+        {[0, 1, 2].map((item) => (
+          <motion.div key={item} className="absolute inset-x-0 rounded-2xl border border-[#E4E7EF] bg-white p-3 shadow-lg" style={{ top: item * 18 }} animate={{ x: item === 0 ? [0, 8, 0] : 0 }} transition={{ duration: 2.1, repeat: Infinity }}>
+            <span className="block h-3 w-28 rounded-full" style={{ background: item === 0 ? `${style.accent}55` : "#E8EBF2" }} />
+          </motion.div>
+        ))}
+      </div>
+    </MiniFrame>
+  );
+}
+
+function MiniUtilitySurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "swatch" | "avatar" | "code" | "chip" }) {
+  if (mode === "code") {
+    return (
+      <MiniFrame>
+        <div className="w-full max-w-[370px] rounded-2xl bg-[#171A2B] p-4 shadow-xl">
+          {[0, 1, 2, 3].map((line) => <span key={line} className="mt-2 block h-2.5 rounded-full first:mt-0" style={{ width: `${92 - line * 13}%`, background: line === 1 ? `${style.accent}` : "rgba(255,255,255,0.18)" }} />)}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "avatar") {
+    return (
+      <MiniFrame>
+        <div className="flex items-center justify-center -space-x-4">
+          {[style.accent, "#F1BE48", "#51C89B", "#FF7664"].map((color, index) => <motion.span key={color} className="grid size-16 place-items-center rounded-full border-4 border-white shadow-lg" style={{ background: color }} animate={{ y: index === 1 ? [0, -5, 0] : 0 }} transition={{ duration: 1.8, repeat: Infinity }} />)}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (mode === "swatch") {
+    return (
+      <MiniFrame>
+        <div className="grid grid-cols-5 gap-3">
+          {[style.accent, style.text, "#51C89B", "#F1BE48", "#E978D4", "#4C8DFF", "#171A2B", "#D8DDE8", "#FFFFFF", style.soft].map((color, index) => <motion.span key={`${color}-${index}`} className="size-10 rounded-2xl border border-[#E4E7EF] shadow-sm" style={{ background: color }} animate={{ scale: index === 0 ? [1, 1.08, 1] : 1 }} transition={{ duration: 1.8, repeat: Infinity }} />)}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <div className="flex flex-wrap justify-center gap-2">
+        {["Ctrl", "K", "Save", "Run"].map((item, index) => <motion.span key={item} className="rounded-2xl border border-[#E4E7EF] bg-white px-4 py-2 text-xs font-bold text-[#171A2B] shadow-sm" animate={{ y: index === 1 ? [0, -4, 0] : 0 }} transition={{ duration: 1.8, repeat: Infinity }}>{item}</motion.span>)}
+      </div>
+    </MiniFrame>
+  );
+}
+
+function MiniChart({ style, variant }: { style: ReturnType<typeof categoryStyle>; variant: "line" | "bar" | "donut" }) {
+  if (variant === "donut") {
+    return (
+      <MiniFrame>
+        <div className="relative size-28 rounded-full" style={{ background: `conic-gradient(${style.accent} 0 76%, #E8EBF2 76% 100%)` }}>
+          <div className="absolute inset-5 rounded-full bg-white shadow-inner" />
+          <motion.span className="absolute inset-0 rounded-full border-2 border-white/80" animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} />
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  if (variant === "bar") {
+    return (
+      <MiniFrame>
+        <div className="flex h-28 w-full max-w-[340px] items-end justify-center gap-3">
+          {[42, 76, 56, 96, 68].map((height, index) => <motion.span key={height} className="w-10 rounded-t-2xl" style={{ background: index === 3 ? style.accent : `${style.accent}35` }} animate={{ height: [`${height * 0.75}%`, `${height}%`, `${height * 0.75}%`] }} transition={{ duration: 1.7, delay: index * 0.08, repeat: Infinity, ease: "easeInOut" }} />)}
+        </div>
+      </MiniFrame>
+    );
+  }
+
+  return (
+    <MiniFrame>
+      <svg viewBox="0 0 320 120" className="h-32 w-full max-w-[380px] overflow-visible">
+        <path d="M8 92 C42 24 78 106 112 56 S176 78 210 34 S268 62 312 18" fill="none" stroke={style.accent} strokeWidth="8" strokeLinecap="round" />
+        <motion.circle r="8" fill={style.accent} animate={{ cx: [8, 112, 210, 312], cy: [92, 56, 34, 18] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }} />
+      </svg>
+    </MiniFrame>
+  );
+}
+
+function MiniCardSurface({ style, mode }: { style: ReturnType<typeof categoryStyle>; mode: "card" | "surface" }) {
+  return (
+    <MiniFrame>
+      <div className="relative h-28 w-full max-w-[360px]">
+        {[0, 1, 2].map((item) => (
+          <motion.div
+            key={item}
+            className="absolute inset-x-0 mx-auto rounded-[24px] border border-[#E4E7EF] bg-white shadow-lg"
+            style={{ top: mode === "surface" ? item * 14 : item * 10, height: 84, width: `${92 - item * 7}%`, zIndex: 3 - item }}
+            animate={{ y: item === 0 ? [0, -5, 0] : 0, borderColor: item === 0 ? [style.border, style.accent, style.border] : "#E4E7EF" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            {item === 0 ? <span className="m-5 block h-3 w-28 rounded-full" style={{ background: `${style.accent}55` }} /> : null}
+          </motion.div>
+        ))}
+      </div>
+    </MiniFrame>
   );
 }
 
