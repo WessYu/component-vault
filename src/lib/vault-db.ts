@@ -11,6 +11,7 @@ export type VaultUser = {
   email: string;
   passwordHash?: string;
   createdAt: string;
+  favoriteComponentIds?: string[];
 };
 
 export type VaultSession = {
@@ -66,6 +67,7 @@ export function publicUser(user: VaultUser) {
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
+    favoriteComponentIds: user.favoriteComponentIds ?? [],
   };
 }
 
@@ -133,6 +135,16 @@ export async function updateVaultComponent(id: string, patch: Partial<VaultCompo
 export async function toggleVaultFavorite(id: string) {
   await ensureVaultSeed();
   return (await fetchMutation(api.vault.toggleFavorite, { id }, convexOptions())) as VaultComponent | null;
+}
+
+export async function getFavoriteComponentIds(sessionId?: string) {
+  await ensureVaultSeed();
+  return (await fetchQuery(api.auth.getFavoritesBySession, { sessionId }, convexOptions())) as string[];
+}
+
+export async function toggleUserFavorite(sessionId: string, componentId: string) {
+  await ensureVaultSeed();
+  return (await fetchMutation(api.auth.toggleFavoriteBySession, { sessionId, componentId }, convexOptions())) as string[] | null;
 }
 
 export async function deleteVaultComponent(id: string) {

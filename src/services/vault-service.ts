@@ -5,6 +5,13 @@ type VaultPayload = {
   collections: Collection[];
 };
 
+type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  favoriteComponentIds?: string[];
+};
+
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
@@ -94,21 +101,25 @@ export async function deleteCollection(id: string) {
 }
 
 export async function localLogin(input: { email: string; password: string }) {
-  return requestJson<{ user: { id: string; name: string; email: string } }>("/api/auth/local/login", {
+  return requestJson<{ user: SessionUser }>("/api/auth/local/login", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
 export async function localRegister(input: { name: string; email: string; password: string }) {
-  return requestJson<{ user: { id: string; name: string; email: string } }>("/api/auth/local/register", {
+  return requestJson<{ user: SessionUser }>("/api/auth/local/register", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
 export async function getLocalSession() {
-  return requestJson<{ user: { id: string; name: string; email: string } | null }>("/api/auth/local/session", { cache: "no-store" });
+  return requestJson<{ user: SessionUser | null }>("/api/auth/local/session", { cache: "no-store" });
+}
+
+export async function localLogout() {
+  return requestJson<{ ok: true }>("/api/auth/local/logout", { method: "POST" });
 }
 
 export async function requestLocalPasswordReset(email: string) {

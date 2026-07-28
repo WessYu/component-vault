@@ -100,15 +100,14 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
               whileHover={reduceMotion ? undefined : { y: -3, scale: 1.015 }}
               whileTap={reduceMotion ? undefined : { scale: 0.96 }}
             >
-              <motion.span whileHover={reduceMotion ? undefined : { rotate: 90 }}>
-                <Plus size={17} aria-hidden />
-              </motion.span>
+              <motion.span whileHover={reduceMotion ? undefined : { rotate: 90 }}><Plus size={17} aria-hidden /></motion.span>
               New Component
             </motion.button>
           </motion.div>
 
           <motion.div
-            className="mt-7 rounded-[28px] border border-white/80 bg-white/60 p-3 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl"
+            id="component-filters"
+            className="mt-7 scroll-mt-24 rounded-[28px] border border-white/80 bg-white/60 p-3 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl"
             initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.08, ease: motionEase }}
@@ -117,26 +116,14 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
               <CategoryFilters active={filter} onChange={setFilter} />
               <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center xl:justify-end">
                 <ComponentSearch value={query} onChange={setQuery} />
-                <motion.select
-                  className="min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#6D7285] shadow-sm"
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                  aria-label="Sort components"
-                  whileFocus={reduceMotion ? undefined : { scale: 1.01 }}
-                >
-                  <option>Newest</option>
-                  <option>Name</option>
-                  <option>Most used</option>
+                <motion.select className="min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#6D7285] shadow-sm" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort components" whileFocus={reduceMotion ? undefined : { scale: 1.01 }}>
+                  <option>Newest</option><option>Name</option><option>Most used</option>
                 </motion.select>
                 <div className="relative flex w-fit rounded-2xl bg-white p-1 shadow-sm ring-1 ring-[#E4E7EF]">
                   {view === "grid" ? <motion.span layoutId="component-view-toggle" className="absolute left-1 top-1 size-9 rounded-xl bg-[#EEF0FF]" transition={{ type: "spring", stiffness: 360, damping: 30 }} /> : null}
                   {view === "list" ? <motion.span layoutId="component-view-toggle" className="absolute right-1 top-1 size-9 rounded-xl bg-[#EEF0FF]" transition={{ type: "spring", stiffness: 360, damping: 30 }} /> : null}
-                  <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "grid" && "text-[#6366F1]")} onClick={() => setView("grid")} aria-label="Grid view">
-                    <Grid2X2 size={16} aria-hidden />
-                  </button>
-                  <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "list" && "text-[#6366F1]")} onClick={() => setView("list")} aria-label="List view">
-                    <List size={16} aria-hidden />
-                  </button>
+                  <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "grid" && "text-[#6366F1]")} onClick={() => setView("grid")} aria-label="Grid view"><Grid2X2 size={16} aria-hidden /></button>
+                  <button className={cn("relative z-10 grid size-9 place-items-center rounded-xl text-[#6D7285]", view === "list" && "text-[#6366F1]")} onClick={() => setView("list")} aria-label="List view"><List size={16} aria-hidden /></button>
                 </div>
               </div>
             </div>
@@ -144,53 +131,24 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
 
           <div className="mt-5 flex items-center justify-between text-sm text-[#6D7285]">
             <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>
-                {filtered.length} results
-              </motion.span>
+              <motion.span key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{filtered.length} results</motion.span>
             </AnimatePresence>
             <span className="hidden sm:inline">Select a card to inspect it in the playground panel.</span>
           </div>
 
-          {!favoriteOnly && motionExperiences.length ? (
-            <Reveal className="mt-5" amount={0.08}>
-              <InteractiveExperiencesSection experiences={motionExperiences} />
-            </Reveal>
-          ) : null}
+          {!favoriteOnly && motionExperiences.length ? <Reveal className="mt-5" amount={0.08}><InteractiveExperiencesSection experiences={motionExperiences} /></Reveal> : null}
 
           <div className="mt-5">
-            <ComponentGrid
-              components={favoriteOnly ? filtered : standardComponents}
-              selectedSlug={panelOpen ? activeComponentSlug : undefined}
-              view={view}
-              onSelect={selectComponent}
-              onFavorite={(component) => toggleFavorite(component.id)}
-            />
+            <ComponentGrid components={favoriteOnly ? filtered : standardComponents} selectedSlug={panelOpen ? activeComponentSlug : undefined} view={view} onSelect={selectComponent} onFavorite={(component) => toggleFavorite(component.id)} />
           </div>
         </div>
       </section>
 
-      <ComponentDetailPanel
-        component={selectedComponent}
-        open={panelOpen && Boolean(selectedComponent)}
-        onClose={() => {
-          setPanelOpen(false);
-          window.history.replaceState(null, "", favoriteOnly ? "/vault/favorites" : "/vault/components");
-        }}
-      />
+      <ComponentDetailPanel component={selectedComponent} open={panelOpen && Boolean(selectedComponent)} onClose={() => { setPanelOpen(false); window.history.replaceState(null, "", favoriteOnly ? "/vault/favorites" : "/vault/components"); }} />
 
       <AnimatePresence>
         {selectedComponent && panelOpen ? (
-          <motion.button
-            className="fixed bottom-5 right-5 z-[60] hidden rounded-2xl bg-[#171A2B] px-4 py-3 text-sm font-semibold text-white shadow-xl xl:inline-flex"
-            onClick={() => openDetail(selectedComponent)}
-            initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 10, scale: 0.97 }}
-            whileHover={reduceMotion ? undefined : { y: -3 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.96 }}
-          >
-            Open full detail
-          </motion.button>
+          <motion.button className="fixed bottom-5 right-5 z-[60] hidden rounded-2xl bg-[#171A2B] px-4 py-3 text-sm font-semibold text-white shadow-xl xl:inline-flex" onClick={() => openDetail(selectedComponent)} initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? undefined : { opacity: 0, y: 10, scale: 0.97 }} whileHover={reduceMotion ? undefined : { y: -3 }} whileTap={reduceMotion ? undefined : { scale: 0.96 }}>Open full detail</motion.button>
         ) : null}
       </AnimatePresence>
     </AppShell>

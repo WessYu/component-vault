@@ -8,6 +8,7 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.string(),
     createdAt: v.string(),
+    favoriteComponentIds: v.optional(v.array(v.string())),
   })
     .index("by_user_id", ["userId"])
     .index("by_email", ["email"]),
