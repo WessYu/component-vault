@@ -36,7 +36,6 @@ export function AuthForm({ mode }: AuthFormProps) {
     const rememberedEmail = window.localStorage.getItem(rememberedEmailKey);
     if (rememberedEmail) {
       form.setValue("email", rememberedEmail, { shouldValidate: false });
-      setRememberLogin(true);
     }
   }, [form, mode]);
 

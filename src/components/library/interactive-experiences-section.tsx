@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ComponentPreview } from "@/components/detail/component-preview";
-import { fastMotion, motionEase } from "@/components/motion/site-motion";
+import { fastMotion } from "@/components/motion/site-motion";
 import { cn } from "@/lib/utils";
 import type { VaultComponent } from "@/types/vault";
 
@@ -32,7 +32,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
     hoverTimer.current = window.setTimeout(() => {
       setActiveSlug(component.slug);
       setPendingSlug(null);
-    }, 1200);
+    }, 700);
   }
 
   function stopPreview(component: VaultComponent) {
@@ -63,15 +63,14 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
           return (
             <motion.article
               key={component.slug}
-              layout
               data-feature-active={isActive ? "true" : undefined}
               className={cn(
-                "group relative overflow-hidden rounded-[30px] border bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-colors",
-                isActive ? "border-[#C9C7FF] p-4 md:col-span-2 2xl:col-span-3" : "border-[#E4E7EF]",
+                "group relative overflow-hidden rounded-[30px] border bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-[border-color,box-shadow] duration-150 will-change-transform",
+                isActive ? "border-[#C9C7FF] shadow-[0_18px_64px_rgba(99,102,241,0.12)] md:col-span-2" : "border-[#E4E7EF]",
               )}
-              animate={isActive ? { scale: 1.018 } : { scale: 1 }}
-              whileHover={reduceMotion ? undefined : { y: -5 }}
-              transition={{ layout: { duration: 0.28, ease: motionEase }, ...fastMotion }}
+              animate={isActive ? { scale: 1.006 } : { scale: 1 }}
+              whileHover={reduceMotion ? undefined : { y: -2 }}
+              transition={fastMotion}
               onPointerEnter={() => startPreview(component)}
               onPointerLeave={() => stopPreview(component)}
               onFocus={() => setActiveSlug(component.slug)}
@@ -85,16 +84,15 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <motion.span className="block h-full rounded-full bg-[#6366F1]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 1.2, ease: "linear" }} />
+                    <motion.span className="block h-full rounded-full bg-[#6366F1]" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 0.7, ease: "linear" }} />
                   </motion.span>
                 ) : null}
               </AnimatePresence>
 
               <motion.div
-                layout
                 className={cn(
-                  "overflow-hidden rounded-[26px]",
-                  isActive ? "min-h-[560px] [&>div]:min-h-[560px]" : "min-h-[178px]",
+                  "overflow-hidden rounded-[26px] transition-[min-height] duration-200 ease-out",
+                  isActive ? "min-h-[430px] [&>div]:min-h-[430px]" : "min-h-[178px]",
                 )}
               >
                 <ComponentPreview key={`${component.slug}-${isActive ? "active" : "rest"}`} component={component} compact={!isActive} viewport={isActive ? "Desktop" : "Tablet"} />

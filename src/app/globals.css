@@ -270,7 +270,7 @@ textarea {
 }
 
 [data-feature-active="true"] .vault-feature-preview {
-  animation: featureFloat 1.8s ease-in-out infinite;
+  animation: featureFloat 2.2s ease-in-out infinite;
 }
 
 [data-feature-active="true"] .vault-feature-preview::before {
@@ -297,7 +297,7 @@ textarea {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-8px) scale(1.025);
+    transform: translateY(-3px) scale(1.012);
   }
 }
 
