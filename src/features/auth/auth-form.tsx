@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, CheckCircle2, LockKeyhole, LogIn, Sparkles, UserPlus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { localLogin, localRegister, requestLocalPasswordReset } from "@/services/vault-service";
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from "./auth-schema";
@@ -110,9 +111,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-tr from-[#6366F1]/60 via-[#9A78FF]/35 to-[#E978D4]/45 blur-3xl" />
             <div className="relative">
               <Link href="/" className="inline-flex items-center gap-3">
-                <span className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-[#6366F1] to-[#9A78FF] text-white shadow-lg shadow-indigo-950/30">
-                  <Sparkles size={20} aria-hidden />
-                </span>
+                <BrandMark size="lg" className="shadow-lg shadow-indigo-950/30" />
                 <span>
                   <span className="block text-sm font-semibold">Component Vault</span>
                   <span className="text-xs text-white/55">Visual component workspace</span>
