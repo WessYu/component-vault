@@ -1,133 +1,91 @@
 # Component Vault
 
-Component Vault is a retro developer workstation for storing, organizing, previewing and reusing interface components. It uses the visual language of old technical desktop software, but the product behavior is practical: component browser, isolated live preview, Monaco editor, inspector, collections, tokens, auth screens and Supabase schema.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/WessYu/WessYu/main/readme-assets/component-vault-cover.svg" alt="Component Vault" width="100%" />
+</p>
 
-## Objective
+<p align="center">
+  <strong>Workspace full stack para criar, organizar, testar, editar e reutilizar componentes de interface.</strong>
+</p>
 
-Give front-end developers a personal component operating system: a place to save React, TypeScript, HTML, CSS and Tailwind snippets with notes, versions, usage references, design tokens, categories, tags and collections.
+<p align="center">
+  <a href="https://component-vault-dun.vercel.app/">Live Demo</a> ·
+  <a href="https://wessyu-arquivo.vercel.app/">Portfólio</a>
+</p>
 
-## Features
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-111111?style=flat-square&logo=nextdotjs" />
+  <img src="https://img.shields.io/badge/TypeScript-111111?style=flat-square&logo=typescript" />
+  <img src="https://img.shields.io/badge/Convex-111111?style=flat-square" />
+  <img src="https://img.shields.io/badge/Framer_Motion-111111?style=flat-square&logo=framer" />
+  <img src="https://img.shields.io/badge/Vercel-111111?style=flat-square&logo=vercel" />
+</p>
 
-- Public landing page with Component Vault boot sequence and product preview
-- Login and registration flows with React Hook Form, Zod and Supabase Auth support
-- Protected `/vault` workspace with demo fallback when Supabase env vars are not configured
-- Desktop workstation with top OS menu, left dock, modular windows and taskbar
-- `BROWSER.EXE` component library with search, category filters, favorites and card/list modes
-- `PREVIEW.LIVE` isolated sandbox preview using `iframe sandbox`
-- `CODE_EDITOR.TSX` Monaco Editor with tabs, syntax highlighting, copy, save status and autosave log
-- `INSPECTOR.NOTES` tabs for props, notes, tokens and usage
-- Collections, favorites, tokens and settings routes
-- 10 real demo components with different previews and documentation
-- Supabase migration with RLS policies for user-owned data and public component reads
+## Demo
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/WessYu/WessYu/main/readme-assets/component-vault-demo.gif" alt="Fluxo animado do Component Vault" width="720" />
+</p>
+
+## Interface
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/overview.svg" alt="Interface do Component Vault" width="100%" />
+</p>
+
+## Sobre
+
+O **Component Vault** nasceu como uma biblioteca pessoal de componentes e evoluiu para um workspace de desenvolvimento. A aplicação reúne catálogo, busca, filtros, favoritos por conta, coleções, edição de código, configurações persistentes, administração e experiências de motion em um único produto.
+
+O backend atual usa **Convex** para persistir contas, sessões, componentes, favoritos, coleções e preferências do workspace.
+
+## Principais recursos
+
+- cadastro, login e sessão persistente com cookie `httpOnly`;
+- favoritos separados por usuário;
+- criação, edição e exclusão de componentes;
+- editor para código, estilos e exemplo de uso;
+- coleções personalizadas;
+- busca global e command palette;
+- painel administrativo protegido por papel de usuário;
+- preferências do workspace salvas no backend;
+- biblioteca de Motion Experiences e padrões emergentes de UI;
+- preview responsivo e interface otimizada para desktop e mobile;
+- deploy contínuo pela Vercel e validação por GitHub Actions.
 
 ## Stack
 
-- Next.js App Router
-- React + TypeScript
-- Tailwind CSS v4 with CSS variable tokens
-- Supabase Auth and database schema
-- React Hook Form + Zod
-- Monaco Editor
-- Lucide React
-- Zustand
-- TanStack Query
-- Framer Motion installed for future functional motion
+| Camada | Tecnologias |
+| --- | --- |
+| Front-end | Next.js, React, TypeScript, Tailwind CSS |
+| Estado e UI | Zustand, Framer Motion, Lucide React |
+| Backend | Convex |
+| Auth | sessão própria com cookies `httpOnly` |
+| Qualidade | GitHub Actions, TypeScript strict |
+| Deploy | Vercel |
 
-## Installation
+## Executando localmente
 
 ```bash
+git clone https://github.com/WessYu/component-vault.git
+cd component-vault
 npm install
 ```
 
-## Environment Variables
-
-Create `.env.local` when connecting a real Supabase project:
+Crie `.env.local` com o deployment do Convex e execute:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
-```
-
-Without these variables, the app runs in local demo mode so the workstation can be evaluated immediately.
-
-## Supabase Setup
-
-1. Create a Supabase project.
-2. Add the variables above to `.env.local`.
-3. Run the SQL migration in `supabase/migrations/202607270001_component_vault_schema.sql`.
-4. Enable email/password auth in Supabase Auth.
-5. Start the app and use `/register` to create a user.
-
-The migration creates:
-
-- `profiles`
-- `components`
-- `categories`
-- `collections`
-- `collection_components`
-- `tags`
-- `component_tags`
-- `component_versions`
-- `component_usage`
-- `design_tokens`
-
-RLS is enabled for every table. Users can access their own rows, and public components can be read by others.
-
-## Local Development
-
-```bash
+npx convex dev
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+A aplicação fica disponível em `http://localhost:3000`.
 
-## Build
+## Por que este projeto importa
 
-```bash
-npm run lint
-npm run build
-```
+Este projeto concentra vários pontos que procuro demonstrar como desenvolvedor: arquitetura de produto, autenticação, persistência, permissões, CRUD real, experiência de interface, motion e evolução contínua baseada em uso.
 
-Both commands should pass before deployment.
+## Autor
 
-## Deploy
-
-Deploy normally to Vercel or any platform that supports Next.js. Add the Supabase environment variables in the hosting dashboard before production use.
-
-## Project Structure
-
-```text
-src/
-  app/                  App Router routes
-  components/
-    desktop/            Workstation shell, dock, taskbar and windows
-    editor/             Monaco editor surface
-    inspector/          Props, notes, tokens and usage panel
-    preview/            Sandboxed live preview
-    ui/                 Reusable low-level UI
-    vault/              Browser and landing preview pieces
-  features/
-    auth/               Auth forms, schemas, settings and route guard
-    collections/        Collection screens
-    tokens/             Token screens
-  hooks/                Query hooks
-  lib/                  Supabase and utilities
-  services/             Demo data and async services
-  stores/               Zustand state
-  types/                Product and database types
-supabase/
-  migrations/           SQL schema and RLS
-```
-
-## Screenshots
-
-Use the landing page and `/vault` workspace as live screenshots of the product. The landing renders a real mini-workstation, and the vault renders the full responsive workstation.
-
-## Next Features
-
-- Persist component CRUD to Supabase tables
-- Add component version diff viewer
-- Add import/export for JSON and ZIP archives
-- Add drag-and-drop layout persistence
-- Add team sharing and public component gallery
-- Add visual regression snapshots for previews
+**Wesley Cruz** — Front-end Developer & Designer  
+[GitHub](https://github.com/WessYu) · [Portfólio](https://wessyu-arquivo.vercel.app/) · [LinkedIn](https://www.linkedin.com/in/wesley-santos-cruz-b57589213/)
