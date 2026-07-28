@@ -1,6 +1,16 @@
 import { v } from "convex/values";
 import { mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 
+type WorkspacePreferences = {
+  gridSize: number;
+  defaultViewport: "Desktop" | "Tablet" | "Mobile";
+  autosaveDebounce: number;
+  previewTheme: "Light" | "Dark";
+  componentReviewRequests: boolean;
+  tokenDriftAlerts: boolean;
+  weeklyUsageDigest: boolean;
+};
+
 const preferencesValidator = v.object({
   gridSize: v.number(),
   defaultViewport: v.union(v.literal("Desktop"), v.literal("Tablet"), v.literal("Mobile")),
@@ -11,11 +21,11 @@ const preferencesValidator = v.object({
   weeklyUsageDigest: v.boolean(),
 });
 
-const defaultPreferences = {
+const defaultPreferences: WorkspacePreferences = {
   gridSize: 8,
-  defaultViewport: "Desktop" as const,
+  defaultViewport: "Desktop",
   autosaveDebounce: 900,
-  previewTheme: "Light" as const,
+  previewTheme: "Light",
   componentReviewRequests: true,
   tokenDriftAlerts: true,
   weeklyUsageDigest: false,
@@ -27,7 +37,7 @@ type PublicUserInput = {
   email: string;
   createdAt: string;
   favoriteComponentIds?: string[];
-  workspacePreferences?: typeof defaultPreferences;
+  workspacePreferences?: WorkspacePreferences;
 };
 
 function publicUser(user: PublicUserInput) {
@@ -50,9 +60,7 @@ async function resolveUserBySession(ctx: any, sessionId?: string) {
 
 export const getUserByEmail = query({
   args: { email: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
-  },
+  handler: async (ctx, args) => await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique(),
 });
 
 export const getUserBySession = query({
@@ -76,7 +84,7 @@ export const getWorkspacePreferencesBySession = query({
   handler: async (ctx, args) => {
     const user = await resolveUserBySession(ctx, args.sessionId);
     if (!user) return null;
-    return user.workspacePreferences ?? defaultPreferences;
+    return (user.workspacePreferences ?? defaultPreferences) as WorkspacePreferences;
   },
 });
 
@@ -85,8 +93,7 @@ export const updateWorkspacePreferencesBySession = mutation({
   handler: async (ctx, args) => {
     const user = await resolveUserBySession(ctx, args.sessionId);
     if (!user) return null;
-
-    const preferences = {
+    const preferences: WorkspacePreferences = {
       ...args.preferences,
       gridSize: Math.min(32, Math.max(2, Math.round(args.preferences.gridSize))),
       autosaveDebounce: Math.min(5000, Math.max(200, Math.round(args.preferences.autosaveDebounce))),
@@ -101,25 +108,17 @@ export const toggleFavoriteBySession = mutation({
   handler: async (ctx, args) => {
     const user = await resolveUserBySession(ctx, args.sessionId);
     if (!user) return null;
-
     const current: string[] = (user.favoriteComponentIds ?? []) as string[];
     const favoriteComponentIds = current.includes(args.componentId)
       ? current.filter((id: string) => id !== args.componentId)
       : [...current, args.componentId];
-
     await ctx.db.patch(user._id, { favoriteComponentIds });
     return favoriteComponentIds;
   },
 });
 
 export const ensureDemoUser = mutation({
-  args: {
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    passwordHash: v.string(),
-    createdAt: v.string(),
-  },
+  args: { userId: v.string(), name: v.string(), email: v.string(), passwordHash: v.string(), createdAt: v.string() },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) return publicUser(existing);
@@ -130,13 +129,7 @@ export const ensureDemoUser = mutation({
 });
 
 export const createUser = mutation({
-  args: {
-    userId: v.string(),
-    name: v.string(),
-    email: v.string(),
-    passwordHash: v.string(),
-    createdAt: v.string(),
-  },
+  args: { userId: v.string(), name: v.string(), email: v.string(), passwordHash: v.string(), createdAt: v.string() },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) throw new Error("Email already registered.");
@@ -147,18 +140,11 @@ export const createUser = mutation({
 });
 
 export const createSession = mutation({
-  args: {
-    sessionId: v.string(),
-    userId: v.string(),
-    createdAt: v.string(),
-    expiresAt: v.string(),
-  },
+  args: { sessionId: v.string(), userId: v.string(), createdAt: v.string(), expiresAt: v.string() },
   handler: async (ctx, args) => {
     const sessions = await ctx.db.query("sessions").withIndex("by_user_id", (q) => q.eq("userId", args.userId)).collect();
     const now = Date.now();
-    for (const session of sessions) {
-      if (new Date(session.expiresAt).getTime() <= now) await ctx.db.delete(session._id);
-    }
+    for (const session of sessions) if (new Date(session.expiresAt).getTime() <= now) await ctx.db.delete(session._id);
     await ctx.db.insert("sessions", args);
     return args;
   },
@@ -174,50 +160,29 @@ export const destroySession = mutation({
 });
 
 export const createPasswordReset = mutation({
-  args: {
-    resetId: v.string(),
-    email: v.string(),
-    tokenHash: v.string(),
-    createdAt: v.string(),
-    expiresAt: v.string(),
-  },
+  args: { resetId: v.string(), email: v.string(), tokenHash: v.string(), createdAt: v.string(), expiresAt: v.string() },
   handler: async (ctx, args) => {
     const user = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     const resets = await ctx.db.query("passwordResets").collect();
     const now = Date.now();
-    for (const reset of resets) {
-      if (reset.usedAt || new Date(reset.expiresAt).getTime() <= now) await ctx.db.delete(reset._id);
-    }
+    for (const reset of resets) if (reset.usedAt || new Date(reset.expiresAt).getTime() <= now) await ctx.db.delete(reset._id);
     if (!user) return null;
-    await ctx.db.insert("passwordResets", {
-      resetId: args.resetId,
-      userId: user.userId,
-      tokenHash: args.tokenHash,
-      createdAt: args.createdAt,
-      expiresAt: args.expiresAt,
-    });
+    await ctx.db.insert("passwordResets", { resetId: args.resetId, userId: user.userId, tokenHash: args.tokenHash, createdAt: args.createdAt, expiresAt: args.expiresAt });
     return { ok: true };
   },
 });
 
 export const resetPassword = mutation({
-  args: {
-    tokenHash: v.string(),
-    passwordHash: v.string(),
-    usedAt: v.string(),
-  },
+  args: { tokenHash: v.string(), passwordHash: v.string(), usedAt: v.string() },
   handler: async (ctx, args) => {
     const reset = await ctx.db.query("passwordResets").withIndex("by_token_hash", (q) => q.eq("tokenHash", args.tokenHash)).unique();
     if (!reset || reset.usedAt || new Date(reset.expiresAt).getTime() <= Date.now()) throw new Error("Password reset link is invalid or expired.");
     const user = await ctx.db.query("users").withIndex("by_user_id", (q) => q.eq("userId", reset.userId)).unique();
     if (!user) throw new Error("User not found.");
-
     await ctx.db.patch(user._id, { passwordHash: args.passwordHash });
     await ctx.db.patch(reset._id, { usedAt: args.usedAt });
-
     const sessions = await ctx.db.query("sessions").withIndex("by_user_id", (q) => q.eq("userId", user.userId)).collect();
     for (const session of sessions) await ctx.db.delete(session._id);
-
     return publicUser(user);
   },
 });
