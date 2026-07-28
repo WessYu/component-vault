@@ -1,5 +1,15 @@
 import type { Collection, VaultComponent } from "@/types/vault";
 
+export type WorkspacePreferences = {
+  gridSize: number;
+  defaultViewport: "Desktop" | "Tablet" | "Mobile";
+  autosaveDebounce: number;
+  previewTheme: "Light" | "Dark";
+  componentReviewRequests: boolean;
+  tokenDriftAlerts: boolean;
+  weeklyUsageDigest: boolean;
+};
+
 type VaultPayload = {
   components: VaultComponent[];
   collections: Collection[];
@@ -10,6 +20,7 @@ type SessionUser = {
   name: string;
   email: string;
   favoriteComponentIds?: string[];
+  workspacePreferences?: WorkspacePreferences;
 };
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -120,6 +131,19 @@ export async function getLocalSession() {
 
 export async function localLogout() {
   return requestJson<{ ok: true }>("/api/auth/local/logout", { method: "POST" });
+}
+
+export async function getWorkspacePreferences() {
+  const payload = await requestJson<{ preferences: WorkspacePreferences }>("/api/settings", { cache: "no-store" });
+  return payload.preferences;
+}
+
+export async function saveWorkspacePreferences(preferences: WorkspacePreferences) {
+  const payload = await requestJson<{ preferences: WorkspacePreferences }>("/api/settings", {
+    method: "PATCH",
+    body: JSON.stringify(preferences),
+  });
+  return payload.preferences;
 }
 
 export async function requestLocalPasswordReset(email: string) {

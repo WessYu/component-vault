@@ -9,6 +9,15 @@ export default defineSchema({
     passwordHash: v.string(),
     createdAt: v.string(),
     favoriteComponentIds: v.optional(v.array(v.string())),
+    workspacePreferences: v.optional(v.object({
+      gridSize: v.number(),
+      defaultViewport: v.union(v.literal("Desktop"), v.literal("Tablet"), v.literal("Mobile")),
+      autosaveDebounce: v.number(),
+      previewTheme: v.union(v.literal("Light"), v.literal("Dark")),
+      componentReviewRequests: v.boolean(),
+      tokenDriftAlerts: v.boolean(),
+      weeklyUsageDigest: v.boolean(),
+    })),
   })
     .index("by_user_id", ["userId"])
     .index("by_email", ["email"]),
