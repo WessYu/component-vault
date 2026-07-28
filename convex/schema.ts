@@ -8,6 +8,7 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.string(),
     createdAt: v.string(),
+    role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
     favoriteComponentIds: v.optional(v.array(v.string())),
     workspacePreferences: v.optional(v.object({
       gridSize: v.number(),

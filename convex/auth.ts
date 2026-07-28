@@ -11,6 +11,8 @@ type WorkspacePreferences = {
   weeklyUsageDigest: boolean;
 };
 
+type VaultRole = "admin" | "user";
+
 const preferencesValidator = v.object({
   gridSize: v.number(),
   defaultViewport: v.union(v.literal("Desktop"), v.literal("Tablet"), v.literal("Mobile")),
@@ -36,6 +38,7 @@ type PublicUserInput = {
   name: string;
   email: string;
   createdAt: string;
+  role?: VaultRole;
   favoriteComponentIds?: string[];
   workspacePreferences?: WorkspacePreferences;
 };
@@ -46,6 +49,7 @@ function publicUser(user: PublicUserInput) {
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
+    role: user.role ?? "user",
     favoriteComponentIds: user.favoriteComponentIds ?? [],
     workspacePreferences: user.workspacePreferences ?? defaultPreferences,
   };
@@ -122,7 +126,7 @@ export const ensureDemoUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) return publicUser(existing);
-    const user = { ...args, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
+    const user = { ...args, role: "user" as VaultRole, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
     await ctx.db.insert("users", user);
     return publicUser(user);
   },
@@ -133,7 +137,7 @@ export const createUser = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", args.email)).unique();
     if (existing) throw new Error("Email already registered.");
-    const user = { ...args, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
+    const user = { ...args, role: "user" as VaultRole, favoriteComponentIds: [] as string[], workspacePreferences: defaultPreferences };
     await ctx.db.insert("users", user);
     return publicUser(user);
   },

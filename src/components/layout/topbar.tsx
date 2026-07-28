@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Bell, Check, Command, Heart, LogIn, LogOut, Plus, Search, Settings, SlidersHorizontal, UserPlus, X } from "lucide-react";
+import { Bell, Check, Command, Heart, LogIn, LogOut, Plus, Search, Settings, ShieldCheck, SlidersHorizontal, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { fastMotion, motionEase } from "@/components/motion/site-motion";
 import { getLocalSession, localLogout } from "@/services/vault-service";
 
-type SessionUser = { id: string; name: string; email: string; favoriteComponentIds?: string[] };
+type SessionUser = { id: string; name: string; email: string; role?: "admin" | "user"; favoriteComponentIds?: string[] };
 
 export function Topbar({ onCreate }: { onCreate?: () => void }) {
   const router = useRouter();
@@ -123,6 +123,7 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
 
   const initial = user?.name?.trim().charAt(0).toUpperCase() || "?";
   const favoriteCount = components.filter((component) => component.isFavorite).length;
+  const isAdmin = user?.role === "admin";
 
   return (
     <>
@@ -198,7 +199,7 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
 
         <div className="relative">
           <motion.button
-            className="flex min-h-10 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-2 shadow-sm"
+            className={cn("flex min-h-10 items-center gap-2 rounded-2xl border bg-white px-2 shadow-sm", isAdmin ? "border-[#C9C7FF] ring-2 ring-[#6366F1]/10" : "border-[#E4E7EF]")}
             aria-label="Account menu"
             aria-expanded={accountOpen}
             onClick={() => {
@@ -210,14 +211,22 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
             transition={fastMotion}
           >
             <span className="grid size-7 place-items-center rounded-full bg-gradient-to-br from-[#F1BE48] to-[#FF7664] text-xs font-semibold text-white">{initial}</span>
+            {isAdmin ? <ShieldCheck size={15} className="mr-1 text-[#6366F1]" aria-hidden /> : null}
           </motion.button>
           <AnimatePresence>
             {accountOpen ? (
               <motion.div className="absolute right-0 top-12 w-72 overflow-hidden rounded-3xl border border-[#E4E7EF] bg-white shadow-[0_24px_70px_rgba(23,26,43,0.14)]" initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4 }}>
                 {user ? (
                   <>
-                    <div className="border-b border-[#E4E7EF] p-4"><p className="font-bold text-[#171A2B]">{user.name}</p><p className="mt-1 truncate text-xs text-[#6D7285]">{user.email}</p></div>
+                    <div className="border-b border-[#E4E7EF] p-4">
+                      <div className="flex items-center gap-2">
+                        <p className="min-w-0 flex-1 truncate font-bold text-[#171A2B]">{user.name}</p>
+                        {isAdmin ? <span className="inline-flex items-center gap-1 rounded-full bg-[#EEF0FF] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6366F1]"><ShieldCheck size={11} aria-hidden /> Admin</span> : null}
+                      </div>
+                      <p className="mt-1 truncate text-xs text-[#6D7285]">{user.email}</p>
+                    </div>
                     <div className="p-2">
+                      {isAdmin ? <Link href="/vault/admin" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl bg-[#F7F7FF] px-3 py-2.5 text-sm font-semibold text-[#6366F1] hover:bg-[#EEF0FF]"><ShieldCheck size={16} /> Admin panel</Link> : null}
                       <Link href="/vault/favorites" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#171A2B] hover:bg-[#F7F8FC]"><Heart size={16} /> My favorites <span className="ml-auto rounded-full bg-[#EEF0FF] px-2 py-0.5 text-xs font-semibold text-[#6366F1]">{favoriteCount}</span></Link>
                       <Link href="/vault/settings" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#171A2B] hover:bg-[#F7F8FC]"><Settings size={16} /> Settings</Link>
                       <button onClick={() => void handleLogout()} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Sign out</button>
