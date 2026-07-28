@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { resolveVaultRole } from "@/lib/admin";
 import { getUserBySession, publicUser } from "@/lib/vault-db";
 
 export async function GET() {
@@ -11,5 +12,10 @@ export async function GET() {
     return NextResponse.json({ user: null }, { status: 401 });
   }
 
-  return NextResponse.json({ user: publicUser(user) });
+  return NextResponse.json({
+    user: {
+      ...publicUser(user),
+      role: resolveVaultRole(user),
+    },
+  });
 }
