@@ -63,6 +63,8 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
 
   const style = categoryStyle(component);
   const isMotionExperience = component.category === "Motion Experiences";
+  const isEmergingTrend = component.slug.startsWith("trend-");
+  const usesExperienceWorkspace = isMotionExperience && !isEmergingTrend;
 
   async function copyCode() {
     await navigator.clipboard.writeText(component.code);
@@ -122,7 +124,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {isMotionExperience ? (
+          {usesExperienceWorkspace ? (
             <div className="mt-8 space-y-5"><ExperienceChecklist /><ExperienceWorkspace slug={component.slug as ExperienceSlug} /></div>
           ) : (
             <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -133,10 +135,18 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
                 </section>
                 <ComponentDetailTabs component={component} active={activeTab} onChange={setActiveTab} />
               </div>
-              <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
-                <div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">Props editor</h2><p className="text-sm text-[#6D7285]">Changes update the preview.</p></div><span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span></div>
-                <PropertiesEditor component={component} tableOptions={tableOptions} setTableOptions={setTableOptions} pricingOptions={pricingOptions} setPricingOptions={setPricingOptions} />
-              </aside>
+              {!isEmergingTrend ? (
+                <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
+                  <div className="mb-5 flex items-center justify-between"><div><h2 className="font-bold">Props editor</h2><p className="text-sm text-[#6D7285]">Changes update the preview.</p></div><span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span></div>
+                  <PropertiesEditor component={component} tableOptions={tableOptions} setTableOptions={setTableOptions} pricingOptions={pricingOptions} setPricingOptions={setPricingOptions} />
+                </aside>
+              ) : (
+                <aside className="hidden rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)] xl:block">
+                  <div className="flex items-center justify-between"><div><h2 className="font-bold">Emerging pattern</h2><p className="text-sm text-[#6D7285]">Experimental 2026 interaction model.</p></div><span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Trend</span></div>
+                  <div className="mt-5 space-y-3">{component.tags.map((tag) => <span key={tag} className="mr-2 inline-flex rounded-full border border-[#E4E7EF] bg-[#F7F8FC] px-3 py-1 text-xs font-medium text-[#6D7285]">{tag}</span>)}</div>
+                  <p className="mt-5 text-sm leading-6 text-[#6D7285]">Interact directly with the preview. Implementation code, usage and notes remain available in the tabs.</p>
+                </aside>
+              )}
             </div>
           )}
         </div>
