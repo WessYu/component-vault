@@ -18,6 +18,10 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
 
   if (!experiences.length) return null;
 
+  function canSustainHover() {
+    return typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }
+
   function clearHoverTimer() {
     if (hoverTimer.current) {
       window.clearTimeout(hoverTimer.current);
@@ -27,6 +31,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
   }
 
   function startPreview(component: VaultComponent) {
+    if (!canSustainHover()) return;
     clearHoverTimer();
     setPendingSlug(component.slug);
     hoverTimer.current = window.setTimeout(() => {
@@ -41,14 +46,14 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
   }
 
   return (
-    <section className="rounded-[34px] border border-[#E4E7EF] bg-white p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] md:p-5">
+    <section className="rounded-[26px] border border-[#E4E7EF] bg-white p-3 shadow-[0_18px_70px_rgba(23,26,43,0.045)] md:rounded-[34px] md:p-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="inline-flex items-center gap-2 rounded-full bg-[#F3EEFF] px-3 py-1 text-sm font-semibold text-[#5B21B6]">
             <Sparkles size={15} aria-hidden />
             Motion Experiences
           </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[#171A2B]">Interactive Experiences</h2>
+          <h2 className="mt-3 text-2xl font-bold tracking-[-0.035em] text-[#171A2B] md:text-3xl">Interactive Experiences</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6D7285]">
             Complete scroll, navigation, morph and comparison patterns with real interaction previews.
           </p>
@@ -56,7 +61,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
         <span className="text-sm font-medium text-[#6D7285]">{experiences.length} patterns</span>
       </div>
 
-      <div className="mt-5 grid auto-rows-[minmax(260px,auto)] gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="mt-4 grid auto-rows-auto gap-3 md:mt-5 md:auto-rows-[minmax(260px,auto)] md:grid-cols-2 md:gap-4 2xl:grid-cols-3">
         {experiences.map((component) => {
           const isActive = activeSlug === component.slug;
           const isPending = pendingSlug === component.slug;
@@ -65,7 +70,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               key={component.slug}
               data-feature-active={isActive ? "true" : undefined}
               className={cn(
-                "group relative overflow-hidden rounded-[30px] border bg-[#F7F8FC] p-3 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-[border-color,box-shadow] duration-150 will-change-transform",
+                "group relative overflow-hidden rounded-[24px] border bg-[#F7F8FC] p-2.5 shadow-[0_14px_44px_rgba(23,26,43,0.04)] transition-[border-color,box-shadow] duration-150 will-change-transform md:rounded-[30px] md:p-3",
                 isActive ? "border-[#C9C7FF] shadow-[0_18px_64px_rgba(99,102,241,0.12)] md:col-span-2" : "border-[#E4E7EF]",
               )}
               animate={isActive ? { scale: 1.006 } : { scale: 1 }}
@@ -73,7 +78,9 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               transition={fastMotion}
               onPointerEnter={() => startPreview(component)}
               onPointerLeave={() => stopPreview(component)}
-              onFocus={() => setActiveSlug(component.slug)}
+              onFocus={() => {
+                if (canSustainHover()) setActiveSlug(component.slug);
+              }}
               onBlur={() => setActiveSlug((current) => (current === component.slug ? null : current))}
             >
               <AnimatePresence>
@@ -91,7 +98,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
 
               <motion.div
                 className={cn(
-                  "overflow-hidden rounded-[26px] transition-[min-height] duration-200 ease-out",
+                  "overflow-hidden rounded-[22px] transition-[min-height] duration-200 ease-out md:rounded-[26px]",
                   isActive ? "min-h-[430px] [&>div]:min-h-[430px]" : "min-h-[178px]",
                 )}
               >
@@ -99,12 +106,12 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               </motion.div>
 
               <button
-                className="mt-4 block w-full rounded-[24px] bg-white p-4 text-left shadow-sm"
+                className="mt-3 block w-full rounded-[20px] bg-white p-3 text-left shadow-sm md:mt-4 md:rounded-[24px] md:p-4"
                 onClick={() => router.push(`/vault/components/${component.slug}`)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">{component.name}</h3>
+                    <h3 className="text-base font-bold tracking-[-0.02em] text-[#171A2B] md:text-lg">{component.name}</h3>
                     <p className={cn("mt-1 text-sm leading-6 text-[#6D7285]", isActive ? "line-clamp-3" : "line-clamp-2")}>{component.description}</p>
                   </div>
                   <ArrowRight className="mt-1 shrink-0 text-[#6366F1] transition group-hover:translate-x-1" size={18} aria-hidden />
