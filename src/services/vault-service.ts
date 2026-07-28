@@ -111,7 +111,7 @@ export async function deleteCollection(id: string) {
   return payload.collection;
 }
 
-export async function localLogin(input: { email: string; password: string }) {
+export async function localLogin(input: { email: string; password: string; remember?: boolean }) {
   return requestJson<{ user: SessionUser }>("/api/auth/local/login", {
     method: "POST",
     body: JSON.stringify(input),
