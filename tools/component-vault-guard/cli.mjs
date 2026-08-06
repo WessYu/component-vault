@@ -507,8 +507,11 @@ function main() {
   }
   if (command === "report") {
     const output = String(options.output ?? "public/component-vault-report.json");
-    writeJson(root, output, createReport(scan, blocking, config, changed));
-    printReport(scan, blocking, config, changed);
+    const reportBlocking = changed.files
+      ? blocking
+      : blocking.filter((violation) => strategyFor(violation, config) !== "touched");
+    writeJson(root, output, createReport(scan, reportBlocking, config, changed));
+    printReport(scan, reportBlocking, config, changed);
     return;
   }
   if (command === "context") {

@@ -87,11 +87,14 @@ test("baseline accepts protect-mode legacy but not new violations", () => {
 test("report and context generate machine-readable artifacts", () => {
   const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
   writeFixture(root);
+  writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy body</p>;\n`);
   let result = run(root, ["report", "--output", "public/report.json"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   const report = JSON.parse(readFileSync(join(root, "public/report.json"), "utf8"));
   assert.equal(report.version, 1);
   assert.equal(typeof report.summary.score, "number");
+  assert.equal(report.summary.errors, 1);
+  assert.equal(report.summary.blocking, 0);
   result = run(root, ["context"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(readFileSync(join(root, ".component-vault/AGENTS.md"), "utf8"), /Text\.Paragraph/);
