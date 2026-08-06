@@ -47,7 +47,40 @@ O backend atual usa **Convex** para persistir contas, sessões, componentes, fav
 - preferências do workspace salvas no backend;
 - biblioteca de Motion Experiences e padrões emergentes de UI;
 - preview responsivo e interface otimizada para desktop e mobile;
-- deploy contínuo pela Vercel e validação por GitHub Actions.
+- deploy contínuo pela Vercel e validação por GitHub Actions;
+- governança incremental de componentes com o **Component Vault Guard**.
+
+## Component Vault Guard
+
+O Guard é a camada de governança do projeto. Ele analisa o código, identifica componentes e estilos fora do padrão e produz mensagens que podem ser compreendidas por pessoas, CI e agentes de programação.
+
+A configuração fica em `component-vault.yaml` e suporta três estratégias:
+
+- `protect`: aceita violações registradas na baseline, mas bloqueia novas ocorrências;
+- `touched`: ao modificar um arquivo, exige a correção das violações governadas naquele arquivo;
+- `full`: qualquer violação bloqueia o pipeline.
+
+Comandos disponíveis:
+
+```bash
+npm run guard             # escaneia e exibe todos os achados
+npm run guard:check       # aplica as estratégias e retorna erro quando necessário
+npm run guard:baseline    # registra o legado atual
+npm run guard:report      # gera public/component-vault-report.json
+npm run guard:context     # gera instruções estruturadas para agentes
+npm run guard:test        # executa os testes do Guard
+```
+
+A página `/vault/guard` apresenta o score de saúde, arquivos analisados, violações bloqueantes, componentes governados e as correções sugeridas. O relatório também é gerado automaticamente antes do build e enviado como artefato pelo GitHub Actions.
+
+### Regras iniciais
+
+- `CV001`: import direto de componente governado;
+- `CV002`: sobrescrita de propriedade visual protegida;
+- `CV003`: elemento HTML cru no lugar de uma variante semântica;
+- `CV004`: combinação estática de classes repetida em vários pontos.
+
+A primeira política ativa governa tipografia através de `Text.H1`, `Text.H2`, `Text.Paragraph` e `Text.Caption`. Ela começa em `touched`, permitindo que a migração aconteça gradualmente conforme os arquivos existentes forem alterados.
 
 ## Stack
 
@@ -57,7 +90,7 @@ O backend atual usa **Convex** para persistir contas, sessões, componentes, fav
 | Estado e UI | Zustand, Framer Motion, Lucide React |
 | Backend | Convex |
 | Auth | sessão própria com cookies `httpOnly` |
-| Qualidade | GitHub Actions, TypeScript strict |
+| Qualidade | Component Vault Guard, GitHub Actions, TypeScript strict |
 | Deploy | Vercel |
 
 ## Executando localmente
@@ -79,7 +112,7 @@ A aplicação fica disponível em `http://localhost:3000`.
 
 ## Por que este projeto importa
 
-Este projeto concentra vários pontos que procuro demonstrar como desenvolvedor: arquitetura de produto, autenticação, persistência, permissões, CRUD real, experiência de interface, motion e evolução contínua baseada em uso.
+Este projeto concentra vários pontos que procuro demonstrar como desenvolvedor: arquitetura de produto, autenticação, persistência, permissões, CRUD real, experiência de interface, motion, governança de design system e evolução contínua baseada em uso.
 
 ## Autor
 
