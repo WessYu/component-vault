@@ -22,6 +22,9 @@
 # production
 /build
 
+# Component Vault Guard generated agent context
+/.component-vault/
+
 # misc
 .DS_Store
 *.pem

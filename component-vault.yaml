@@ -1,0 +1,29 @@
+version: 1
+
+scan:
+  include: [src]
+  exclude: [node_modules, .next, .git]
+  extensions: [.ts, .tsx, .js, .jsx]
+
+duplicates:
+  enabled: true
+  minOccurrences: 5
+  minTokens: 5
+
+components:
+  Text:
+    source: src/components/ui/text.tsx
+    allowedImportFiles: [src/components/ui/text.tsx]
+    forbiddenImports: [tamagui, "@radix-ui/themes"]
+    forbiddenProps: [fontSize, lineHeight, fontWeight]
+    strategy: touched
+    rawElements:
+      h1: H1
+      h2: H2
+      p: Paragraph
+      small: Caption
+    variants:
+      H1: Main page title with the strongest visual hierarchy
+      H2: Section heading inside a page or panel
+      Paragraph: Default readable body copy
+      Caption: Secondary metadata, labels and supporting copy
