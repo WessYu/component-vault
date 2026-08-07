@@ -201,13 +201,13 @@ export function GuardDashboard() {
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                       <Metric label="Legacy" value={component.legacy ?? component.errors} />
                       <Metric label="New" value={component.new ?? 0} />
-                      <Metric label="Resolved" value={component.resolved ?? 0} />
+                      <Metric label="Resolved" value={component.resolved || (componentRows.length === 1 ? resolved : 0)} />
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white">
-                        <div className="h-full rounded-full bg-[#6366F1]" style={{ width: `${component.migrationProgress ?? 0}%` }} />
+                        <div className="h-full rounded-full bg-[#6366F1]" style={{ width: `${component.migrationProgress || (componentRows.length === 1 ? migrationProgress : 0)}%` }} />
                       </div>
-                      <Text.Caption className="normal-case tracking-normal">{component.migrationProgress ?? 0}% migrated</Text.Caption>
+                      <Text.Caption className="normal-case tracking-normal">{component.migrationProgress || (componentRows.length === 1 ? migrationProgress : 0)}% migrated</Text.Caption>
                     </div>
                   </div>
                 )) : <Text.Paragraph>No governed components were found in the report.</Text.Paragraph>}
