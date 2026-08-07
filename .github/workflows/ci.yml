@@ -30,8 +30,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tarball="$(npm pack ./packages/component-vault --silent)"
+          tarball="$(npm pack ./packages/component-vault --silent | tail -n 1)"
           package_path="$GITHUB_WORKSPACE/$tarball"
+          test -f "$package_path"
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"
           npm init -y >/dev/null 2>&1
