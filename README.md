@@ -52,7 +52,7 @@ O backend atual usa **Convex** para persistir contas, sessões, componentes, fav
 
 ## Component Vault Guard
 
-O Guard é a camada de governança do projeto. Ele analisa o código, identifica componentes e estilos fora do padrão e produz mensagens que podem ser compreendidas por pessoas, CI e agentes de programação.
+O Guard é a camada de governança do projeto. Ele usa a AST do TypeScript para identificar drift real no design system sem confundir strings, snippets de documentação e HTML de demonstração com JSX executável.
 
 A configuração fica em `component-vault.yaml` e suporta três estratégias:
 
@@ -60,7 +60,26 @@ A configuração fica em `component-vault.yaml` e suporta três estratégias:
 - `touched`: ao modificar um arquivo, exige a correção das violações governadas naquele arquivo;
 - `full`: qualquer violação bloqueia o pipeline.
 
-Comandos disponíveis:
+### CLI instalável
+
+O pacote publicável fica em `packages/component-vault` e expõe o binário `component-vault`. Depois da publicação no npm, o fluxo de instalação será:
+
+```bash
+npx component-vault init
+npx component-vault scan
+npx component-vault baseline
+npx component-vault pr --base origin/master
+```
+
+`init --ci` também gera um workflow do GitHub Actions:
+
+```bash
+npx component-vault init --ci
+```
+
+O comando `doctor` valida configuração, baseline, Git e o motor AST. O comando `pr` gera `.component-vault/pr-summary.md`, adiciona o mesmo conteúdo ao `GITHUB_STEP_SUMMARY` quando executado no Actions e retorna código de erro quando a política bloqueia o PR.
+
+Comandos usados pelo próprio Component Vault:
 
 ```bash
 npm run guard             # escaneia e exibe todos os achados
@@ -68,10 +87,12 @@ npm run guard:check       # aplica as estratégias e retorna erro quando necess�
 npm run guard:baseline    # registra o legado atual
 npm run guard:report      # gera public/component-vault-report.json
 npm run guard:context     # gera instruções estruturadas para agentes
+npm run guard:doctor      # valida a instalação local
+npm run guard:pr          # gera o resumo de governança do PR
 npm run guard:test        # executa os testes do Guard
 ```
 
-A página `/vault/guard` apresenta o score de saúde, arquivos analisados, violações bloqueantes, componentes governados e as correções sugeridas. O relatório também é gerado automaticamente antes do build e enviado como artefato pelo GitHub Actions.
+A página `/vault/guard` mostra progresso de migração, baseline, dívida legada, violações resolvidas, novas violações, bloqueios e findings com arquivo, linha, coluna e sugestão de correção.
 
 ### Regras iniciais
 
@@ -81,6 +102,16 @@ A página `/vault/guard` apresenta o score de saúde, arquivos analisados, viola
 - `CV004`: combinação estática de classes repetida em vários pontos.
 
 A primeira política ativa governa tipografia através de `Text.H1`, `Text.H2`, `Text.Paragraph` e `Text.Caption`. Ela começa em `touched`, permitindo que a migração aconteça gradualmente conforme os arquivos existentes forem alterados.
+
+### Demo brownfield
+
+`examples/messy-app` contém um pequeno projeto propositalmente inconsistente para demonstrar o ciclo completo:
+
+```text
+scan -> baseline -> mudança -> PR gate -> legacy/new/resolved/blocking
+```
+
+O pipeline principal também empacota a CLI e instala o tarball em um projeto temporário para provar que `init` e `doctor` funcionam fora do repositório do Component Vault.
 
 ## Stack
 
@@ -109,6 +140,10 @@ npm run dev
 ```
 
 A aplicação fica disponível em `http://localhost:3000`.
+
+## Publicação da CLI
+
+O workflow `Publish Component Vault CLI` publica `packages/component-vault` quando uma tag `component-vault-cli-v*` é enviada ou quando o workflow é disparado manualmente. A publicação exige o secret `NPM_TOKEN` no repositório.
 
 ## Por que este projeto importa
 

@@ -24,6 +24,28 @@ jobs:
         run: npm run guard:test
       - name: Enforce component governance
         run: npm run guard:check
+      - name: Generate Guard PR summary
+        run: npm run guard:pr
+      - name: Smoke test installable CLI package
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$(npm pack ./packages/component-vault --silent | tail -n 1)"
+          package_path="$GITHUB_WORKSPACE/$tarball"
+          test -f "$package_path"
+          smoke_dir="$(mktemp -d)"
+          cd "$smoke_dir"
+          npm init -y >/dev/null 2>&1
+          npm install "$package_path" --silent
+          mkdir -p src
+          git init -q
+          git config user.email "guard@example.com"
+          git config user.name "Component Vault CI"
+          ./node_modules/.bin/component-vault --version
+          ./node_modules/.bin/component-vault init
+          git add .
+          git commit -qm "initialize smoke fixture"
+          ./node_modules/.bin/component-vault doctor
       - name: Build application
         shell: bash
         run: |
@@ -47,6 +69,12 @@ jobs:
         with:
           name: component-vault-guard-report
           path: public/component-vault-report.json
+      - name: Upload Guard PR summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-vault-guard-pr-summary
+          path: .component-vault/pr-summary.md
       - name: Assert build success
         shell: bash
         run: test "$(cat build-exit-code)" = "0"
