@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const cli = new URL("./cli-v2.mjs", import.meta.url).pathname;
+const cli = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 
 function writeFixture(root) {
   mkdirSync(join(root, "src/components/ui"), { recursive: true });
@@ -35,12 +36,12 @@ components:
   writeFileSync(join(root, "src/pages/good.tsx"), `import { Text } from "../components/ui/text"; export const Good = () => <Text.H1>Good</Text.H1>;\n`);
 }
 
-function run(root, args) {
-  return spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8" });
+function run(root, args, env = {}) {
+  return spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8", env: { ...process.env, ...env } });
 }
 
 function initGit(root) {
-  execFileSync("git", ["init"], { cwd: root });
+  execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
   execFileSync("git", ["config", "user.email", "guard@example.com"], { cwd: root });
   execFileSync("git", ["config", "user.name", "Guard Test"], { cwd: root });
   execFileSync("git", ["add", "."], { cwd: root });
@@ -107,4 +108,37 @@ test("alias imports from forbidden libraries are detected", () => {
   const result = run(root, ["scan"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /CV001/);
+});
+
+test("init creates a five-minute starter setup and doctor validates it", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-init-"));
+  mkdirSync(join(root, "src"), { recursive: true });
+  let result = run(root, ["init", "--ci"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.ok(existsSync(join(root, "component-vault.yaml")));
+  assert.ok(existsSync(join(root, "component-vault.baseline.json")));
+  assert.ok(existsSync(join(root, ".component-vault/README.md")));
+  assert.ok(existsSync(join(root, ".github/workflows/component-vault-guard.yml")));
+  initGit(root);
+  result = run(root, ["doctor"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.match(result.stdout, /Guard setup looks ready/);
+});
+
+test("pr command writes a concise summary and fails on blocking drift", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-pr-"));
+  writeFixture(root);
+  writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy</p>;\n`);
+  let result = run(root, ["baseline"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  initGit(root);
+  writeFileSync(join(root, "src/pages/good.tsx"), `export const Changed = () => <h1>New drift</h1>;\n`);
+  execFileSync("git", ["add", "src/pages/good.tsx"], { cwd: root });
+  execFileSync("git", ["commit", "-m", "introduce drift"], { cwd: root, stdio: "ignore" });
+  result = run(root, ["pr", "--base", "HEAD~1"]);
+  assert.equal(result.status, 1, result.stderr + result.stdout);
+  assert.match(result.stdout, /PR · blocked/);
+  const summary = readFileSync(join(root, ".component-vault/pr-summary.md"), "utf8");
+  assert.match(summary, /blocked this PR/);
+  assert.match(summary, /\| Blocking \| 1 \|/);
 });
