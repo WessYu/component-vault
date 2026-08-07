@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
-const cli = new URL("./cli.mjs", import.meta.url).pathname;
+const cli = new URL("./cli-v2.mjs", import.meta.url).pathname;
 
 function writeFixture(root) {
   mkdirSync(join(root, "src/components/ui"), { recursive: true });
@@ -47,55 +47,61 @@ function initGit(root) {
   execFileSync("git", ["commit", "-m", "base"], { cwd: root, stdio: "ignore" });
 }
 
-test("check passes when a touched file follows the governed component", () => {
+test("AST scan ignores raw HTML stored inside strings", () => {
   const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
   writeFixture(root);
-  initGit(root);
-  writeFileSync(join(root, "src/pages/good.tsx"), `import { Text } from "../components/ui/text"; export const Good = () => <Text.H1>Updated</Text.H1>;\n`);
-  const result = run(root, ["check", "--base", "HEAD~1"]);
+  writeFileSync(join(root, "src/pages/example.tsx"), `export const html = '<p>demo only</p>'; export const code = \`<h1>snippet</h1>\`;\n`);
+  const result = run(root, ["scan"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  assert.match(result.stdout, /Guard passed/);
+  assert.doesNotMatch(result.stdout, /example\.tsx/);
 });
 
-test("touched strategy blocks raw elements in changed files", () => {
+test("AST scan detects actual JSX and supports ignore directives", () => {
   const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
   writeFixture(root);
+  writeFileSync(join(root, "src/pages/bad.tsx"), `export const Bad = () => <h1>Real violation</h1>;\n`);
+  writeFileSync(join(root, "src/pages/ignored.tsx"), `export const Allowed = () => (\n  // component-vault-ignore CV003\n  <p>Intentional raw HTML</p>\n);\n`);
+  const result = run(root, ["scan"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.match(result.stdout, /bad\.tsx/);
+  assert.doesNotMatch(result.stdout, /ignored\.tsx/);
+});
+
+test("touched strategy blocks violations only in changed files", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
+  writeFixture(root);
+  writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy</p>;\n`);
   initGit(root);
-  writeFileSync(join(root, "src/pages/good.tsx"), `export const Bad = () => <h1>Duplicated title</h1>;\n`);
+  writeFileSync(join(root, "src/pages/good.tsx"), `export const Bad = () => <h1>Changed violation</h1>;\n`);
   const result = run(root, ["check", "--base", "HEAD~1"]);
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /CV003/);
-  assert.match(result.stdout, /Text\.H1/);
+  assert.match(result.stdout, /1 blocking violation/);
 });
 
-test("baseline accepts protect-mode legacy but not new violations", () => {
+test("baseline report separates legacy, resolved and new findings", () => {
   const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
   writeFixture(root);
-  const configPath = join(root, "component-vault.yaml");
-  writeFileSync(configPath, readFileSync(configPath, "utf8").replace("strategy: touched", "strategy: protect"));
-  writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy</p>;\n`);
+  writeFileSync(join(root, "src/pages/legacy-a.tsx"), `export const A = () => <p>A</p>;\n`);
+  writeFileSync(join(root, "src/pages/legacy-b.tsx"), `export const B = () => <p>B</p>;\n`);
   let result = run(root, ["baseline"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  result = run(root, ["check"]);
-  assert.equal(result.status, 0, result.stderr + result.stdout);
+  writeFileSync(join(root, "src/pages/legacy-a.tsx"), `import { Text } from "../components/ui/text"; export const A = () => <Text.Paragraph>A</Text.Paragraph>;\n`);
   writeFileSync(join(root, "src/pages/new.tsx"), `export const New = () => <h1>New</h1>;\n`);
-  result = run(root, ["check"]);
-  assert.equal(result.status, 1);
-  assert.match(result.stdout, /blocking violation/);
-});
-
-test("report and context generate machine-readable artifacts", () => {
-  const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
-  writeFixture(root);
-  writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy body</p>;\n`);
-  let result = run(root, ["report", "--output", "public/report.json"]);
+  result = run(root, ["report", "--output", "public/report.json"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   const report = JSON.parse(readFileSync(join(root, "public/report.json"), "utf8"));
-  assert.equal(report.version, 1);
-  assert.equal(typeof report.summary.score, "number");
-  assert.equal(report.summary.errors, 1);
-  assert.equal(report.summary.blocking, 0);
-  result = run(root, ["context"]);
+  assert.equal(report.engine, "typescript-ast");
+  assert.equal(report.summary.legacy, 1);
+  assert.equal(report.summary.resolved, 1);
+  assert.equal(report.summary.new, 1);
+  assert.equal(report.summary.migrationProgress, 50);
+});
+
+test("alias imports from forbidden libraries are detected", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-"));
+  writeFixture(root);
+  writeFileSync(join(root, "src/pages/import.tsx"), `import { Text as Typography } from "tamagui"; export const X = () => <Typography>Hello</Typography>;\n`);
+  const result = run(root, ["scan"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  assert.match(readFileSync(join(root, ".component-vault/AGENTS.md"), "utf8"), /Text\.Paragraph/);
+  assert.match(result.stdout, /CV001/);
 });
