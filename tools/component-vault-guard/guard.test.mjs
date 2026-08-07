@@ -73,9 +73,12 @@ test("touched strategy blocks violations only in changed files", () => {
   writeFileSync(join(root, "src/pages/legacy.tsx"), `export const Legacy = () => <p>Legacy</p>;\n`);
   initGit(root);
   writeFileSync(join(root, "src/pages/good.tsx"), `export const Bad = () => <h1>Changed violation</h1>;\n`);
+  execFileSync("git", ["add", "src/pages/good.tsx"], { cwd: root });
+  execFileSync("git", ["commit", "-m", "change touched file"], { cwd: root, stdio: "ignore" });
   const result = run(root, ["check", "--base", "HEAD~1"]);
   assert.equal(result.status, 1);
   assert.match(result.stdout, /1 blocking violation/);
+  assert.match(result.stdout, /good\.tsx/);
 });
 
 test("baseline report separates legacy, resolved and new findings", () => {
