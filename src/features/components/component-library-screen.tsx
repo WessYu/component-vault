@@ -5,6 +5,7 @@ import { Activity, Boxes, Grid2X2, Layers3, List, Monitor, Plus, Sparkles } from
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { Text } from "@/components/ui/text";
 import { CategoryFilters } from "@/components/library/category-filters";
 import { ComponentSearch } from "@/components/library/component-search";
 import { ComponentGrid } from "@/components/library/component-grid";
@@ -97,8 +98,8 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
                 <Sparkles size={13} aria-hidden />
                 Visual playground
               </motion.p>
-              <h1 className="max-w-4xl text-3xl font-bold tracking-[-0.045em] text-[#171A2B] sm:text-4xl md:text-5xl">{favoriteOnly ? "Favorite Components" : "Discover Components"}</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#6D7285] md:text-base md:leading-7">Explore, inspect and reuse production-ready interface components with responsive previews and motion-safe interactions.</p>
+              <Text.H1 className="max-w-4xl">{favoriteOnly ? "Favorite Components" : "Discover Components"}</Text.H1>
+              <Text.Paragraph className="mt-3 max-w-3xl">Explore, inspect and reuse production-ready interface components with responsive previews and motion-safe interactions.</Text.Paragraph>
             </div>
             <div className="grid gap-3">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
