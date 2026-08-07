@@ -8,11 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "guard": "node tools/component-vault-guard/cli-v2.mjs scan",
-    "guard:check": "node tools/component-vault-guard/cli-v2.mjs check",
-    "guard:baseline": "node tools/component-vault-guard/cli-v2.mjs baseline",
-    "guard:report": "node tools/component-vault-guard/cli-v2.mjs report --output public/component-vault-report.json",
-    "guard:context": "node tools/component-vault-guard/cli-v2.mjs context",
+    "guard": "node tools/component-vault-guard/cli.mjs scan",
+    "guard:check": "node tools/component-vault-guard/cli.mjs check",
+    "guard:baseline": "node tools/component-vault-guard/cli.mjs baseline",
+    "guard:report": "node tools/component-vault-guard/cli.mjs report --output public/component-vault-report.json",
+    "guard:context": "node tools/component-vault-guard/cli.mjs context",
+    "guard:doctor": "node tools/component-vault-guard/cli.mjs doctor",
+    "guard:pr": "node tools/component-vault-guard/cli.mjs pr",
     "guard:test": "node --test tools/component-vault-guard/guard.test.mjs"
   },
   "dependencies": {
