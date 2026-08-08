@@ -12,8 +12,17 @@ duplicates:
 
 rules:
   forbiddenPatterns:
-    - 'text-\\[#'
-    - 'bg-\\[#'
+    - id: arbitrary-text-color
+      pattern: 'text-\\[#[0-9a-fA-F]{3,8}\\]'
+      message: 'Arbitrary text colors are not allowed.'
+      suggestion: 'Use a governed text color token.'
+      severity: error
+
+    - id: arbitrary-background-color
+      pattern: 'bg-\\[#[0-9a-fA-F]{3,8}\\]'
+      message: 'Arbitrary background colors are not allowed.'
+      suggestion: 'Use a governed background color token.'
+      severity: error
 
 components:
   Text:
