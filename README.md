@@ -52,47 +52,79 @@ O backend atual usa **Convex** para persistir contas, sessões, componentes, fav
 
 ## Component Vault Guard
 
-O Guard é a camada de governança do projeto. Ele usa a AST do TypeScript para identificar drift real no design system sem confundir strings, snippets de documentação e HTML de demonstração com JSX executável.
+O **Component Vault Guard** é a camada de governança do projeto. A ideia é impedir que um design system perca consistência conforme o código cresce, inclusive quando parte dele é produzida ou modificada por agentes de IA.
 
-A configuração fica em `component-vault.yaml` e suporta três estratégias:
+O Guard usa a **TypeScript Compiler API para analisar a AST de TypeScript/TSX**. Isso permite trabalhar com nós reais de import, JSX e propriedades em vez de depender somente de buscas textuais ou regex. Como consequência, o scanner consegue separar código executável de strings, comentários, snippets de documentação e HTML usado apenas em exemplos.
 
-- `protect`: aceita violações registradas na baseline, mas bloqueia novas ocorrências;
-- `touched`: ao modificar um arquivo, exige a correção das violações governadas naquele arquivo;
-- `full`: qualquer violação bloqueia o pipeline.
+### Arquitetura
 
-### CLI instalável
-
-O pacote publicável fica em `packages/component-vault` e expõe o binário `component-vault`. Depois da publicação no npm, o fluxo de instalação será:
-
-```bash
-npx component-vault init
-npx component-vault scan
-npx component-vault baseline
-npx component-vault pr --base origin/master
+```text
+Source Code
+    │
+    ▼
+TypeScript / TSX AST
+    │
+    ├── Component rules
+    ├── Import rules
+    ├── Property rules
+    └── Semantic rules
+    │
+    ▼
+Guard Engine
+    │
+    ├── Baseline
+    ├── Migration strategy
+    └── Finding classification
+    │
+    ▼
+Report / CLI / CI
+    │
+    ├── legacy
+    ├── new
+    ├── resolved
+    └── blocking
 ```
 
-`init --ci` também gera um workflow do GitHub Actions:
+A regra não precisa apenas dizer que algo está errado. Ela pode definir **qual componente é permitido, quais imports são proibidos, qual API semântica deve ser usada e em que momento uma violação deve bloquear o desenvolvimento**.
 
-```bash
-npx component-vault init --ci
+### Brownfield migration
+
+Um dos objetivos do Guard é permitir a adoção em projetos existentes sem exigir uma refatoração completa no primeiro dia.
+
+A configuração suporta três estratégias:
+
+- `protect`: mantém violações conhecidas na baseline, mas bloqueia novas ocorrências;
+- `touched`: quando um arquivo legado é modificado, as violações governadas naquele arquivo precisam ser corrigidas;
+- `full`: qualquer violação restante bloqueia o pipeline.
+
+O fluxo fica assim:
+
+```text
+Legacy code
+    │
+    ▼
+Baseline
+    │
+    ├── existing debt → tolerated
+    │
+    └── touched file → must migrate
+                         │
+                         ▼
+                    full enforcement
 ```
 
-O comando `doctor` valida configuração, baseline, Git e o motor AST. O comando `pr` gera `.component-vault/pr-summary.md`, adiciona o mesmo conteúdo ao `GITHUB_STEP_SUMMARY` quando executado no Actions e retorna código de erro quando a política bloqueia o PR.
+Isso permite que um projeto brownfield reduza a dívida de forma incremental, sem transformar a adoção do Guard em uma migração de big bang.
 
-Comandos usados pelo próprio Component Vault:
+### Classificação dos findings
 
-```bash
-npm run guard             # escaneia e exibe todos os achados
-npm run guard:check       # aplica as estratégias e retorna erro quando necessário
-npm run guard:baseline    # registra o legado atual
-npm run guard:report      # gera public/component-vault-report.json
-npm run guard:context     # gera instruções estruturadas para agentes
-npm run guard:doctor      # valida a instalação local
-npm run guard:pr          # gera o resumo de governança do PR
-npm run guard:test        # executa os testes do Guard
-```
+O Guard acompanha mais do que apenas o número bruto de erros:
 
-A página `/vault/guard` mostra progresso de migração, baseline, dívida legada, violações resolvidas, novas violações, bloqueios e findings com arquivo, linha, coluna e sugestão de correção.
+- **legacy** — violações já registradas na baseline;
+- **new** — violações introduzidas pela alteração atual;
+- **resolved** — violações que existiam e foram corrigidas;
+- **blocking** — findings que, de acordo com a política, impedem o pipeline de passar.
+
+Isso torna o resultado útil tanto para desenvolvimento local quanto para revisão de Pull Requests.
 
 ### Regras iniciais
 
@@ -108,10 +140,98 @@ A primeira política ativa governa tipografia através de `Text.H1`, `Text.H2`, 
 `examples/messy-app` contém um pequeno projeto propositalmente inconsistente para demonstrar o ciclo completo:
 
 ```text
-scan -> baseline -> mudança -> PR gate -> legacy/new/resolved/blocking
+scan → baseline → mudança → PR gate → legacy/new/resolved/blocking
 ```
 
-O pipeline principal também empacota a CLI e instala o tarball em um projeto temporário para provar que `init` e `doctor` funcionam fora do repositório do Component Vault.
+O pipeline principal também empacota a CLI, instala o tarball em um projeto temporário e executa `init` e `doctor` fora do próprio repositório. Isso valida o artefato publicado em vez de testar somente os arquivos-fonte.
+
+## CLI
+
+O Guard também é distribuído como pacote npm independente:
+
+```bash
+npm install -g @wess2001/component-vault
+```
+
+Ou sem instalação global:
+
+```bash
+npx @wess2001/component-vault init
+```
+
+O pacote é `@wess2001/component-vault`, enquanto o executável exposto no terminal continua sendo `component-vault`.
+
+### Inicializar um projeto
+
+```bash
+component-vault init
+```
+
+Para configurar também a integração de CI:
+
+```bash
+component-vault init --ci
+```
+
+### Comandos
+
+```bash
+component-vault scan
+component-vault check
+component-vault baseline
+component-vault report
+component-vault context
+component-vault doctor
+component-vault pr
+```
+
+Exemplo de Pull Request:
+
+```bash
+component-vault pr --base origin/master
+```
+
+O comando `doctor` valida configuração, baseline, Git e o motor AST. O comando `pr` gera `.component-vault/pr-summary.md`, adiciona o mesmo conteúdo ao `GITHUB_STEP_SUMMARY` quando executado no GitHub Actions e retorna código de erro quando a política bloqueia o PR.
+
+### Uso no próprio Component Vault
+
+```bash
+npm run guard
+npm run guard:check
+npm run guard:baseline
+npm run guard:report
+npm run guard:context
+npm run guard:doctor
+npm run guard:pr
+npm run guard:test
+```
+
+A página `/vault/guard` mostra progresso de migração, baseline, dívida legada, violações resolvidas, novas violações, bloqueios e findings com arquivo, linha, coluna e sugestão de correção.
+
+## CI/CD
+
+O Guard pode funcionar como gate de Pull Request. Uma configuração gerada pelo `init --ci` executa a política no GitHub Actions e pode bloquear a alteração quando novos findings incompatíveis com a regra são introduzidos.
+
+O fluxo recomendado é:
+
+```text
+Developer / AI agent
+        │
+        ▼
+component-vault check
+        │
+        ▼
+TypeScript AST analysis
+        │
+   ┌────┴────┐
+   │         │
+ allowed   violation
+   │         │
+   ▼         ▼
+ CI pass   CI block
+```
+
+Para publicação da CLI, o pacote fica em `packages/component-vault` e possui o nome `@wess2001/component-vault`. O workflow de publicação pode ser disparado por tags `component-vault-cli-v*` ou manualmente.
 
 ## Stack
 
@@ -141,13 +261,11 @@ npm run dev
 
 A aplicação fica disponível em `http://localhost:3000`.
 
-## Publicação da CLI
-
-O workflow `Publish Component Vault CLI` publica `packages/component-vault` quando uma tag `component-vault-cli-v*` é enviada ou quando o workflow é disparado manualmente. A publicação exige o secret `NPM_TOKEN` no repositório.
-
 ## Por que este projeto importa
 
-Este projeto concentra vários pontos que procuro demonstrar como desenvolvedor: arquitetura de produto, autenticação, persistência, permissões, CRUD real, experiência de interface, motion, governança de design system e evolução contínua baseada em uso.
+O Component Vault começou como uma biblioteca pessoal e evoluiu para uma ferramenta que trata componentes como uma camada governável do produto. O Guard adiciona uma preocupação que normalmente fica espalhada entre lint, documentação, code review e conhecimento tácito do time: **garantir que o código continue usando o design system de forma consistente ao longo do tempo**.
+
+Isso fica especialmente relevante em fluxos modernos de desenvolvimento assistido por IA, nos quais gerar código é fácil, mas manter uma API visual coerente em centenas de arquivos continua sendo um problema de engenharia.
 
 ## Autor
 
