@@ -10,6 +10,11 @@ duplicates:
   minOccurrences: 5
   minTokens: 5
 
+rules:
+  forbiddenPatterns:
+    - 'text-\\[#'
+    - 'bg-\\[#'
+
 components:
   Text:
     source: src/components/ui/text.tsx
@@ -22,8 +27,8 @@ components:
       h2: H2
       p: Paragraph
       small: Caption
-    variants:
-      H1: Main page title with the strongest visual hierarchy
-      H2: Section heading inside a page or panel
-      Paragraph: Default readable body copy
-      Caption: Secondary metadata, labels and supporting copy
+    documentation:
+      H1: Use for the main page title. Keep visual hierarchy consistent with the Text component.
+      H2: Use for section headings inside pages and panels.
+      Paragraph: Use for readable body copy and explanatory content.
+      Caption: Use for metadata, labels and supporting copy.
