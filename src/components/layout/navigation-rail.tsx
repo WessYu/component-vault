@@ -14,6 +14,7 @@ const items = [
   { label: "Collections", href: "/vault/collections", icon: Archive },
   { label: "Favorites", href: "/vault/favorites", icon: Heart },
   { label: "Tokens", href: "/vault/tokens", icon: SwatchBook },
+  { label: "Guard", href: "/vault/guard", icon: ShieldCheck },
   { label: "Admin", href: "/vault/admin", icon: ShieldCheck },
   { label: "Settings", href: "/vault/settings", icon: Settings },
 ];
@@ -226,7 +227,7 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
               >
                 <div className="absolute -right-8 -top-8 size-20 rounded-full bg-white/15 blur-xl" />
                 <Sparkles className="relative" size={18} aria-hidden />
-                <p className="relative mt-3 text-sm font-semibold">Build faster with high-quality components.</p>
+                <span className="relative mt-3 block text-sm font-semibold">Build faster with high-quality components.</span>
                 <Link href="/vault/components/card-stack-navigator" className="relative mt-3 inline-flex text-xs font-medium text-white/90 transition-transform duration-100 hover:translate-x-0.5">
                   Explore motion
                 </Link>

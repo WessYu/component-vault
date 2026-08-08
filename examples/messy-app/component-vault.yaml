@@ -1,0 +1,27 @@
+version: 1
+
+scan:
+  include: [src]
+  exclude: [node_modules, .git]
+  extensions: [.ts, .tsx]
+
+duplicates:
+  enabled: false
+
+components:
+  Text:
+    source: src/components/ui/text.tsx
+    allowedImportFiles: [src/components/ui/text.tsx]
+    forbiddenImports: [tamagui]
+    forbiddenProps: [fontSize, lineHeight, fontWeight]
+    strategy: touched
+    rawElements:
+      h1: H1
+      h2: H2
+      p: Paragraph
+      small: Caption
+    variants:
+      H1: Main page title
+      H2: Section heading
+      Paragraph: Default body text
+      Caption: Supporting metadata

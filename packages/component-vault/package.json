@@ -1,0 +1,45 @@
+{
+  "name": "component-vault",
+  "version": "0.2.0",
+  "description": "AST-based design-system governance for developers, CI and AI coding agents.",
+  "type": "module",
+  "bin": {
+    "component-vault": "bin/component-vault.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md"
+  ],
+  "scripts": {
+    "prepack": "node scripts/prepack.mjs",
+    "postpack": "node scripts/postpack.mjs"
+  },
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WessYu/component-vault.git"
+  },
+  "homepage": "https://component-vault-dun.vercel.app/",
+  "bugs": {
+    "url": "https://github.com/WessYu/component-vault/issues"
+  },
+  "keywords": [
+    "design-system",
+    "typescript",
+    "ast",
+    "lint",
+    "governance",
+    "react",
+    "ai-agents",
+    "ci"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
