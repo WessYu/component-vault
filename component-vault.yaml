@@ -10,6 +10,34 @@ duplicates:
   minOccurrences: 5
   minTokens: 5
 
+rules:
+  CV001:
+    title: Direct component import
+    explanation: A governed component was imported directly from a forbidden library instead of the project wrapper.
+    severity: error
+  CV002:
+    title: Forbidden variant override
+    explanation: A semantic component overrides a protected visual prop and can fragment the design system.
+    severity: error
+  CV003:
+    title: Raw semantic element
+    explanation: A real JSX element was used where a governed semantic component should be used.
+    severity: error
+  CV004:
+    title: Repeated static style
+    explanation: The same static className combination appears repeatedly and may deserve extraction.
+    severity: warning
+  CV005:
+    title: Forbidden arbitrary style
+    explanation: An arbitrary design value bypasses the project's governed design tokens.
+    severity: error
+    patterns: [
+      'text-\\[#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\]',
+      'bg-\\[#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\]',
+      'border-\\[#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\]'
+    ]
+    message: Use a governed design token instead of an arbitrary color value.
+
 components:
   Text:
     source: src/components/ui/text.tsx
@@ -23,7 +51,15 @@ components:
       p: Paragraph
       small: Caption
     variants:
-      H1: Main page title with the strongest visual hierarchy
-      H2: Section heading inside a page or panel
-      Paragraph: Default readable body copy
-      Caption: Secondary metadata, labels and supporting copy
+      H1:
+        description: Page title with the strongest visual hierarchy.
+        tokens: [text-text-primary]
+      H2:
+        description: Section heading inside a page or panel.
+        tokens: [text-text-primary]
+      Paragraph:
+        description: Default readable body copy.
+        tokens: [text-text-secondary]
+      Caption:
+        description: Secondary metadata, labels and supporting copy.
+        tokens: [text-text-secondary]
