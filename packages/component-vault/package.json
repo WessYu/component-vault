@@ -1,5 +1,5 @@
 {
-  "name": "component-vault",
+  "name": "@wess2001/component-vault",
   "version": "0.2.0",
   "description": "AST-based design-system governance for developers, CI and AI coding agents.",
   "type": "module",
