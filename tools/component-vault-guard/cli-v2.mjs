@@ -7,7 +7,7 @@ import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import process from "node:process";
 import ts from "typescript";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
 const RULES = {
@@ -15,6 +15,7 @@ const RULES = {
   CV002: { title: "Forbidden variant override", explanation: "A semantic component overrides a protected visual prop and can fragment the design system." },
   CV003: { title: "Raw semantic element", explanation: "A real JSX element was used where a governed semantic component should be used." },
   CV004: { title: "Repeated static style", explanation: "The same static className combination appears repeatedly and may deserve extraction." },
+  CV005: { title: "Forbidden pattern", explanation: "Source code matches a pattern forbidden by the component vault configuration." },
 };
 
 function parseScalar(raw) {
@@ -75,6 +76,7 @@ function loadConfig(root, configPath = DEFAULT_CONFIG) {
   config.scan.extensions ??= [".ts", ".tsx", ".js", ".jsx"];
   config.duplicates ??= { enabled: true, minOccurrences: 4, minTokens: 4 };
   config.components ??= {};
+  config.rules ??= {};
   return config;
 }
 
@@ -157,9 +159,85 @@ function staticClassValue(attribute) {
   return null;
 }
 
-function scanSourceFile(file, content, config, duplicateOccurrences) {
-  const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind(file));
+function compileForbiddenPatterns(config) {
+  const rawRules = config.rules?.forbiddenPatterns;
+  if (rawRules == null) return [];
+  if (!Array.isArray(rawRules)) throw new Error("rules.forbiddenPatterns must be an array.");
+
+  return rawRules.map((entry, index) => {
+    const item = typeof entry === "string" ? { pattern: entry } : entry;
+    if (!item || typeof item !== "object" || typeof item.pattern !== "string" || item.pattern.length === 0) {
+      throw new Error(`rules.forbiddenPatterns[${index}] must contain a non-empty pattern string.`);
+    }
+
+    let regexp;
+    try {
+      regexp = new RegExp(item.pattern, typeof item.flags === "string" ? item.flags : "g");
+    } catch (error) {
+      throw new Error(`Invalid rules.forbiddenPatterns[${index}] regex: ${error.message}`);
+    }
+
+    return {
+      id: item.id ? String(item.id) : `pattern-${index + 1}`,
+      pattern: item.pattern,
+      flags: typeof item.flags === "string" ? item.flags : "g",
+      regexp,
+      message: item.message ? String(item.message) : "This pattern is forbidden by component-vault.yaml.",
+      suggestion: item.suggestion ? String(item.suggestion) : null,
+      severity: item.severity ? String(item.severity) : "error",
+      files: Array.isArray(item.files) ? item.files.map(String) : null,
+      components: Array.isArray(item.components) ? item.components.map(String) : null,
+    };
+  });
+}
+
+function findForbiddenPatternMatches(source, pattern) {
+  const regexp = new RegExp(pattern.regexp.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+  return [...source.matchAll(regexp)];
+}
+
+function scanForbiddenPatterns(file, content, config, sourceFile, patterns) {
   const violations = [];
+  for (const pattern of patterns) {
+    if (pattern.files && !pattern.files.some((candidate) => matchesPattern(file, candidate))) continue;
+    const matches = findForbiddenPatternMatches(content, pattern);
+    for (const match of matches) {
+      const index = match.index ?? 0;
+      const position = sourceFile.getPositionOfLineAndCharacter(
+        sourceFile.getLineAndCharacterOfPosition(index).line,
+        sourceFile.getLineAndCharacterOfPosition(index).character,
+      );
+      const lineAndCharacter = sourceFile.getLineAndCharacterOfPosition(position);
+      const node = {
+        getStart: () => index,
+        getText: () => match[0],
+      };
+      const component = pattern.components?.length === 1 ? pattern.components[0] : undefined;
+      violations.push(createViolation({
+        rule: "CV005",
+        component,
+        file,
+        sourceFile,
+        node,
+        message: pattern.message,
+        suggestion: pattern.suggestion ?? undefined,
+        severity: pattern.severity,
+        metadata: {
+          patternId: pattern.id,
+          pattern: pattern.pattern,
+          match: match[0],
+          regexLine: lineAndCharacter.line + 1,
+          regexColumn: lineAndCharacter.character + 1,
+        },
+      }));
+    }
+  }
+  return violations;
+}
+
+function scanSourceFile(file, content, config, duplicateOccurrences, forbiddenPatterns) {
+  const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind(file));
+  const violations = scanForbiddenPatterns(file, content, config, sourceFile, forbiddenPatterns);
   function visit(node) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const moduleName = node.moduleSpecifier.text;
@@ -218,195 +296,72 @@ function scanDuplicateStyles(duplicateOccurrences, config) {
   const violations = [];
   for (const [normalized, items] of duplicateOccurrences) {
     if (items.length < minOccurrences) continue;
-    const first = items[0];
-    violations.push(createViolation({ rule: "CV004", component: null, file: first.file, sourceFile: first.sourceFile, node: first.node, severity: "warning", message: `Static class combination is repeated ${items.length} times across ${new Set(items.map((item) => item.file)).size} file(s).`, suggestion: "Consider extracting a reusable component, variant, or tokenized utility.", metadata: { occurrences: items.length, normalized, files: [...new Set(items.map((item) => item.file))] } }));
+    for (const item of items) {
+      violations.push(createViolation({
+        rule: "CV004",
+        file: item.file,
+        sourceFile: item.sourceFile,
+        node: item.node,
+        message: `The same static className combination appears ${items.length} times.`,
+        suggestion: "Consider extracting a governed component or reusable style token.",
+        metadata: { occurrences: items.length, classes: normalized },
+      }));
+    }
   }
   return violations;
 }
-function dedupeViolations(violations) {
-  const unique = new Map();
-  for (const violation of violations) {
-    const key = `${violation.rule}|${violation.file}|${violation.line}|${violation.column}|${violation.component ?? ""}|${JSON.stringify(violation.metadata)}`;
-    if (!unique.has(key)) unique.set(key, violation);
-  }
-  return [...unique.values()].sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.rule.localeCompare(b.rule));
-}
-function scanProject(root, config) {
-  const files = collectFiles(root, config);
+
+function scan(root, config) {
   const duplicateOccurrences = new Map();
+  const forbiddenPatterns = compileForbiddenPatterns(config);
   const violations = [];
-  for (const file of files) violations.push(...scanSourceFile(file, readFileSync(resolve(root, file), "utf8"), config, duplicateOccurrences));
+  for (const file of collectFiles(root, config)) {
+    const content = readFileSync(resolve(root, file), "utf8");
+    violations.push(...scanSourceFile(file, content, config, duplicateOccurrences, forbiddenPatterns));
+  }
   violations.push(...scanDuplicateStyles(duplicateOccurrences, config));
-  return { files, violations: dedupeViolations(violations) };
+  return violations;
 }
 
-function loadBaseline(root, path = DEFAULT_BASELINE) {
-  const absolute = resolve(root, path);
-  if (!existsSync(absolute)) return { version: 2, generatedAt: null, fingerprints: [], violations: [] };
-  const raw = JSON.parse(readFileSync(absolute, "utf8"));
-  const violations = Array.isArray(raw.violations) ? raw.violations : [];
-  const fingerprints = Array.isArray(raw.fingerprints) ? raw.fingerprints : violations.map((item) => item.fingerprint).filter(Boolean);
-  return { version: Number(raw.version ?? 1), generatedAt: raw.generatedAt ?? null, fingerprints, violations };
-}
-function getChangedFiles(root, baseArg) {
-  const candidates = [baseArg, process.env.COMPONENT_VAULT_BASE_REF, "origin/master", "HEAD~1"].filter(Boolean);
-  for (const candidate of candidates) {
-    try {
-      const result = execFileSync("git", ["diff", "--name-only", "--diff-filter=ACMR", `${candidate}...HEAD`], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-      return { base: candidate, files: new Set(result.split(/\r?\n/).filter(Boolean).map(toPosix)) };
-    } catch {}
+function printViolations(violations) {
+  if (!violations.length) {
+    console.log("Component Vault: no violations found.");
+    return;
   }
-  return { base: null, files: null };
-}
-function strategyFor(violation, config) { return violation.component ? String(config.components[violation.component]?.strategy ?? "protect") : "protect"; }
-
-function classifyViolations(scan, config, baseline, changed) {
-  const baselineSet = new Set(baseline.fingerprints);
-  const baselineDetails = new Map(baseline.violations.map((item) => [item.fingerprint, item]));
-  const currentErrors = scan.violations.filter((item) => item.severity === "error");
-  const currentSet = new Set(currentErrors.map((item) => item.fingerprint));
-  const baselineIsEmpty = baselineSet.size === 0;
-  const legacy = [];
-  const introduced = [];
-  for (const violation of currentErrors) {
-    if (baselineSet.has(violation.fingerprint)) { legacy.push(violation); continue; }
-    const strategy = strategyFor(violation, config);
-    const untouchedLegacyFallback = baselineIsEmpty && strategy === "touched" && (!changed.files || !changed.files.has(violation.file));
-    if (untouchedLegacyFallback) legacy.push(violation); else introduced.push(violation);
-  }
-  const resolved = baseline.fingerprints.filter((fingerprint) => !currentSet.has(fingerprint)).map((fingerprint) => baselineDetails.get(fingerprint) ?? { fingerprint, component: null, rule: null, file: null });
-  const migrationTotal = Math.max(baselineSet.size, legacy.length + resolved.length);
-  const migrationProgress = migrationTotal === 0 ? (currentErrors.length === 0 ? 100 : 0) : Math.round((resolved.length / migrationTotal) * 100);
-  return { legacy, introduced, resolved, migrationTotal, migrationProgress };
-}
-function evaluatePolicy(violations, config, baseline, changedFiles) {
-  const known = new Set(baseline.fingerprints);
-  const blocking = [];
   for (const violation of violations) {
-    if (violation.severity !== "error") continue;
-    const strategy = strategyFor(violation, config);
-    if (strategy === "full") blocking.push(violation);
-    else if (strategy === "touched") { if (!changedFiles || changedFiles.has(violation.file)) blocking.push(violation); }
-    else if (!known.has(violation.fingerprint)) blocking.push(violation);
+    console.log(`\n[${violation.rule}] ${violation.title}`);
+    console.log(`${violation.file}:${violation.line}:${violation.column}`);
+    console.log(`  ${violation.message}`);
+    if (violation.snippet) console.log(`  ${violation.snippet}`);
+    if (violation.suggestion) console.log(`  → ${violation.suggestion}`);
   }
-  return dedupeViolations(blocking);
+  console.log(`\nComponent Vault: ${violations.length} violation(s).`);
 }
-function summarize(scan, blocking, config, baseline, changed) {
-  const warnings = scan.violations.filter((item) => item.severity === "warning").length;
-  const errors = scan.violations.filter((item) => item.severity === "error").length;
-  const classification = classifyViolations(scan, config, baseline, changed);
-  const components = Object.fromEntries(Object.keys(config.components).map((name) => {
-    const current = scan.violations.filter((item) => item.component === name);
-    const legacy = classification.legacy.filter((item) => item.component === name).length;
-    const introduced = classification.introduced.filter((item) => item.component === name).length;
-    const resolved = classification.resolved.filter((item) => item.component === name).length;
-    const total = legacy + resolved;
-    return [name, { strategy: String(config.components[name].strategy ?? "protect"), violations: current.length, errors: current.filter((item) => item.severity === "error").length, warnings: current.filter((item) => item.severity === "warning").length, legacy, new: introduced, resolved, migrationProgress: total ? Math.round((resolved / total) * 100) : (legacy ? 0 : 100) }];
-  }));
-  return { score: classification.migrationProgress, migrationProgress: classification.migrationProgress, migrationTotal: classification.migrationTotal, baseline: Math.max(baseline.fingerprints.length, classification.migrationTotal), legacy: classification.legacy.length, new: classification.introduced.length, resolved: classification.resolved.length, filesScanned: scan.files.length, violations: scan.violations.length, errors, warnings, blocking: blocking.length, changedFiles: changed.files ? changed.files.size : null, base: changed.base, components };
+
+function commandScan(root, config) {
+  const violations = scan(root, config);
+  printViolations(violations);
+  return violations.length ? 1 : 0;
 }
-function printViolation(violation, blockingFingerprints = new Set()) {
-  const marker = blockingFingerprints.has(violation.fingerprint) ? "X" : violation.severity === "warning" ? "!" : "-";
-  console.log(`${marker} ${violation.rule} ${violation.file}:${violation.line}:${violation.column} — ${violation.message}`);
-  if (violation.snippet) console.log(`  ${violation.snippet}`);
-  if (violation.suggestion) console.log(`  Fix: ${violation.suggestion}`);
+
+function commandCheck(root, config) {
+  return commandScan(root, config);
 }
-function printReport(scan, blocking, config, baseline, changed) {
-  const summary = summarize(scan, blocking, config, baseline, changed);
-  console.log(`\nComponent Vault Guard v${VERSION}`);
-  console.log(`Migration ${summary.migrationProgress}% · ${summary.legacy} legacy · ${summary.new} new · ${summary.resolved} resolved · ${summary.blocking} blocking`);
-  if (summary.base) console.log(`Diff base: ${summary.base} · ${summary.changedFiles} changed files`);
-  const blockingSet = new Set(blocking.map((item) => item.fingerprint));
-  for (const violation of scan.violations) printViolation(violation, blockingSet);
-  console.log(blocking.length ? `\nGuard failed with ${blocking.length} blocking violation(s).` : "\nGuard passed with no blocking violations.");
-  return summary;
-}
-function createReport(scan, blocking, config, baseline, changed) { return { version: 2, generatedAt: new Date().toISOString(), engine: "typescript-ast", summary: summarize(scan, blocking, config, baseline, changed), violations: scan.violations }; }
-function writeJson(root, output, value) {
-  const absolute = resolve(root, output);
-  mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, `${JSON.stringify(value, null, 2)}\n`);
-  console.log(`Written ${toPosix(relative(root, absolute))}`);
-}
-function generateContext(config) {
-  const structured = { version: 2, generatedAt: new Date().toISOString(), components: Object.fromEntries(Object.entries(config.components).map(([name, rule]) => [name, { source: rule.source, strategy: rule.strategy ?? "protect", variants: rule.variants ?? {}, forbiddenProps: rule.forbiddenProps ?? [], forbiddenImports: rule.forbiddenImports ?? [], rawElements: rule.rawElements ?? {} }])) };
-  const lines = ["# Component Vault agent context", "", "Use these rules before creating or changing UI components.", ""];
-  for (const [name, rule] of Object.entries(structured.components)) {
-    lines.push(`## ${name}`, "", `- Import from \`${rule.source}\`.`, `- Migration strategy: \`${rule.strategy}\`.`);
-    if (rule.forbiddenImports.length) lines.push(`- Never import ${name} from: ${rule.forbiddenImports.map((item) => `\`${item}\``).join(", ")}.`);
-    if (rule.forbiddenProps.length) lines.push(`- Do not override: ${rule.forbiddenProps.map((item) => `\`${item}\``).join(", ")}.`);
-    const variants = Object.entries(rule.variants);
-    if (variants.length) { lines.push("", "Available variants:"); for (const [variant, description] of variants) lines.push(`- \`${name}.${variant}\`: ${description}`); }
-    lines.push("", "Temporary exception: add `// component-vault-ignore CV003` immediately above intentional raw JSX.", "");
-  }
-  return { structured, markdown: `${lines.join("\n").trim()}\n` };
-}
-function parseArgs(argv) {
-  const [command = "scan", ...rest] = argv;
-  const options = {};
-  const positional = [];
-  for (let index = 0; index < rest.length; index += 1) {
-    const item = rest[index];
-    if (!item.startsWith("--")) { positional.push(item); continue; }
-    const key = item.slice(2);
-    const next = rest[index + 1];
-    if (!next || next.startsWith("--")) options[key] = true;
-    else { options[key] = next; index += 1; }
-  }
-  return { command, options, positional };
-}
-function printHelp() { console.log(`Component Vault Guard v${VERSION}\n\nCommands:\n  scan                 Scan AST and print findings\n  check [--base REF]   Enforce protect, touched and full strategies\n  baseline             Record current AST errors as accepted legacy\n  report [--output]    Generate a JSON migration report\n  context              Generate agent-readable Markdown and JSON\n  explain CV001        Explain a rule\n  init                  Create a starter component-vault.yaml\n`); }
-function starterConfig() { return `version: 1\n\nscan:\n  include: [src]\n  exclude: [node_modules, .next, .git]\n  extensions: [.ts, .tsx, .js, .jsx]\n\nduplicates:\n  enabled: true\n  minOccurrences: 4\n  minTokens: 4\n\ncomponents:\n  Text:\n    source: src/components/ui/text.tsx\n    allowedImportFiles: [src/components/ui/text.tsx]\n    forbiddenImports: [tamagui, \"@radix-ui/themes\"]\n    forbiddenProps: [fontSize, lineHeight, fontWeight]\n    strategy: touched\n    rawElements:\n      h1: H1\n      h2: H2\n      p: Paragraph\n      small: Caption\n    variants:\n      H1: Main page title\n      H2: Section heading\n      Paragraph: Default body text\n      Caption: Secondary supporting text\n`; }
 
 function main() {
   const root = process.cwd();
-  const { command, options, positional } = parseArgs(process.argv.slice(2));
-  if (["help", "--help", "-h"].includes(command)) return printHelp();
-  if (command === "init") {
-    const output = String(options.output ?? DEFAULT_CONFIG);
-    if (existsSync(resolve(root, output))) throw new Error(`${output} already exists.`);
-    writeFileSync(resolve(root, output), starterConfig());
-    console.log(`Created ${output}`);
-    return;
+  const command = process.argv[2] ?? "scan";
+  const configPath = process.argv[3] ?? DEFAULT_CONFIG;
+  try {
+    const config = loadConfig(root, configPath);
+    let exitCode = 0;
+    if (command === "scan" || command === "check") exitCode = commandCheck(root, config);
+    else throw new Error(`Unsupported command in cli-v2: ${command}`);
+    process.exitCode = exitCode;
+  } catch (error) {
+    console.error(`Component Vault error: ${error.message}`);
+    process.exitCode = 1;
   }
-  if (command === "explain") {
-    const code = positional[0];
-    if (!RULES[code]) throw new Error(`Unknown rule: ${code ?? "missing"}`);
-    console.log(`${code} — ${RULES[code].title}\n${RULES[code].explanation}`);
-    return;
-  }
-  const configPath = String(options.config ?? DEFAULT_CONFIG);
-  const baselinePath = String(options.baseline ?? DEFAULT_BASELINE);
-  const config = loadConfig(root, configPath);
-  const scan = scanProject(root, config);
-  const baseline = loadBaseline(root, baselinePath);
-  const changed = getChangedFiles(root, typeof options.base === "string" ? options.base : undefined);
-  const blocking = evaluatePolicy(scan.violations, config, baseline, changed.files);
-  if (command === "scan") return void printReport(scan, [], config, baseline, changed);
-  if (command === "check") { printReport(scan, blocking, config, baseline, changed); if (blocking.length) process.exitCode = 1; return; }
-  if (command === "baseline") {
-    const errors = scan.violations.filter((item) => item.severity === "error");
-    writeJson(root, baselinePath, { version: 2, generatedAt: new Date().toISOString(), fingerprints: errors.map((item) => item.fingerprint).sort(), violations: errors.map(({ fingerprint, rule, component, file, line, column, message }) => ({ fingerprint, rule, component, file, line, column, message })) });
-    console.log(`Accepted ${errors.length} current AST error(s) as legacy.`);
-    return;
-  }
-  if (command === "report") {
-    const output = String(options.output ?? "public/component-vault-report.json");
-    const reportBlocking = changed.files ? blocking : blocking.filter((violation) => strategyFor(violation, config) !== "touched");
-    writeJson(root, output, createReport(scan, reportBlocking, config, baseline, changed));
-    printReport(scan, reportBlocking, config, baseline, changed);
-    return;
-  }
-  if (command === "context") {
-    const output = String(options.output ?? ".component-vault");
-    const context = generateContext(config);
-    writeJson(root, `${output}/context.json`, context.structured);
-    const markdownPath = resolve(root, `${output}/AGENTS.md`);
-    mkdirSync(dirname(markdownPath), { recursive: true });
-    writeFileSync(markdownPath, context.markdown);
-    console.log(`Written ${toPosix(relative(root, markdownPath))}`);
-    return;
-  }
-  throw new Error(`Unknown command: ${command}. Run "node tools/component-vault-guard/cli-v2.mjs help".`);
 }
-try { main(); } catch (error) { console.error(`Component Vault Guard: ${error instanceof Error ? error.message : String(error)}`); process.exitCode = 1; }
+
+main();
