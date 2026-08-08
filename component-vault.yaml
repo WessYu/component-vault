@@ -11,13 +11,13 @@ duplicates:
   minTokens: 5
 
 rules:
-  forbiddenPatterns: ['text-\\[#', 'bg-\\[#']
+  forbiddenPatterns: ['text-\[#', 'bg-\[#']
   fixes:
     arbitrary-text-primary:
-      pattern: 'text-\\[#171A2B\\]'
+      pattern: 'text-\[#171A2B\]'
       replace: 'text-text-primary'
     arbitrary-bg-surface:
-      pattern: 'bg-\\[#F8F9FC\\]'
+      pattern: 'bg-\[#F8F9FC\]'
       replace: 'bg-surface'
 
 components:
