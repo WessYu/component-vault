@@ -11,18 +11,14 @@ duplicates:
   minTokens: 5
 
 rules:
-  forbiddenPatterns:
-    - id: arbitrary-text-color
-      pattern: 'text-\\[#[0-9a-fA-F]{3,8}\\]'
-      message: 'Arbitrary text colors are not allowed.'
-      suggestion: 'Use a governed text color token.'
-      severity: error
-
-    - id: arbitrary-background-color
-      pattern: 'bg-\\[#[0-9a-fA-F]{3,8}\\]'
-      message: 'Arbitrary background colors are not allowed.'
-      suggestion: 'Use a governed background color token.'
-      severity: error
+  forbiddenPatterns: ['text-\\[#', 'bg-\\[#']
+  fixes:
+    arbitrary-text-primary:
+      pattern: 'text-\\[#171A2B\\]'
+      replace: 'text-text-primary'
+    arbitrary-bg-surface:
+      pattern: 'bg-\\[#F8F9FC\\]'
+      replace: 'bg-surface'
 
 components:
   Text:
