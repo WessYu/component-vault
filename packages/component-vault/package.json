@@ -16,7 +16,6 @@
     "postpack": "node scripts/postpack.mjs"
   },
   "dependencies": {
-    "@wess2001/component-vault": "file:wess2001-component-vault-0.3.0.tgz",
     "typescript": "^5.0.0",
     "yaml": "^2.9.0"
   },
