@@ -35,7 +35,7 @@ function EmergingTrendCompactPreview({ slug }: { slug: string }) {
 
   if (slug === "trend-variable-type-reactor") {
     return (
-      <div className={`${shell} bg-[#F6F1E7] p-4 text-[#171A2B]`}>
+      <div className={`${shell} bg-[#F6F1E7] p-4 text-text-primary`}>
         <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.16em] text-[#8B8476]"><span>Variable type</span><span>720</span></div>
         <div className="absolute inset-x-4 bottom-4 overflow-hidden">
           <div className="origin-left text-[42px] font-black leading-[0.82] tracking-[-0.085em] [transform:scaleX(.88)]">TYPE<br />REACTS</div>
@@ -109,7 +109,7 @@ function EmergingTrendCompactPreview({ slug }: { slug: string }) {
   if (slug === "trend-morphing-command-capsule") {
     return (
       <div className={`${shell} grid place-items-center bg-[#F7F8FC]`}>
-        <div className="flex h-14 w-[82%] items-center gap-3 rounded-full border border-[#E4E7EF] bg-white px-5 text-xs font-semibold text-[#171A2B] shadow-[0_16px_42px_rgba(23,26,43,.10)]"><span className="text-[#6366F1]">⌘</span><span>Quick command</span><span className="ml-auto rounded-lg bg-[#F2F4FA] px-2 py-1 text-[9px] text-[#9A9FB1]">K</span></div>
+        <div className="flex h-14 w-[82%] items-center gap-3 rounded-full border border-[#E4E7EF] bg-white px-5 text-xs font-semibold text-text-primary shadow-[0_16px_42px_rgba(23,26,43,.10)]"><span className="text-[#6366F1]">⌘</span><span>Quick command</span><span className="ml-auto rounded-lg bg-[#F2F4FA] px-2 py-1 text-[9px] text-[#9A9FB1]">K</span></div>
       </div>
     );
   }
@@ -117,7 +117,7 @@ function EmergingTrendCompactPreview({ slug }: { slug: string }) {
   return (
     <div className={`${shell} bg-[#DDE5F3] p-3`}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_100px_at_68%_35%,rgba(255,255,255,.95),rgba(226,236,255,.45)_45%,transparent_75%)]" />
-      <div className="relative grid h-full content-between rounded-[18px] border border-white/70 bg-white/35 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)]"><span className="text-[9px] font-bold uppercase tracking-[.16em] text-[#6D7285]">Ambient light</span><strong className="max-w-[170px] text-2xl leading-none tracking-[-.05em] text-[#171A2B]">Light as feedback.</strong></div>
+      <div className="relative grid h-full content-between rounded-[18px] border border-white/70 bg-white/35 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)]"><span className="text-[9px] font-bold uppercase tracking-[.16em] text-[#6D7285]">Ambient light</span><strong className="max-w-[170px] text-2xl leading-none tracking-[-.05em] text-text-primary">Light as feedback.</strong></div>
     </div>
   );
 }
@@ -164,7 +164,7 @@ function VariableTypePreview() {
     >
       <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-[#8B8476]"><span>Variable type reactor</span><span>{weight}</span></div>
       <div>
-        <motion.div className="origin-left text-[54px] leading-[0.86] tracking-[-0.075em] text-[#171A2B]" animate={{ scaleX: 0.86 + amount * 0.22, x: amount * 10 }} style={{ fontWeight: weight }} transition={{ type: "spring", stiffness: 360, damping: 30 }}>
+        <motion.div className="origin-left text-[54px] leading-[0.86] tracking-[-0.075em] text-text-primary" animate={{ scaleX: 0.86 + amount * 0.22, x: amount * 10 }} style={{ fontWeight: weight }} transition={{ type: "spring", stiffness: 360, damping: 30 }}>
           Shape<br />the voice.
         </motion.div>
         <div className="mt-5 h-1.5 rounded-full bg-[#DED8CA]"><motion.div className="h-full rounded-full bg-[#171A2B]" animate={{ width: `${amount * 100}%` }} /></div>
@@ -205,7 +205,7 @@ function ProximityDockPreview() {
         {items.map((item, index) => {
           const distance = Math.abs(pointer - index);
           const scale = Math.max(1, 1.55 - distance * 0.28);
-          return <motion.button key={item} className="grid size-11 place-items-center rounded-2xl bg-[#F2F4FA] text-lg font-bold text-[#171A2B]" animate={{ scale, y: -(scale - 1) * 12 }} transition={{ type: "spring", stiffness: 420, damping: 27 }}>{item}</motion.button>;
+          return <motion.button key={item} className="grid size-11 place-items-center rounded-2xl bg-[#F2F4FA] text-lg font-bold text-text-primary" animate={{ scale, y: -(scale - 1) * 12 }} transition={{ type: "spring", stiffness: 420, damping: 27 }}>{item}</motion.button>;
         })}
       </div>
     </div>
@@ -253,7 +253,7 @@ function MorphingCommandPreview() {
   return (
     <div className="grid h-64 place-items-center rounded-[30px] bg-[#F7F8FC] p-5">
       <motion.div layout className="max-w-full overflow-hidden border border-[#E4E7EF] bg-white shadow-[0_20px_60px_rgba(23,26,43,.12)]" animate={{ width: open ? 360 : 180, borderRadius: open ? 26 : 999 }}>
-        <button className="flex min-h-14 w-full items-center gap-3 px-5 text-left text-sm font-semibold text-[#171A2B]" onClick={() => setOpen((value) => !value)}><span className="text-[#6366F1]">⌘</span><span>{open ? "Search actions" : "Quick command"}</span><span className="ml-auto text-xs text-[#9A9FB1]">K</span></button>
+        <button className="flex min-h-14 w-full items-center gap-3 px-5 text-left text-sm font-semibold text-text-primary" onClick={() => setOpen((value) => !value)}><span className="text-[#6366F1]">⌘</span><span>{open ? "Search actions" : "Quick command"}</span><span className="ml-auto text-xs text-[#9A9FB1]">K</span></button>
         <AnimatePresence>{open ? <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="border-t border-[#EEF0F6] p-2">{["Create component", "Open recent", "Switch collection"].map((item) => <button key={item} className="block w-full rounded-xl px-3 py-2 text-left text-xs font-medium text-[#6D7285] hover:bg-[#F7F8FC]">{item}</button>)}</motion.div> : null}</AnimatePresence>
       </motion.div>
     </div>
@@ -266,7 +266,7 @@ function AmbientLightPreview() {
   return (
     <div className="relative h-64 overflow-hidden rounded-[30px] bg-[#DDE5F3] p-5" onPointerMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setPoint({ x: ((event.clientX - rect.left) / rect.width) * 100, y: ((event.clientY - rect.top) / rect.height) * 100 }); }}>
       <div className="absolute inset-0" style={{ background: gradient }} />
-      <div className="relative grid h-full content-between rounded-[24px] border border-white/70 bg-white/45 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.8),0_24px_70px_rgba(48,67,97,.12)] backdrop-blur-sm"><span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6D7285]">Ambient light window</span><div><strong className="text-3xl tracking-[-0.05em] text-[#171A2B]">Light as feedback.</strong><p className="mt-2 max-w-xs text-xs leading-5 text-[#6D7285]">Pointer position shifts illumination without turning the whole UI into glass.</p></div></div>
+      <div className="relative grid h-full content-between rounded-[24px] border border-white/70 bg-white/45 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.8),0_24px_70px_rgba(48,67,97,.12)] backdrop-blur-sm"><span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6D7285]">Ambient light window</span><div><strong className="text-3xl tracking-[-0.05em] text-text-primary">Light as feedback.</strong><p className="mt-2 max-w-xs text-xs leading-5 text-[#6D7285]">Pointer position shifts illumination without turning the whole UI into glass.</p></div></div>
     </div>
   );
 }

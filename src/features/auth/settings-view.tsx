@@ -82,7 +82,7 @@ export function SettingsView() {
               <p className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EF] bg-white px-3 py-1 text-sm font-medium text-[#6366F1] shadow-sm">
                 <SlidersHorizontal size={15} aria-hidden /> Workspace preferences
               </p>
-              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-5xl">Settings</h1>
+              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-text-primary md:text-5xl">Settings</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-[#6D7285]">Configure defaults and notifications. These settings are saved to the signed-in Convex account.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -103,34 +103,34 @@ export function SettingsView() {
               <section className="rounded-[30px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.045)]">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-2xl bg-[#EEF0FF] text-[#6366F1]"><MonitorSmartphone size={20} aria-hidden /></span>
-                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Preview defaults</h2><p className="text-sm text-[#9A9FB1]">Used whenever a component preview is opened.</p></div>
+                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Preview defaults</h2><p className="text-sm text-[#9A9FB1]">Used whenever a component preview is opened.</p></div>
                 </div>
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#171A2B]">Grid size</span>
+                    <span className="text-sm font-semibold text-text-primary">Grid size</span>
                     <div className="flex items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4">
                       <input className="h-12 min-w-0 flex-1 accent-[#6366F1]" type="range" min="2" max="16" step="2" value={preferences.gridSize} disabled={loading} onChange={(event) => patch("gridSize", Number(event.target.value))} />
-                      <span className="w-10 text-right font-mono text-sm text-[#171A2B]">{preferences.gridSize}px</span>
+                      <span className="w-10 text-right font-mono text-sm text-text-primary">{preferences.gridSize}px</span>
                     </div>
                   </label>
 
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#171A2B]">Default viewport</span>
+                    <span className="text-sm font-semibold text-text-primary">Default viewport</span>
                     <select className="min-h-12 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none focus:border-[#6366F1]" value={preferences.defaultViewport} disabled={loading} onChange={(event) => patch("defaultViewport", event.target.value as WorkspacePreferences["defaultViewport"])}>
                       <option>Desktop</option><option>Tablet</option><option>Mobile</option>
                     </select>
                   </label>
 
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#171A2B]">Autosave delay</span>
+                    <span className="text-sm font-semibold text-text-primary">Autosave delay</span>
                     <select className="min-h-12 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none focus:border-[#6366F1]" value={preferences.autosaveDebounce} disabled={loading} onChange={(event) => patch("autosaveDebounce", Number(event.target.value))}>
                       <option value={300}>300 ms</option><option value={600}>600 ms</option><option value={900}>900 ms</option><option value={1500}>1.5 s</option><option value={2500}>2.5 s</option>
                     </select>
                   </label>
 
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#171A2B]">Preview theme</span>
+                    <span className="text-sm font-semibold text-text-primary">Preview theme</span>
                     <select className="min-h-12 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none focus:border-[#6366F1]" value={preferences.previewTheme} disabled={loading} onChange={(event) => patch("previewTheme", event.target.value as WorkspacePreferences["previewTheme"])}>
                       <option>Light</option><option>Dark</option>
                     </select>
@@ -141,7 +141,7 @@ export function SettingsView() {
               <section className="rounded-[30px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.045)]">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-2xl bg-[#EAFBF4] text-emerald-600"><Bell size={20} aria-hidden /></span>
-                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Notifications</h2><p className="text-sm text-[#9A9FB1]">Choose which workspace activity should surface as an update.</p></div>
+                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Notifications</h2><p className="text-sm text-[#9A9FB1]">Choose which workspace activity should surface as an update.</p></div>
                 </div>
 
                 <div className="mt-5 space-y-3">
@@ -151,7 +151,7 @@ export function SettingsView() {
                     ["Weekly usage digest", "weeklyUsageDigest"],
                   ] as const).map(([label, key]) => (
                     <label key={key} className="flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4">
-                      <span className="text-sm font-medium text-[#171A2B]">{label}</span>
+                      <span className="text-sm font-medium text-text-primary">{label}</span>
                       <button type="button" role="switch" aria-checked={preferences[key]} disabled={loading} onClick={() => patch(key, !preferences[key])} className={`relative h-7 w-12 rounded-full transition-colors ${preferences[key] ? "bg-[#6366F1]" : "bg-[#D9DDE8]"}`}>
                         <span className={`absolute top-1 size-5 rounded-full bg-white shadow-sm transition-transform ${preferences[key] ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
@@ -170,7 +170,7 @@ export function SettingsView() {
                 </div>
                 <div className="mt-5 space-y-3">
                   {[["Authentication", "Convex account"], ["Session cookie", "httpOnly"], ["Preferences", "Per account"]].map(([label, value]) => (
-                    <div key={label} className="flex items-center justify-between rounded-2xl bg-[#F7F8FC] px-4 py-3"><span className="text-sm text-[#6D7285]">{label}</span><span className="text-sm font-semibold text-[#171A2B]">{value}</span></div>
+                    <div key={label} className="flex items-center justify-between rounded-2xl bg-[#F7F8FC] px-4 py-3"><span className="text-sm text-[#6D7285]">{label}</span><span className="text-sm font-semibold text-text-primary">{value}</span></div>
                   ))}
                 </div>
               </section>
@@ -178,7 +178,7 @@ export function SettingsView() {
               <section className="rounded-[30px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.045)]">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-2xl bg-[#FFF4E8] text-[#F59E0B]"><LockKeyhole size={20} aria-hidden /></span>
-                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Backend</h2><p className="text-sm text-[#9A9FB1]">Current runtime</p></div>
+                  <div><h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Backend</h2><p className="text-sm text-[#9A9FB1]">Current runtime</p></div>
                 </div>
                 <div className="mt-5 space-y-2">
                   <div className="rounded-2xl bg-[#F7F8FC] px-4 py-3 font-mono text-xs text-[#6D7285]">NEXT_PUBLIC_CONVEX_URL</div>

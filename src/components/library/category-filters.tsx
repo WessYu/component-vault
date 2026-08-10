@@ -11,7 +11,7 @@ export function CategoryFilters({ active, onChange }: { active: string; onChange
       {visualFilters.map((filter) => (
         <button
           key={filter}
-          className={cn("relative min-h-10 shrink-0 rounded-2xl px-3.5 text-sm font-semibold transition md:px-4", active === filter ? "text-[#171A2B]" : "text-[#6D7285] hover:text-[#171A2B]")}
+          className={cn("relative min-h-10 shrink-0 rounded-2xl px-3.5 text-sm font-semibold transition md:px-4", active === filter ? "text-text-primary" : "text-[#6D7285] hover:text-text-primary")}
           onClick={() => onChange(filter)}
         >
           {active === filter ? <motion.span layoutId="category-filter" className="absolute inset-0 rounded-2xl bg-white shadow-sm ring-1 ring-[#E4E7EF]" /> : null}

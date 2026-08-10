@@ -164,7 +164,7 @@ function SelectField({ label, value, values, onChange }: { label: string; value:
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
   return (
     <label className="flex min-h-10 items-center justify-between gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm capitalize">
-      <span className="text-[#171A2B]">{label}</span>
+      <span className="text-text-primary">{label}</span>
       <input className="size-4 accent-[#6366F1]" type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
     </label>
   );

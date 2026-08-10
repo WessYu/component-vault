@@ -36,7 +36,7 @@ export function ComponentDetailTabs({ component, active, onChange }: { component
     <section className="overflow-hidden rounded-[28px] border border-[#E4E7EF] bg-white shadow-[0_18px_70px_rgba(23,26,43,0.05)]">
       <div className="flex overflow-x-auto border-b border-[#E4E7EF] px-2">
         {tabs.map(({ tab, icon: Icon }) => (
-          <button key={tab} className={cn("relative inline-flex min-h-12 items-center gap-2 px-4 text-sm font-medium", active === tab ? "text-[#171A2B]" : "text-[#6D7285]")} onClick={() => onChange(tab)}>
+          <button key={tab} className={cn("relative inline-flex min-h-12 items-center gap-2 px-4 text-sm font-medium", active === tab ? "text-text-primary" : "text-[#6D7285]")} onClick={() => onChange(tab)}>
             <Icon size={16} aria-hidden />
             {tab}
             {active === tab ? <motion.span layoutId="detail-tab-indicator" className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[#6366F1]" /> : null}

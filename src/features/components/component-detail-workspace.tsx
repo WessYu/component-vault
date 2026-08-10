@@ -98,15 +98,15 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
       <section className="px-4 py-6 md:px-7">
         <div className="mx-auto max-w-[1460px]">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-[#6D7285]" aria-label="Breadcrumb">
-            <Link href="/vault/components" className="hover:text-[#171A2B]">All Components</Link><ChevronRight size={14} aria-hidden />
-            <Link href="/vault/components" className="hover:text-[#171A2B]">{visualCategory(component)}</Link><ChevronRight size={14} aria-hidden />
-            <span className="font-medium text-[#171A2B]">{component.name}</span>
+            <Link href="/vault/components" className="hover:text-text-primary">All Components</Link><ChevronRight size={14} aria-hidden />
+            <Link href="/vault/components" className="hover:text-text-primary">{visualCategory(component)}</Link><ChevronRight size={14} aria-hidden />
+            <span className="font-medium text-text-primary">{component.name}</span>
           </nav>
 
           <div className="mt-5 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-3xl">
               <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ background: style.soft, color: style.text }}>{visualCategory(component)}</span>
-              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-6xl">{component.name}</h1>
+              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-text-primary md:text-6xl">{component.name}</h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#6D7285]">{component.description}</p>
               <div className="mt-5 flex flex-wrap gap-2 text-sm">
                 <span className="rounded-full border border-[#E4E7EF] bg-white px-3 py-1 text-[#6D7285]">{component.version}</span>
@@ -116,9 +116,9 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button className="grid size-11 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm" onClick={() => toggleFavorite(component.id)} aria-label="Favorite component"><Heart size={18} fill={component.isFavorite ? style.accent : "none"} color={component.isFavorite ? style.accent : "currentColor"} aria-hidden /></button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={openEditor}><Pencil size={17} aria-hidden /> Edit</button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={() => navigator.clipboard.writeText(window.location.href)}><Share2 size={17} aria-hidden /> Share</button>
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm" onClick={copyCode}>{copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />} {copied ? "Copied" : "Copy code"}</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={openEditor}><Pencil size={17} aria-hidden /> Edit</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={() => navigator.clipboard.writeText(window.location.href)}><Share2 size={17} aria-hidden /> Share</button>
+              <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={copyCode}>{copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />} {copied ? "Copied" : "Copy code"}</button>
               {!isMotionExperience ? <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}><PanelRightOpen size={17} aria-hidden /> Customize</button> : null}
               <button className="grid size-11 place-items-center rounded-2xl border border-red-200 bg-red-50 text-red-600 shadow-sm" onClick={() => void removeComponent()} aria-label="Delete component"><Trash2 size={17} aria-hidden /></button>
             </div>

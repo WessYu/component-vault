@@ -103,7 +103,7 @@ export function ComponentCard({
             </motion.span>
             <span className="font-mono text-xs text-[#9A9FB1]">{component.version}</span>
           </div>
-          <h3 className="mt-3 text-base font-bold tracking-[-0.015em] text-[#171A2B]">{component.name}</h3>
+          <h3 className="mt-3 text-base font-bold tracking-[-0.015em] text-text-primary">{component.name}</h3>
           <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#6D7285]">{component.description}</p>
           <div className="mt-4 flex items-center justify-between text-xs text-[#9A9FB1]">
             <span className="inline-flex items-center gap-1"><Star size={13} aria-hidden /> {component.isFavorite ? 124 : 78}</span>

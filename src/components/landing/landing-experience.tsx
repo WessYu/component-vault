@@ -49,7 +49,7 @@ export function LandingExperience() {
   const progressScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <main className="relative isolate min-h-dvh overflow-x-clip bg-[#F7F8FC] text-[#171A2B]">
+    <main className="relative isolate min-h-dvh overflow-x-clip bg-[#F7F8FC] text-text-primary">
       <SiteMotionLayer tone="landing" />
       <RouteProgress />
 
@@ -71,7 +71,7 @@ export function LandingExperience() {
             <span className="font-bold tracking-[-0.02em]">Component Vault</span>
           </Link>
           <nav className="flex items-center gap-2">
-            <Link href="/login" className="hidden min-h-10 items-center rounded-2xl px-4 text-sm font-semibold text-[#6D7285] transition hover:text-[#171A2B] sm:inline-flex">
+            <Link href="/login" className="hidden min-h-10 items-center rounded-2xl px-4 text-sm font-semibold text-[#6D7285] transition hover:text-text-primary sm:inline-flex">
               Login
             </Link>
             <Magnetic>
@@ -130,7 +130,7 @@ export function LandingExperience() {
                   Start exploring <ArrowRight className="transition-transform group-hover:translate-x-1" size={17} aria-hidden />
                 </Link>
               </Magnetic>
-              <Link href="/vault/components/card-stack-navigator" className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white/84 px-5 text-sm font-bold text-[#171A2B] shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-[#D4D8E3]">
+              <Link href="/vault/components/card-stack-navigator" className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white/84 px-5 text-sm font-bold text-text-primary shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-[#D4D8E3]">
                 See motion experiences
               </Link>
             </motion.div>
@@ -318,7 +318,7 @@ export function LandingExperience() {
                 <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] md:text-6xl">Stop browsing static cards. Start exploring behavior.</h2>
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">Open the vault, interact with motion experiences and shape reusable interfaces without losing visual context.</p>
                 <Magnetic className="mt-8 w-fit">
-                  <Link href="/vault/components" className="group inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-[#171A2B]">
+                  <Link href="/vault/components" className="group inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-text-primary">
                     Open Component Vault <ArrowRight className="transition-transform group-hover:translate-x-1" size={17} aria-hidden />
                   </Link>
                 </Magnetic>

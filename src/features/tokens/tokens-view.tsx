@@ -33,7 +33,7 @@ export function TokensView() {
                 <Database size={15} aria-hidden />
                 Design system tokens
               </p>
-              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-5xl">Tokens</h1>
+              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-text-primary md:text-5xl">Tokens</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-[#6D7285]">
                 Shared visual decisions for color, spacing, type, borders, shadows and component rhythm.
               </p>
@@ -46,7 +46,7 @@ export function TokensView() {
               ].map(([label, value]) => (
                 <div key={label} className="rounded-3xl border border-[#E4E7EF] bg-white px-5 py-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9A9FB1]">{label}</p>
-                  <p className="mt-1 text-2xl font-bold tracking-[-0.03em] text-[#171A2B]">{value}</p>
+                  <p className="mt-1 text-2xl font-bold tracking-[-0.03em] text-text-primary">{value}</p>
                 </div>
               ))}
             </div>
@@ -65,7 +65,7 @@ export function TokensView() {
                           <Icon size={20} aria-hidden />
                         </span>
                         <div>
-                          <h2 className="text-lg font-bold capitalize tracking-[-0.02em] text-[#171A2B]">{type}</h2>
+                          <h2 className="text-lg font-bold capitalize tracking-[-0.02em] text-text-primary">{type}</h2>
                           <p className="text-sm text-[#9A9FB1]">{items.length} tokens</p>
                         </div>
                       </div>
@@ -76,7 +76,7 @@ export function TokensView() {
                       {items.map((token) => (
                         <article key={token.id} className="flex min-h-16 items-center justify-between gap-4 rounded-3xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 py-3">
                           <div className="min-w-0">
-                            <h3 className="truncate text-sm font-semibold text-[#171A2B]">{token.name}</h3>
+                            <h3 className="truncate text-sm font-semibold text-text-primary">{token.name}</h3>
                             <p className="mt-1 break-all text-xs text-[#6D7285]">{token.value}</p>
                           </div>
                           {token.type === "color" ? (
@@ -106,7 +106,7 @@ export function TokensView() {
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between rounded-2xl bg-[#F7F8FC] px-4 py-3">
                     <span className="text-sm text-[#6D7285]">{label}</span>
-                    <span className="text-sm font-semibold text-[#171A2B]">{value}</span>
+                    <span className="text-sm font-semibold text-text-primary">{value}</span>
                   </div>
                 ))}
               </div>

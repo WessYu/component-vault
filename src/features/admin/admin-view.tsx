@@ -75,9 +75,9 @@ function AdminCard({
     <article className="rounded-[28px] border border-[#E4E7EF] bg-[#F8F9FD] p-5">
       <div className="flex items-center justify-between gap-4">
         <span className="grid size-11 place-items-center rounded-2xl bg-white text-[#6366F1] shadow-sm"><Icon size={20} aria-hidden /></span>
-        <span className="text-3xl font-bold tracking-[-0.04em] text-[#171A2B]">{value}</span>
+        <span className="text-3xl font-bold tracking-[-0.04em] text-text-primary">{value}</span>
       </div>
-      <h2 className="mt-5 text-lg font-bold text-[#171A2B]">{title}</h2>
+      <h2 className="mt-5 text-lg font-bold text-text-primary">{title}</h2>
       <p className="mt-2 min-h-12 text-sm leading-6 text-[#6D7285]">{description}</p>
       <Link href={href} className="mt-5 inline-flex min-h-10 items-center rounded-2xl bg-white px-4 text-sm font-semibold text-[#6366F1] shadow-sm ring-1 ring-[#E4E7EF] transition hover:-translate-y-0.5 hover:shadow-md">{action}</Link>
     </article>

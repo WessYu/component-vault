@@ -456,3 +456,6 @@ export async function resetLocalPassword({ token, password }: { token: string; p
     convexOptions(),
   )) as VaultUser;
 }
+
+
+

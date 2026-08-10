@@ -303,7 +303,7 @@ function AdminInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        "min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#171A2B] shadow-sm transition-colors placeholder:text-[#A5ABBA] focus:border-[#6366F1]",
+        "min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-text-primary shadow-sm transition-colors placeholder:text-[#A5ABBA] focus:border-[#6366F1]",
         props.className,
       )}
     />
@@ -315,7 +315,7 @@ function AdminTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>)
     <textarea
       {...props}
       className={cn(
-        "min-h-28 resize-y rounded-2xl border border-[#E4E7EF] bg-white px-4 py-3 font-mono text-xs leading-5 text-[#171A2B] shadow-sm transition-colors placeholder:text-[#A5ABBA] focus:border-[#6366F1]",
+        "min-h-28 resize-y rounded-2xl border border-[#E4E7EF] bg-white px-4 py-3 font-mono text-xs leading-5 text-text-primary shadow-sm transition-colors placeholder:text-[#A5ABBA] focus:border-[#6366F1]",
         props.className,
       )}
     />
@@ -327,7 +327,7 @@ function AdminSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       className={cn(
-        "min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-[#171A2B] shadow-sm transition-colors focus:border-[#6366F1]",
+        "min-h-11 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm text-text-primary shadow-sm transition-colors focus:border-[#6366F1]",
         props.className,
       )}
     />
@@ -538,12 +538,12 @@ export function AdminPanelScreen() {
                 <ShieldCheck size={13} aria-hidden />
                 Owner admin
               </p>
-              <h1 className="text-4xl font-bold tracking-[-0.045em] text-[#171A2B] md:text-5xl">Admin Studio</h1>
+              <h1 className="text-4xl font-bold tracking-[-0.045em] text-text-primary md:text-5xl">Admin Studio</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-[#6D7285]">Create, stage, review and publish components from one backend-backed workspace.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <motion.button
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm"
+                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm"
                 onClick={() => void loadVault(true)}
                 whileHover={reduceMotion ? undefined : { y: -2 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.96 }}
@@ -582,7 +582,7 @@ export function AdminPanelScreen() {
                     <AnimatePresence mode="popLayout" initial={false}>
                       <motion.strong
                         key={`${metric.label}-${metric.value}`}
-                        className="text-3xl font-bold tracking-[-0.04em] text-[#171A2B]"
+                        className="text-3xl font-bold tracking-[-0.04em] text-text-primary"
                         initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={reduceMotion ? undefined : { opacity: 0, y: -8, scale: 0.96 }}
@@ -592,7 +592,7 @@ export function AdminPanelScreen() {
                       </motion.strong>
                     </AnimatePresence>
                   </div>
-                  <p className="mt-5 text-sm font-semibold text-[#171A2B]">{metric.label}</p>
+                  <p className="mt-5 text-sm font-semibold text-text-primary">{metric.label}</p>
                   <p className="mt-1 text-xs text-[#6D7285]">{metric.detail}</p>
                 </motion.article>
               );
@@ -605,7 +605,7 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Templates</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Templates</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">Start from a component pattern and ship it into the vault.</p>
                     </div>
                     <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">
@@ -632,7 +632,7 @@ export function AdminPanelScreen() {
                           <span className="grid size-9 place-items-center rounded-2xl bg-[#F7F8FC] text-[#6366F1] transition-colors group-hover:bg-white">
                             <Sparkles size={16} aria-hidden />
                           </span>
-                          <span className="mt-4 block text-sm font-bold text-[#171A2B]">{template.name}</span>
+                          <span className="mt-4 block text-sm font-bold text-text-primary">{template.name}</span>
                           <span className="mt-2 block text-xs leading-5 text-[#6D7285]">{template.category}</span>
                         </motion.button>
                       </StaggerItem>
@@ -645,12 +645,12 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Component Editor</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Component Editor</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">{activeComponent ? `Editing ${activeComponent.name}` : "Ready for a new component."}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <motion.button
-                        className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-semibold text-[#171A2B] shadow-sm"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-semibold text-text-primary shadow-sm"
                         onClick={() => {
                           setForm(defaultForm);
                           setActiveId(null);
@@ -662,7 +662,7 @@ export function AdminPanelScreen() {
                         New
                       </motion.button>
                       <motion.button
-                        className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-semibold text-[#171A2B] shadow-sm"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-semibold text-text-primary shadow-sm"
                         onClick={() => void handleSave()}
                         disabled={!activeComponent}
                         whileTap={reduceMotion ? undefined : { scale: 0.96 }}
@@ -769,7 +769,7 @@ export function AdminPanelScreen() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <label className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-[#171A2B] shadow-sm">
+                    <label className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm">
                       <input type="checkbox" checked={form.isPublic} onChange={(event) => updateForm("isPublic", event.target.checked)} />
                       Public component
                     </label>
@@ -785,7 +785,7 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Library Control</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Library Control</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">{filteredComponents.length} components in view.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -807,7 +807,7 @@ export function AdminPanelScreen() {
                       <button
                         className={cn(
                           "inline-flex min-h-11 items-center gap-2 rounded-2xl border px-4 text-sm font-semibold shadow-sm",
-                          dense ? "border-[#6366F1] bg-[#EEF0FF] text-[#6366F1]" : "border-[#E4E7EF] bg-white text-[#171A2B]",
+                          dense ? "border-[#6366F1] bg-[#EEF0FF] text-[#6366F1]" : "border-[#E4E7EF] bg-white text-text-primary",
                         )}
                         onClick={() => setDense((value) => !value)}
                       >
@@ -840,7 +840,7 @@ export function AdminPanelScreen() {
                             layout
                           >
                             <button className="min-w-0 text-left" onClick={() => loadComponent(component)}>
-                              <span className="block truncate text-sm font-bold text-[#171A2B]">{component.name}</span>
+                              <span className="block truncate text-sm font-bold text-text-primary">{component.name}</span>
                               <span className="mt-1 flex flex-wrap gap-1">
                                 {component.tags.slice(0, 3).map((tag) => (
                                   <span key={tag} className="rounded-full bg-[#F7F8FC] px-2 py-0.5 text-[11px] font-semibold text-[#6D7285]">
@@ -883,7 +883,7 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Collections</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Collections</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">{selectedCollection?.name ?? "No collection selected"}</p>
                     </div>
                     <span className="grid size-10 place-items-center rounded-2xl bg-[#EEF0FF] text-[#6366F1]">
@@ -907,7 +907,7 @@ export function AdminPanelScreen() {
                     ) : null}
                     <div className="grid gap-2">
                       {components.slice(0, 8).map((component) => (
-                        <label key={component.id} className="flex items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-3 py-2 text-sm text-[#171A2B] shadow-sm">
+                        <label key={component.id} className="flex items-center gap-3 rounded-2xl border border-[#E4E7EF] bg-white px-3 py-2 text-sm text-text-primary shadow-sm">
                           <input
                             type="checkbox"
                             checked={selectedCollectionSet.has(component.id)}
@@ -933,7 +933,7 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Review Lanes</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Review Lanes</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">Draft, review and live inventory.</p>
                     </div>
                     <ListChecks className="text-[#6366F1]" size={20} aria-hidden />
@@ -947,7 +947,7 @@ export function AdminPanelScreen() {
                         </div>
                         <div className="space-y-2">
                           {lane.items.map((component) => (
-                            <button key={`${lane.label}-${component.id}`} className="flex w-full items-center gap-2 rounded-2xl bg-[#F7F8FC] px-3 py-2 text-left text-sm text-[#171A2B]" onClick={() => loadComponent(component)}>
+                            <button key={`${lane.label}-${component.id}`} className="flex w-full items-center gap-2 rounded-2xl bg-[#F7F8FC] px-3 py-2 text-left text-sm text-text-primary" onClick={() => loadComponent(component)}>
                               <Check size={15} className="text-[#51C89B]" aria-hidden />
                               <span className="min-w-0 flex-1 truncate">{component.name}</span>
                             </button>
@@ -963,7 +963,7 @@ export function AdminPanelScreen() {
                 <section className="rounded-[30px] border border-white/80 bg-white/70 p-4 shadow-[0_18px_70px_rgba(23,26,43,0.045)] backdrop-blur-xl">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-lg font-bold tracking-[-0.02em] text-[#171A2B]">Motion Stack</h2>
+                      <h2 className="text-lg font-bold tracking-[-0.02em] text-text-primary">Motion Stack</h2>
                       <p className="mt-1 text-sm text-[#6D7285]">{motionFeatures.length} active refinements.</p>
                     </div>
                     <Sparkles className="text-[#E978D4]" size={20} aria-hidden />
@@ -974,7 +974,7 @@ export function AdminPanelScreen() {
                       return (
                         <motion.button
                           key={feature.label}
-                          className="group flex min-h-12 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-left text-xs font-semibold text-[#171A2B] shadow-sm"
+                          className="group flex min-h-12 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-left text-xs font-semibold text-text-primary shadow-sm"
                           initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true, amount: 0.2 }}

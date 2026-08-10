@@ -41,7 +41,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#F7F8FC] px-4 py-6 text-[#171A2B] md:px-7">
+    <main className="min-h-dvh bg-[#F7F8FC] px-4 py-6 text-text-primary md:px-7">
       <section className="mx-auto grid min-h-[calc(100dvh-48px)] max-w-3xl place-items-center">
         <form onSubmit={onSubmit} className="w-full rounded-[34px] border border-[#E4E7EF] bg-white p-6 shadow-[0_30px_120px_rgba(23,26,43,0.09)] md:p-8">
           <Link href="/" className="inline-flex items-center gap-3">
@@ -64,7 +64,7 @@ export function ResetPasswordForm() {
             </div>
           </div>
 
-          <label className="mt-8 block text-sm font-semibold text-[#171A2B]">
+          <label className="mt-8 block text-sm font-semibold text-text-primary">
             New password
             <input
               className="mt-2 min-h-12 w-full rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm outline-none transition focus:border-[#6366F1] focus:bg-white"

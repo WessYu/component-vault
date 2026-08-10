@@ -198,15 +198,15 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
                   <>
                     <div className="border-b border-[#E4E7EF] p-4">
                       <div className="flex items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate font-bold text-[#171A2B]">{user.name}</p>
+                        <p className="min-w-0 flex-1 truncate font-bold text-text-primary">{user.name}</p>
                         {isAdmin ? <span className="inline-flex items-center gap-1 rounded-full bg-[#EEF0FF] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#6366F1]"><ShieldCheck size={11} aria-hidden /> Admin</span> : null}
                       </div>
                       <p className="mt-1 truncate text-xs text-[#6D7285]">{user.email}</p>
                     </div>
                     <div className="p-2">
                       {isAdmin ? <Link href="/vault/admin" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl bg-[#F7F7FF] px-3 py-2.5 text-sm font-semibold text-[#6366F1] hover:bg-[#EEF0FF]"><ShieldCheck size={16} /> Admin panel</Link> : null}
-                      <Link href="/vault/favorites" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#171A2B] hover:bg-[#F7F8FC]"><Heart size={16} /> My favorites <span className="ml-auto rounded-full bg-[#EEF0FF] px-2 py-0.5 text-xs font-semibold text-[#6366F1]">{favoriteCount}</span></Link>
-                      <Link href="/vault/settings" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#171A2B] hover:bg-[#F7F8FC]"><Settings size={16} /> Settings</Link>
+                      <Link href="/vault/favorites" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-text-primary hover:bg-[#F7F8FC]"><Heart size={16} /> My favorites <span className="ml-auto rounded-full bg-[#EEF0FF] px-2 py-0.5 text-xs font-semibold text-[#6366F1]">{favoriteCount}</span></Link>
+                      <Link href="/vault/settings" onClick={() => setAccountOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-text-primary hover:bg-[#F7F8FC]"><Settings size={16} /> Settings</Link>
                       <button onClick={() => void handleLogout()} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"><LogOut size={16} /> Sign out</button>
                     </div>
                   </>
@@ -214,7 +214,7 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
                   <div className="p-3">
                     <p className="px-2 pb-3 text-sm text-[#6D7285]">Sign in to save favorites and create components.</p>
                     <Link href="/login" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-[#6366F1] hover:bg-[#F7F8FC]"><LogIn size={16} /> Sign in</Link>
-                    <Link href="/register" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-[#171A2B] hover:bg-[#F7F8FC]"><UserPlus size={16} /> Create account</Link>
+                    <Link href="/register" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-text-primary hover:bg-[#F7F8FC]"><UserPlus size={16} /> Create account</Link>
                   </div>
                 )}
               </motion.div>
@@ -230,7 +230,7 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
               <div className="flex items-center gap-3 border-b border-[#E4E7EF] px-4 py-3">
                 <Command size={18} className="text-[#6366F1]" aria-hidden />
                 <input ref={inputRef} className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="Jump to a component, collection or command..." value={query} onChange={(event) => setQuery(event.target.value)} />
-                <button className="grid size-8 place-items-center rounded-xl text-[#9A9FB1] transition-colors hover:bg-[#F2F4FA] hover:text-[#171A2B]" onClick={() => setPaletteOpen(false)} aria-label="Close command palette"><X size={17} aria-hidden /></button>
+                <button className="grid size-8 place-items-center rounded-xl text-[#9A9FB1] transition-colors hover:bg-[#F2F4FA] hover:text-text-primary" onClick={() => setPaletteOpen(false)} aria-label="Close command palette"><X size={17} aria-hidden /></button>
               </div>
               <div className="max-h-[420px] overflow-auto p-2">
                 <AnimatePresence initial={false}>
@@ -238,7 +238,7 @@ export function Topbar({ onCreate }: { onCreate?: () => void }) {
                     <motion.div key={`${result.href}-${result.label}`} initial={reduceMotion ? false : { opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0 }} transition={{ duration: 0.1 }}>
                       <Link href={result.href} className="group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-colors duration-100 hover:bg-[#F2F4FA]" onClick={() => setPaletteOpen(false)}>
                         <span className="grid size-9 place-items-center rounded-2xl bg-[#EEF0FF] text-[#6366F1]"><Check size={16} aria-hidden /></span>
-                        <span className="min-w-0 flex-1"><span className="block truncate font-medium text-[#171A2B]">{result.label}</span><span className="text-xs text-[#9A9FB1]">{result.meta}</span></span>
+                        <span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-primary">{result.label}</span><span className="text-xs text-[#9A9FB1]">{result.meta}</span></span>
                       </Link>
                     </motion.div>
                   ))}

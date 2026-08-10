@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run guard:report",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

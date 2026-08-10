@@ -117,7 +117,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
                         <span className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8194]">{stat.label}</span>
                         <Icon className="shrink-0 text-[#6366F1]" size={15} aria-hidden />
                       </div>
-                      <strong className="mt-2 block text-2xl font-bold tracking-[-0.04em] text-[#171A2B]">{stat.value}</strong>
+                      <strong className="mt-2 block text-2xl font-bold tracking-[-0.04em] text-text-primary">{stat.value}</strong>
                     </motion.div>
                   );
                 })}
@@ -159,7 +159,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
 
           <div className="mt-4 flex flex-col gap-2 text-sm text-[#6D7285] sm:flex-row sm:items-center sm:justify-between">
             <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span className="w-fit rounded-full border border-white/80 bg-white/70 px-3 py-1 font-semibold text-[#171A2B] shadow-sm backdrop-blur" key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{filtered.length} results</motion.span>
+              <motion.span className="w-fit rounded-full border border-white/80 bg-white/70 px-3 py-1 font-semibold text-text-primary shadow-sm backdrop-blur" key={`${filtered.length}-${filter}-${query}`} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{filtered.length} results</motion.span>
             </AnimatePresence>
             <span className="hidden sm:inline">Select a card to inspect it in the playground panel.</span>
           </div>

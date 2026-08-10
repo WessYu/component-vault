@@ -153,7 +153,7 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
                 exit={reduceMotion ? undefined : { opacity: 0, x: -4 }}
                 transition={{ duration: 0.1 }}
               >
-                <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-[#171A2B]">Component Vault</span>
+                <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text-primary">Component Vault</span>
                 <span className="text-xs text-[#9A9FB1]">Playground</span>
               </motion.span>
             ) : null}
@@ -178,7 +178,7 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
                   className={cn(
                     "group relative flex min-h-11 items-center gap-3 overflow-hidden rounded-2xl px-3 text-sm font-medium",
                     expanded ? "justify-start" : "justify-center",
-                    selected ? "text-[#6366F1]" : "text-[#6D7285] hover:text-[#171A2B]",
+                    selected ? "text-[#6366F1]" : "text-[#6D7285] hover:text-text-primary",
                   )}
                 >
                   {selected ? (
@@ -235,7 +235,7 @@ export function NavigationRail({ active = "Library", expanded, onToggle }: { act
             ) : null}
           </AnimatePresence>
           <motion.button
-            className="grid size-10 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm transition-colors hover:text-[#171A2B]"
+            className="grid size-10 place-items-center rounded-2xl border border-[#E4E7EF] bg-white text-[#6D7285] shadow-sm transition-colors hover:text-text-primary"
             onClick={onToggle}
             aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
             whileTap={reduceMotion ? undefined : { scale: 0.94 }}

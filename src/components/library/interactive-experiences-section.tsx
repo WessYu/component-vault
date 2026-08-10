@@ -55,13 +55,13 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               <Sparkles size={14} aria-hidden />
               Motion experiences
             </p>
-            <h2 className="mt-3 text-2xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-4xl">Interactive Experiences</h2>
+            <h2 className="mt-3 text-2xl font-bold tracking-[-0.04em] text-text-primary md:text-4xl">Interactive Experiences</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6D7285] md:text-base">
               Responsive previews for motion patterns, emerging UI models and polished interaction systems.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-            <span className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-xs font-bold text-[#171A2B] shadow-sm">
+            <span className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2 text-xs font-bold text-text-primary shadow-sm">
               {experiences.length} patterns
             </span>
             <span className="inline-flex items-center gap-2 rounded-2xl border border-[#DCD7FF] bg-[#F7F7FF] px-3 py-2 text-xs font-bold text-[#6366F1] shadow-sm">
@@ -130,7 +130,7 @@ export function InteractiveExperiencesSection({ experiences }: { experiences: Va
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h3 className="truncate text-base font-bold tracking-[-0.02em] text-[#171A2B] md:text-lg">{component.name}</h3>
+                    <h3 className="truncate text-base font-bold tracking-[-0.02em] text-text-primary md:text-lg">{component.name}</h3>
                     <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#6D7285]">{component.description}</p>
                   </div>
                   <ArrowRight className="mt-1 shrink-0 text-[#6366F1] transition-transform group-hover:translate-x-1" size={18} aria-hidden />

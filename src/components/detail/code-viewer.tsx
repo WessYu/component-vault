@@ -76,7 +76,7 @@ export function CodeViewer({ component }: { component: VaultComponent }) {
             </>
           ) : (
             <button
-              className="inline-flex min-h-9 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-medium text-[#171A2B]"
+              className="inline-flex min-h-9 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-medium text-text-primary"
               onClick={() => {
                 setDraft(source);
                 setEditing(true);
@@ -85,7 +85,7 @@ export function CodeViewer({ component }: { component: VaultComponent }) {
               <Pencil size={15} aria-hidden /> Edit
             </button>
           )}
-          <button className="inline-flex min-h-9 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-medium text-[#171A2B]" onClick={copy}>
+          <button className="inline-flex min-h-9 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-3 text-sm font-medium text-text-primary" onClick={copy}>
             {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
             {copied ? "Copied" : "Copy"}
           </button>

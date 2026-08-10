@@ -50,7 +50,7 @@ export function CollectionView({ collectionId }: { collectionId?: string }) {
               <p className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EF] bg-white px-3 py-1 text-sm font-medium text-[#6366F1] shadow-sm">
                 <Archive size={15} aria-hidden /> Component collections
               </p>
-              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-[#171A2B] md:text-5xl">{selected ? selected.name : "Collections"}</h1>
+              <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] text-text-primary md:text-5xl">{selected ? selected.name : "Collections"}</h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-[#6D7285]">{selected ? selected.description : "Organize reusable interface building blocks by system, product and workflow."}</p>
             </div>
             <div className="flex flex-wrap gap-2">

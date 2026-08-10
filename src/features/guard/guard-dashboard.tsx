@@ -131,7 +131,7 @@ export function GuardDashboard() {
               {report.summary.blocking > 0 ? <AlertTriangle className="text-amber-500" size={22} /> : <CheckCircle2 className="text-emerald-500" size={22} />}
               <div>
                 <Text.Caption className="block uppercase">Current gate</Text.Caption>
-                <strong className="text-base text-[#171A2B]">{loading ? "Scanning..." : statusLabel}</strong>
+                <strong className="text-base text-text-primary">{loading ? "Scanning..." : statusLabel}</strong>
               </div>
             </div>
           </div>
@@ -163,7 +163,7 @@ export function GuardDashboard() {
                   <Text.Caption className="uppercase">{label}</Text.Caption>
                   <Icon className="text-[#6366F1]" size={17} aria-hidden />
                 </div>
-                <strong className="mt-3 block text-3xl font-bold tracking-[-0.05em] text-[#171A2B]">{value}</strong>
+                <strong className="mt-3 block text-3xl font-bold tracking-[-0.05em] text-text-primary">{value}</strong>
                 <Text.Caption className="mt-1 block normal-case tracking-normal text-[#8B91A3]">{detail}</Text.Caption>
               </article>
             ))}
@@ -175,7 +175,7 @@ export function GuardDashboard() {
                 <Text.H2>Migration progress</Text.H2>
                 <Text.Paragraph className="mt-2">Baseline debt is reduced over time while new violations remain independently visible.</Text.Paragraph>
               </div>
-              <strong className="text-2xl tracking-[-0.04em] text-[#171A2B]">{migrationProgress}%</strong>
+              <strong className="text-2xl tracking-[-0.04em] text-text-primary">{migrationProgress}%</strong>
             </div>
             <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#EEF0F6]">
               <div className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#9A78FF] transition-[width] duration-500" style={{ width: `${Math.max(2, migrationProgress)}%` }} />
@@ -193,9 +193,9 @@ export function GuardDashboard() {
               <Text.Paragraph className="mt-2">Each component can move independently from legacy protection to full enforcement.</Text.Paragraph>
               <div className="mt-5 space-y-3">
                 {componentRows.length ? componentRows.map(([name, component]) => (
-                  <div key={name} className="rounded-[18px] border border-[#E9EBF2] bg-[#F8F9FC] p-4">
+                  <div key={name} className="rounded-[18px] border border-[#E9EBF2] bg-surface p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <strong className="text-sm text-[#171A2B]">{name}</strong>
+                      <strong className="text-sm text-text-primary">{name}</strong>
                       <span className="rounded-full bg-[#EEF0FF] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#6366F1]">{component.strategy}</span>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -224,7 +224,7 @@ export function GuardDashboard() {
               </div>
               <div className="mt-5 space-y-3">
                 {recentViolations.length ? recentViolations.map((violation, index) => (
-                  <div key={`${violation.rule}-${violation.file}-${violation.line}-${violation.column ?? 0}-${index}`} className="rounded-[18px] border border-[#E9EBF2] bg-[#F8F9FC] p-4">
+                  <div key={`${violation.rule}-${violation.file}-${violation.line}-${violation.column ?? 0}-${index}`} className="rounded-[18px] border border-[#E9EBF2] bg-surface p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={violation.severity === "error" ? "rounded-full bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600" : "rounded-full bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700"}>{violation.rule}</span>
                       <code className="break-all text-xs text-[#6366F1]">{violation.file}:{violation.line}{violation.column ? `:${violation.column}` : ""}</code>
@@ -256,7 +256,7 @@ export function GuardDashboard() {
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl bg-white px-2 py-2.5">
-      <strong className="block text-lg text-[#171A2B]">{value}</strong>
+      <strong className="block text-lg text-text-primary">{value}</strong>
       <Text.Caption className="uppercase">{label}</Text.Caption>
     </div>
   );
@@ -264,9 +264,9 @@ function Metric({ label, value }: { label: string; value: number }) {
 
 function ProgressMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[16px] bg-[#F8F9FC] px-4 py-3">
+    <div className="rounded-[16px] bg-surface px-4 py-3">
       <Text.Caption className="uppercase">{label}</Text.Caption>
-      <strong className="mt-1 block text-xl text-[#171A2B]">{value}</strong>
+      <strong className="mt-1 block text-xl text-text-primary">{value}</strong>
     </div>
   );
 }

@@ -59,7 +59,7 @@ export function ExperienceProperties({ experience }: { experience: MotionExperie
     <aside className="rounded-[32px] border border-[#E4E7EF] bg-white p-5 shadow-[0_18px_70px_rgba(23,26,43,0.05)]">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-[#171A2B]">Properties</h2>
+          <h2 className="font-bold text-text-primary">Properties</h2>
           <p className="text-sm text-[#6D7285]">Motion controls and API surface.</p>
         </div>
         <span className="rounded-full bg-[#EEF0FF] px-3 py-1 text-xs font-semibold text-[#6366F1]">Live</span>
@@ -67,7 +67,7 @@ export function ExperienceProperties({ experience }: { experience: MotionExperie
       <div className="mt-5 space-y-3">
         {experience.props.map((prop) => (
           <label key={prop} className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] px-4 text-sm">
-            <span className="font-medium text-[#171A2B]">{prop}</span>
+            <span className="font-medium text-text-primary">{prop}</span>
             <input className="size-4 accent-[#6366F1]" type="checkbox" defaultChecked />
           </label>
         ))}
@@ -81,7 +81,7 @@ export function ExperienceDocumentation({ experience }: { experience: MotionExpe
     <section className="overflow-hidden rounded-[32px] border border-[#E4E7EF] bg-white shadow-[0_18px_70px_rgba(23,26,43,0.05)]">
       <div className="grid gap-0 lg:grid-cols-2">
         <div className="p-5">
-          <h2 className="flex items-center gap-2 font-bold text-[#171A2B]"><Layers size={18} aria-hidden /> Documentation</h2>
+          <h2 className="flex items-center gap-2 font-bold text-text-primary"><Layers size={18} aria-hidden /> Documentation</h2>
           <div className="mt-4 space-y-3">
             {experience.docs.map((item) => (
               <p key={item} className="rounded-2xl bg-[#F7F8FC] p-4 text-sm leading-6 text-[#6D7285]">{item}</p>
@@ -142,7 +142,7 @@ function ProjectChapterScroll({ experience }: { experience: MotionExperience }) 
           </motion.div>
           <div className="self-center overflow-hidden">
             <motion.p key={active?.label} initial={false} animate={{ y: 0, opacity: 1 }} className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: experience.accent }}>{chapter.label}</motion.p>
-            <motion.h2 key={chapter.title} initial={false} animate={{ y: 0, opacity: 1 }} className="mt-3 text-4xl font-bold tracking-[-0.04em] text-[#171A2B]">{chapter.title}</motion.h2>
+            <motion.h2 key={chapter.title} initial={false} animate={{ y: 0, opacity: 1 }} className="mt-3 text-4xl font-bold tracking-[-0.04em] text-text-primary">{chapter.title}</motion.h2>
             <p className="mt-4 text-base leading-7 text-[#6D7285]">{chapter.description}</p>
             <div className="mt-8 h-2 overflow-hidden rounded-full bg-white/70">
               <motion.div className="h-full rounded-full" style={{ background: experience.accent }} animate={{ width: `${Math.round(progress * 100)}%` }} />
@@ -329,7 +329,7 @@ function BeforeAfterScrubber({ experience }: { experience: MotionExperience }) {
       </div>
       <div className="relative mt-5 h-[430px] overflow-hidden rounded-[28px] bg-[#F7F8FC]" onPointerDown={setFromPointer} onPointerMove={(event) => event.buttons === 1 && setFromPointer(event)} onKeyDown={(event) => event.key === "ArrowRight" ? setPosition((v) => Math.min(96, v + 4)) : event.key === "ArrowLeft" ? setPosition((v) => Math.max(4, v - 4)) : undefined} tabIndex={0}>
         <div className="absolute inset-0 grid place-items-center bg-[#171A2B] text-white"><strong className="text-4xl">Before</strong></div>
-        <div className="absolute inset-0 grid place-items-center bg-white text-[#171A2B]" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}><strong className="text-4xl">After</strong></div>
+        <div className="absolute inset-0 grid place-items-center bg-white text-text-primary" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}><strong className="text-4xl">After</strong></div>
         <div className="absolute inset-y-0 w-1 bg-white shadow-xl" style={{ left: `${position}%` }} />
       </div>
     </section>

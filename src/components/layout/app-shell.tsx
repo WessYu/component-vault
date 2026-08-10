@@ -18,7 +18,7 @@ export function AppShell({ active = "Library", children }: { active?: string; ch
   }, [loadVault]);
 
   return (
-    <main className="relative isolate min-h-dvh overflow-x-clip bg-[#F7F8FC] text-[#171A2B]">
+    <main className="relative isolate min-h-dvh overflow-x-clip bg-[#F7F8FC] text-text-primary">
       <SiteMotionLayer />
       <RouteProgress />
       <div className="relative z-10 grid min-h-dvh lg:grid-cols-[auto_1fr]">

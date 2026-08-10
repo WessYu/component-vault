@@ -81,7 +81,7 @@ export function ComponentDetailPanel({ component, open, onClose }: { component: 
                 <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: style.soft, color: style.text }}>
                   {visualCategory(component)}
                 </span>
-                <h2 className="mt-3 text-2xl font-bold tracking-[-0.02em] text-[#171A2B]">{component.name}</h2>
+                <h2 className="mt-3 text-2xl font-bold tracking-[-0.02em] text-text-primary">{component.name}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#6D7285]">{component.description}</p>
                 <div className="mt-4 flex items-center gap-3 text-xs text-[#9A9FB1]">
                   <span>{component.version}</span>
