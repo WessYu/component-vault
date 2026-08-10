@@ -1,0 +1,29 @@
+version: 1
+
+scan:
+  include: [.]
+  exclude: [node_modules, .next, dist, build, coverage, .git]
+  extensions: [.ts, .tsx, .js, .jsx]
+
+duplicates:
+  enabled: true
+  minOccurrences: 4
+  minTokens: 4
+
+components:
+  Text:
+    source: src/components/ui/text.tsx
+    allowedImportFiles: [src/components/ui/text.tsx]
+    forbiddenImports: [tamagui, "@radix-ui/themes"]
+    forbiddenProps: [fontSize, lineHeight, fontWeight]
+    strategy: touched
+    rawElements:
+      h1: H1
+      h2: H2
+      p: Paragraph
+      small: Caption
+    variants:
+      H1: Main page title
+      H2: Section heading
+      Paragraph: Default body text
+      Caption: Secondary supporting text
