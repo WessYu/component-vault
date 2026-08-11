@@ -55,6 +55,8 @@ TypeScript / TSX AST
 Guard Engine
     │
     ├── Baseline
+    ├── Semantic analysis
+    ├── Autofix
     ├── Migration strategy
     └── Finding classification
     │
@@ -74,6 +76,51 @@ Design-system drift usually happens gradually:
 
 Documentation and code review can catch some of this. The Guard makes the rules **machine-checkable and repeatable**.
 
+## Semantic governance
+
+The Guard can model UI by semantic role instead of coupling a policy to one HTML element or component name.
+
+```text
+JSX / TS AST
+     │
+     ▼
+semantic role + metadata
+     │
+     ▼
+project-owned YAML mappings
+     │
+     ├── analyze
+     ├── scan
+     ├── fix
+     └── CI / PR gate
+```
+
+For example, a project can define `h1` as the semantic role `heading` at level `1`, then map that role to its own governed component. Another project can use a completely different component name without changing the Guard itself.
+
+The YAML configuration remains the source of truth:
+
+```yaml
+semantics:
+  strict: false
+  elements:
+    h1:
+      role: heading
+      level: 1
+    button:
+      role: button
+
+  components:
+    Text.H1:
+      roles:
+        heading:
+          level: 1
+    Button:
+      roles:
+        button: {}
+```
+
+This is the part that makes the governance model generalizable: the engine understands semantic facts, while the repository defines what those facts mean and which components should govern them.
+
 ## Rules
 
 | Rule | What it catches |
@@ -83,23 +130,55 @@ Documentation and code review can catch some of this. The Guard makes the rules 
 | `CV003` | Raw semantic JSX where a governed variant exists |
 | `CV004` | Repeated static class combinations |
 | `CV005` | Configurable repository-specific forbidden patterns |
+| `CV006` | Semantic elements that should use a governed component |
 
 Example:
 
 ```tsx
-<h1 style={{ fontSize: 32 }}>
-  Título de teste
-</h1>
+<h1>Título de teste</h1>
+<button>Salvar</button>
 ```
 
-can produce:
+can produce a semantic finding such as:
 
 ```text
-[CV003] Raw semantic element
-src/test.tsx:5:5
-  Raw <h1> detected in governed JSX.
-  → Use <Text.H1> instead.
+[CV006] Semantic element requires governed component
+src/test.tsx:10:7
+  <button> is mapped to semantic role 'button' and a governed component is available.
+  → Use the project's governed Button component for 'button'.
 ```
+
+## Autofix
+
+Version `0.4.1` adds a deterministic autofix flow for supported governance and semantic findings.
+
+Preview the proposed changes first:
+
+```bash
+npx component-vault fix --dry-run
+```
+
+Then apply supported replacements:
+
+```bash
+npx component-vault fix
+```
+
+A typical workflow is:
+
+```text
+scan / analyze
+      ↓
+fix --dry-run
+      ↓
+review
+      ↓
+fix
+      ↓
+scan again
+```
+
+The autofix uses the same repository-owned mappings as the analyzer. It does not guess a replacement when no governed target can be resolved; those findings are reported as skipped instead.
 
 ## YAML is the source of truth
 
@@ -180,6 +259,7 @@ npx @wess2001/component-vault@latest init
 
 ```bash
 npx component-vault init
+npx component-vault analyze
 npx component-vault scan
 ```
 
@@ -202,12 +282,15 @@ npx component-vault pr --base origin/master
 init [--ci] [--force]     initialize governance files
 doctor                    validate local setup
 scan                      scan TypeScript/JavaScript AST
+analyze                   inspect semantic roles and coverage
+fix [--dry-run]           automatically fix supported findings
 check --base REF          enforce governance strategies
 baseline                  capture accepted legacy debt
 report --output FILE      generate the full JSON migration report
 pr --base REF             generate a PR summary and enforce the gate
 context                   export agent-readable rules
-explain CV001             explain a rule
+explain CV001             explain a Guard rule
+explain CV006             explain a semantic finding
 ```
 
 ## AI-assisted development
@@ -228,10 +311,10 @@ Repository code
 Component Vault Guard
       │
       ├── allowed
-      └── blocked
+      └── blocked / fixable
 ```
 
-The agent can use `component-vault context` to understand project rules, but the final enforcement remains deterministic and repository-controlled.
+The agent can use `component-vault context` to understand project rules, but the final enforcement remains deterministic and repository-controlled. Supported autofixes use those same rules instead of asking an AI model to invent transformations.
 
 ## GitHub Actions
 
@@ -325,13 +408,13 @@ The application runs at `http://localhost:3000`.
 
 ## Project status
 
-The current published Guard CLI is:
+The current npm package being prepared is:
 
 ```text
-@wess2001/component-vault@0.3.0
+@wess2001/component-vault@0.4.1
 ```
 
-The project is actively evolving around configurable governance, brownfield migration, deterministic AST analysis and better tooling for AI-assisted development.
+Version `0.4.1` focuses on the Guard's semantic governance model and deterministic autofix workflow, while the project continues evolving around configurable governance, brownfield migration and better tooling for AI-assisted development.
 
 ## Author
 
