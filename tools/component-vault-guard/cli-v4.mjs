@@ -6,8 +6,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import process from "node:process";
+import ts from "typescript";
 import YAML from "yaml";
-import { analyze, explainSemantic, loadConfig, semanticScan } from "./semantic.mjs";
+import { analyze, collectFiles, elementFacts, explainSemantic, governedTagForElement, loadConfig, scriptKind, semanticScan } from "./semantic.mjs";
 
 const VERSION = "0.4.0";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
@@ -40,6 +41,8 @@ function coreArgs(command, options, positional = []) {
   for (const key of ["base", "config", "baseline", "output", "report"]) {
     if (typeof options[key] === "string") args.push(`--${key}`, options[key]);
   }
+  if (options["dry-run"] === true) args.push("--dry-run");
+  if (options.check === true) args.push("--check");
   return args;
 }
 
@@ -91,6 +94,7 @@ function printSemanticFindings(findings) {
     console.log(`  ${item.message}`);
     console.log(`  ${item.snippet}`);
     console.log(`  → ${item.suggestion}`);
+    if (item.fix) console.log(`  ↳ Autofix: ${item.fix}`);
   }
   console.log(`\nComponent Vault Semantic Guard: ${findings.length} new semantic violation(s).`);
 }
@@ -132,8 +136,83 @@ function printAnalyze(root, configPath) {
   }
 }
 
+function applySemanticFixes(root, configPath, dryRun = false) {
+  const config = loadConfig(root, configPath);
+  const elements = elementFacts(config);
+  let changedFiles = 0;
+  let replacements = 0;
+  let skipped = 0;
+
+  for (const file of collectFiles(root, config)) {
+    const path = resolve(root, file);
+    const source = readFileSync(path, "utf8");
+    const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind(file));
+    const edits = [];
+
+    function addTagEdit(tagNode, replacement) {
+      edits.push({ start: tagNode.getStart(sourceFile), end: tagNode.getEnd(), replacement });
+    }
+
+    function visit(node) {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const tag = node.tagName.getText(sourceFile);
+        const element = elements.get(tag);
+        if (element) {
+          const target = governedTagForElement(config, tag, element);
+          if (target && target !== tag) {
+            addTagEdit(node.tagName, target);
+            if (ts.isJsxOpeningElement(node) && node.parent && ts.isJsxElement(node.parent)) {
+              const closing = node.parent.closingElement;
+              if (closing) addTagEdit(closing.tagName, target);
+            }
+          } else {
+            skipped += 1;
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    }
+
+    visit(sourceFile);
+    if (!edits.length) continue;
+
+    const unique = new Map(edits.map((edit) => [`${edit.start}:${edit.end}`, edit]));
+    const ordered = [...unique.values()].sort((a, b) => b.start - a.start);
+    let updated = source;
+    for (const edit of ordered) updated = `${updated.slice(0, edit.start)}${edit.replacement}${updated.slice(edit.end)}`;
+
+    if (updated === source) continue;
+    changedFiles += 1;
+    replacements += ordered.length;
+    console.log(`${dryRun ? "Would fix" : "Fixed"} ${file}: ${ordered.length} semantic replacement(s)`);
+    if (!dryRun) writeFileSync(path, updated, "utf8");
+  }
+
+  console.log(`\nComponent Vault Semantic Fix: ${replacements} replacement(s) in ${changedFiles} file(s).`);
+  if (skipped) console.log(`Skipped ${skipped} semantic occurrence(s) without a resolvable governed target.`);
+  return { changedFiles, replacements, skipped };
+}
+
+function handleFix(root, options, positional) {
+  const configPath = typeof options.config === "string" ? options.config : DEFAULT_CONFIG;
+  const dryRun = options["dry-run"] === true || options.check === true;
+
+  console.log("Component Vault Guard Autofix\n");
+
+  const legacy = runLegacy("fix", options, positional);
+  printLegacy(legacy);
+  if (legacy.status !== 0) {
+    process.exitCode = legacy.status ?? 1;
+    return;
+  }
+
+  const semantic = applySemanticFixes(root, configPath, dryRun);
+  process.exitCode = dryRun ? 0 : 0;
+  if (!semantic.replacements && !legacy.stdout?.includes("replacement(s)")) console.log("\nNo automatically fixable findings were found.");
+}
+
 function help() {
-  console.log(`Component Vault Guard v${VERSION}\n\nUsage:\n  npx component-vault <command> [options]\n\nSetup:\n  init [--ci] [--force]     Initialize governance and semantic mappings\n  doctor                    Validate local Guard setup\n\nGovernance:\n  scan                      Scan AST and semantic roles\n  check [--base REF]        Enforce governance and semantic policies\n  baseline                  Capture accepted legacy findings\n  report [--output FILE]    Generate migration report\n  pr [--base REF]           Generate PR gate summary\n  context                   Export agent-readable rules\n  explain CV001             Explain a Guard rule\n\nSemantic model:\n  analyze                   Inspect semantic roles, coverage and mappings\n  explain CV006             Explain a semantic finding\n\nOptions:\n  --config FILE             Use another YAML configuration\n  --baseline FILE           Use another baseline file\n  --output FILE             Output path for report/PR summary\n  --report FILE             Internal report path used by PR\n\nExamples:\n  npx component-vault analyze\n  npx component-vault scan\n  npx component-vault baseline\n  npx component-vault check\n  npx component-vault pr --base origin/master\n`);
+  console.log(`Component Vault Guard v${VERSION}\n\nUsage:\n  npx component-vault <command> [options]\n\nSetup:\n  init [--ci] [--force]     Initialize governance and semantic mappings\n  doctor                    Validate local Guard setup\n\nGovernance:\n  scan                      Scan AST and semantic roles\n  check [--base REF]        Enforce governance and semantic policies\n  fix [--dry-run]           Automatically fix supported governance and semantic findings\n  baseline                  Capture accepted legacy findings\n  report [--output FILE]    Generate migration report\n  pr [--base REF]           Generate PR gate summary\n  context                   Export agent-readable rules\n  explain CV001             Explain a Guard rule\n\nSemantic model:\n  analyze                   Inspect semantic roles, coverage and mappings\n  explain CV006             Explain a semantic finding\n\nOptions:\n  --config FILE             Use another YAML configuration\n  --baseline FILE           Use another baseline file\n  --output FILE             Output path for report/PR summary\n  --report FILE             Internal report path used by PR\n  --dry-run                 Preview supported fixes without changing files\n\nExamples:\n  npx component-vault analyze\n  npx component-vault scan\n  npx component-vault fix --dry-run\n  npx component-vault fix\n  npx component-vault baseline\n  npx component-vault check\n  npx component-vault pr --base origin/master\n`);
 }
 
 function main() {
@@ -148,6 +227,7 @@ function main() {
     if (result.status === 0) semanticInit(root, configPath);
     process.exitCode = result.status ?? 1; return;
   }
+  if (command === "fix") return handleFix(root, options, positional);
   if (command === "baseline") {
     const result = runLegacy(command, options, positional); printLegacy(result);
     if (result.status === 0) { const config = loadConfig(root, configPath); writeSemanticBaseline(root, semanticScan(root, config).findings); console.log(`Component Vault Semantic Guard: baseline written to ${SEMANTIC_BASELINE}`); }
