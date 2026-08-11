@@ -10,7 +10,7 @@ import ts from "typescript";
 import YAML from "yaml";
 import { analyze, collectFiles, elementFacts, explainSemantic, governedTagForElement, loadConfig, scriptKind, semanticScan } from "./semantic.mjs";
 
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
@@ -207,7 +207,7 @@ function handleFix(root, options, positional) {
   }
 
   const semantic = applySemanticFixes(root, configPath, dryRun);
-  process.exitCode = dryRun ? 0 : 0;
+  process.exitCode = 0;
   if (!semantic.replacements && !legacy.stdout?.includes("replacement(s)")) console.log("\nNo automatically fixable findings were found.");
 }
 
