@@ -82,18 +82,34 @@ function getTagName(node, sourceFile) {
   return node.tagName.getText(sourceFile);
 }
 
+function addRoleEntry(map, name, role, config = {}) {
+  if (!name || !role) return;
+  map.set(name, { role: String(role), config: config && typeof config === "object" ? config : {} });
+}
+
 function componentRoleMap(config) {
   const map = new Map();
   for (const [name, definition] of Object.entries(config.semantics.components ?? {})) {
-    const roles = definition?.roles ?? {};
-    for (const [role, roleConfig] of Object.entries(roles)) {
-      map.set(name, { role, config: roleConfig ?? {} });
+    if (!definition || typeof definition !== "object") continue;
+    const roles = definition.roles ?? {};
+    for (const [role, roleConfig] of Object.entries(roles)) addRoleEntry(map, name, role, roleConfig);
+    const variants = definition.variants ?? {};
+    for (const [variant, variantConfig] of Object.entries(variants)) {
+      if (!variantConfig || typeof variantConfig !== "object") continue;
+      const role = variantConfig.role ?? variantConfig.semanticRole;
+      if (role) addRoleEntry(map, `${name}.${variant}`, role, { ...variantConfig, variant });
     }
   }
   for (const [name, definition] of Object.entries(config.components ?? {})) {
-    if (map.has(name)) continue;
-    const semanticRole = definition?.semanticRole;
-    if (semanticRole) map.set(name, { role: String(semanticRole), config: {} });
+    if (!definition || typeof definition !== "object") continue;
+    const semanticRole = definition.semanticRole;
+    if (semanticRole && !map.has(name)) addRoleEntry(map, name, semanticRole);
+    for (const [variant, description] of Object.entries(definition.variants ?? {})) {
+      if (map.has(`${name}.${variant}`)) continue;
+      if (description && typeof description === "object" && (description.role || description.semanticRole)) {
+        addRoleEntry(map, `${name}.${variant}`, description.role ?? description.semanticRole, { ...description, variant });
+      }
+    }
   }
   return map;
 }
@@ -127,17 +143,24 @@ function componentSemanticFacts(sourceFile, file, config) {
     }
     if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
       const tag = getTagName(node, sourceFile);
-      const dot = tag.indexOf(".");
-      const rootName = dot === -1 ? tag : tag.slice(0, dot);
-      const configured = roleMap.get(rootName);
+      const configured = roleMap.get(tag) ?? roleMap.get(tag.includes(".") ? tag.slice(0, tag.indexOf(".")) : tag);
       if (configured) {
-        facts.push({ kind: "usage", name: rootName, variant: dot === -1 ? undefined : tag.slice(dot + 1), role: configured.role, file, line: sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1, tag, props: Object.fromEntries(node.attributes.properties.filter(ts.isJsxAttribute).map((a) => [a.name.text, getLiteralAttribute(node, a.name.text)])) });
+        const dot = tag.indexOf(".");
+        facts.push({ kind: "usage", name: tag, rootName: dot === -1 ? tag : tag.slice(0, dot), variant: dot === -1 ? undefined : tag.slice(dot + 1), role: configured.role, config: configured.config, file, line: sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1, tag, props: Object.fromEntries(node.attributes.properties.filter(ts.isJsxAttribute).map((a) => [a.name.text, getLiteralAttribute(node, a.name.text)])) });
       }
     }
     ts.forEachChild(node, visit);
   }
   visit(sourceFile);
   return facts;
+}
+
+function governedForElement(componentRoles, element) {
+  return [...componentRoles.entries()].filter(([, value]) => {
+    if (value.role !== element.role) return false;
+    if (element.level === undefined) return true;
+    return value.config?.level === element.level || value.config?.variants?.[element.variant]?.level === element.level;
+  });
 }
 
 function semanticScan(root, config) {
@@ -158,9 +181,8 @@ function semanticScan(root, config) {
         const element = elements.get(tag);
         if (element) {
           const location = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-          const governed = [...componentRoles.entries()].filter(([, value]) => value.role === element.role);
-          const exactVariant = element.level === undefined ? true : governed.some(([, value]) => value.config?.level === element.level || value.config?.variants?.[element.variant]?.level === element.level);
-          if (governed.length && (!element.level || exactVariant)) {
+          const governed = governedForElement(componentRoles, element);
+          if (governed.length) {
             const names = governed.map(([name]) => name);
             findings.push({
               code: "CV006",
@@ -192,7 +214,6 @@ function semanticScan(root, config) {
 function analyze(root, config) {
   const result = semanticScan(root, config);
   const byRole = new Map();
-  const nativeByRole = new Map();
   const governedByRole = new Map();
 
   for (const fact of result.facts) {
@@ -200,24 +221,30 @@ function analyze(root, config) {
     governedByRole.set(fact.role, (governedByRole.get(fact.role) ?? 0) + 1);
   }
 
+  const elements = elementFacts(config);
   for (const file of result.files) {
     const source = readFileSync(resolve(root, file), "utf8");
     const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind(file));
     function visit(node) {
       if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
         const tag = getTagName(node, sourceFile);
-        const element = elementFacts(config).get(tag);
-        if (element) {
-          byRole.set(element.role, (byRole.get(element.role) ?? 0) + 1);
-          nativeByRole.set(element.role, (nativeByRole.get(element.role) ?? 0) + 1);
-        }
+        const element = elements.get(tag);
+        if (element) byRole.set(element.role, (byRole.get(element.role) ?? 0) + 1);
       }
       ts.forEachChild(node, visit);
     }
     visit(sourceFile);
   }
 
-  return { ...result, summary: [...new Set([...byRole.keys(), ...governedByRole.keys()])].sort().map((role) => ({ role, semanticOccurrences: byRole.get(role) ?? 0, governedUsages: governedByRole.get(role) ?? 0, findings: result.findings.filter((finding) => finding.semanticRole === role).length })) };
+  return {
+    ...result,
+    summary: [...new Set([...byRole.keys(), ...governedByRole.keys()])].sort().map((role) => ({
+      role,
+      semanticOccurrences: byRole.get(role) ?? 0,
+      governedUsages: governedByRole.get(role) ?? 0,
+      findings: result.findings.filter((finding) => finding.semanticRole === role).length
+    }))
+  };
 }
 
 function formatAnalyze(result) {
@@ -243,4 +270,4 @@ function explainSemantic(finding) {
   ].filter(Boolean).join("\n");
 }
 
-export { analyze, explainSemantic, loadConfig, semanticScan };
+export { analyze, explainSemantic, loadConfig, semanticScan, componentRoleMap, elementFacts, collectFiles, scriptKind };
