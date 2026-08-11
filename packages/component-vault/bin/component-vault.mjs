@@ -1,3 +1,3 @@
 #!/usr/bin/env node
 
-await import("../../../tools/component-vault-guard/cli.mjs");
+await import("../../../tools/component-vault-guard/cli-v4.mjs");
