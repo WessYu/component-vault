@@ -128,6 +128,41 @@ function elementFacts(config) {
   return map;
 }
 
+function governedForElement(componentRoles, element) {
+  return [...componentRoles.entries()].filter(([, value]) => {
+    if (value.role !== element.role) return false;
+    if (element.level === undefined) return true;
+    return value.config?.level === element.level;
+  });
+}
+
+function governedTagForElement(config, elementName, element) {
+  const componentRoles = componentRoleMap(config);
+  const direct = governedForElement(componentRoles, element);
+  if (direct.length) return direct[0][0];
+
+  for (const [name, definition] of Object.entries(config.components ?? {})) {
+    if (!definition || typeof definition !== "object") continue;
+    const variant = definition.rawElements?.[elementName];
+    if (!variant) continue;
+    const candidate = `${name}.${variant}`;
+    const configured = componentRoles.get(candidate);
+    if (configured && configured.role === element.role && (element.level === undefined || configured.config?.level === element.level)) return candidate;
+    if (configured && configured.role === element.role && element.level === undefined) return candidate;
+  }
+
+  for (const [name, definition] of Object.entries(config.semantics.components ?? {})) {
+    const variants = definition?.variants ?? {};
+    const variant = element.variant;
+    if (variant && variants[variant]) {
+      const candidate = `${name}.${variant}`;
+      const configured = componentRoles.get(candidate);
+      if (configured && configured.role === element.role && (element.level === undefined || configured.config?.level === element.level)) return candidate;
+    }
+  }
+  return null;
+}
+
 function componentSemanticFacts(sourceFile, file, config) {
   const facts = [];
   const roleMap = componentRoleMap(config);
@@ -153,14 +188,6 @@ function componentSemanticFacts(sourceFile, file, config) {
   }
   visit(sourceFile);
   return facts;
-}
-
-function governedForElement(componentRoles, element) {
-  return [...componentRoles.entries()].filter(([, value]) => {
-    if (value.role !== element.role) return false;
-    if (element.level === undefined) return true;
-    return value.config?.level === element.level || value.config?.variants?.[element.variant]?.level === element.level;
-  });
 }
 
 function semanticScan(root, config) {
@@ -195,6 +222,7 @@ function semanticScan(root, config) {
               level: element.level,
               element: tag,
               governedComponents: names,
+              fix: governedTagForElement(config, tag, element),
               snippet: node.getText(sourceFile).replace(/\s+/g, " ").slice(0, 280),
               message: `<${tag}> is mapped to semantic role '${element.role}' and a governed component is available.`,
               suggestion: `Use the project's governed ${names.join(" / ")} component for '${element.role}'.`,
@@ -247,14 +275,6 @@ function analyze(root, config) {
   };
 }
 
-function formatAnalyze(result) {
-  const lines = ["Component Vault Semantic Analysis", "", "Role                 Native   Governed   Findings", "────────────────────────────────────────────────────"];
-  for (const item of result.summary) lines.push(`${item.role.padEnd(20)} ${String(item.semanticOccurrences).padStart(6)} ${String(item.governedUsages).padStart(10)} ${String(item.findings).padStart(10)}`);
-  if (!result.summary.length) lines.push("No semantic roles configured.");
-  lines.push("", `Files analyzed: ${result.files.length}`, `Semantic findings: ${result.findings.length}`);
-  return lines.join("\n");
-}
-
 function explainSemantic(finding) {
   return [
     `${finding.code} · ${finding.title}`,
@@ -264,10 +284,11 @@ function explainSemantic(finding) {
     `Semantic role: ${finding.semanticRole}`,
     finding.level === undefined ? null : `Level: ${finding.level}`,
     `Governed components: ${finding.governedComponents.join(", ")}`,
+    finding.fix ? `Autofix: ${finding.fix}` : "Autofix: unavailable",
     "",
     finding.message,
     finding.suggestion
   ].filter(Boolean).join("\n");
 }
 
-export { analyze, explainSemantic, loadConfig, semanticScan, componentRoleMap, elementFacts, collectFiles, scriptKind };
+export { analyze, explainSemantic, loadConfig, semanticScan, componentRoleMap, elementFacts, governedTagForElement, collectFiles, scriptKind };
