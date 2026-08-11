@@ -26,6 +26,40 @@ npx component-vault check --base origin/master
 npx component-vault pr --base origin/master
 ```
 
+## Autofix
+
+Version `0.4.1` adds a deterministic autofix command for supported governance and semantic findings.
+
+Preview changes without modifying files:
+
+```bash
+npx component-vault fix --dry-run
+```
+
+Apply supported fixes:
+
+```bash
+npx component-vault fix
+```
+
+The Guard resolves configured semantic mappings from `component-vault.yaml` and can replace native semantic elements with their configured governed components. For example, a configured `<button>` → `Button` mapping can be applied automatically.
+
+The autofix is intentionally conservative: findings without a resolvable governed target are reported as skipped instead of being changed heuristically.
+
+A recommended workflow is:
+
+```text
+scan / analyze
+      ↓
+fix --dry-run
+      ↓
+review proposed replacements
+      ↓
+fix
+      ↓
+scan again
+```
+
 ## Semantic governance
 
 The semantic layer separates three concerns:
@@ -37,7 +71,7 @@ Semantic facts
         ↓
 Governance policies
         ↓
-Findings / CI / PR output
+Findings / Fixes / CI / PR output
 ```
 
 This means a policy can describe a semantic role such as `heading` instead of being permanently coupled to `<h1>`.
@@ -195,13 +229,14 @@ init [--ci] [--force]  initialize governance and semantic mappings
 doctor                 validate setup
 scan                   scan AST and semantic roles
 check --base REF       enforce protect/touched/full + semantic policies
+fix [--dry-run]        automatically fix supported findings
 baseline               capture accepted legacy debt
-report                  write full JSON migration report
+report --output FILE   write full JSON migration report
 pr --base REF          create PR summary and fail when blocked
-context                 export rules for coding agents
-analyze                 inspect semantic roles and coverage
-explain CV001           explain a rule
-explain CV006           explain a semantic finding
+context                export rules for coding agents
+analyze                inspect semantic roles and coverage
+explain CV001          explain a rule
+explain CV006          explain a semantic finding
 ```
 
 ## Existing AST rules
@@ -225,11 +260,15 @@ The semantic layer complements the original configurable rules:
 
 ### Deterministic core
 
-The enforcement engine is AST + YAML driven. AI can help developers understand or author policies, but the CI decision remains deterministic.
+The enforcement and autofix engine is AST + YAML driven. AI can help developers understand or author policies, but the CI decision and supported code transformations remain deterministic.
 
 ### Repository-owned semantics
 
 Component Vault does not assume that every Design System calls its typography component `Text`, `Typography` or `Heading`. The repository defines its own semantic mappings.
+
+### Conservative autofix
+
+`fix` only applies replacements when the Guard can resolve a configured governed target. It does not guess which component should replace an element.
 
 ### Migration instead of rewrite
 
