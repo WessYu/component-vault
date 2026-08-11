@@ -5,15 +5,15 @@ import { spawnSync } from "node:child_process";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
+import YAML from "yaml";
+import { analyzeProject, renderAnalysis } from "./semantic.mjs";
 
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 const CORE_PATH = fileURLToPath(new URL("./cli-v2.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
 
-function toPosix(value) {
-  return value.split(sep).join("/");
-}
+function toPosix(value) { return value.split(sep).join("/"); }
 
 function parseArgs(argv) {
   const [command = "help", ...rest] = argv;
@@ -21,17 +21,11 @@ function parseArgs(argv) {
   const positional = [];
   for (let index = 0; index < rest.length; index += 1) {
     const item = rest[index];
-    if (!item.startsWith("--")) {
-      positional.push(item);
-      continue;
-    }
+    if (!item.startsWith("--")) { positional.push(item); continue; }
     const key = item.slice(2);
     const next = rest[index + 1];
     if (!next || next.startsWith("--")) options[key] = true;
-    else {
-      options[key] = next;
-      index += 1;
-    }
+    else { options[key] = next; index += 1; }
   }
   return { command, options, positional };
 }
@@ -46,25 +40,31 @@ function coreArgs(command, options, positional = []) {
 
 function runCore(args, { capture = false } = {}) {
   return spawnSync(process.execPath, [CORE_PATH, ...args], {
-    cwd: process.cwd(),
-    encoding: "utf8",
-    stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+    cwd: process.cwd(), encoding: "utf8", stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
   });
 }
 
+function loadProjectConfig(root, configPath) {
+  const path = resolve(root, String(configPath ?? DEFAULT_CONFIG));
+  if (!existsSync(path)) throw new Error(`Configuration not found: ${configPath ?? DEFAULT_CONFIG}`);
+  const config = YAML.parse(readFileSync(path, "utf8"));
+  if (!config || config.version !== 1) throw new Error("component-vault.yaml must use version: 1");
+  config.scan ??= {};
+  config.scan.include ??= ["src"];
+  config.scan.exclude ??= ["node_modules", ".next", ".git", "dist", "build", "coverage"];
+  config.scan.extensions ??= [".ts", ".tsx", ".js", ".jsx"];
+  config.components ??= {};
+  config.semantics ??= {};
+  config.semantics.elements ??= {};
+  return config;
+}
+
 function detectTextSource(root) {
-  const candidates = [
-    "src/components/ui/text.tsx",
-    "src/components/text.tsx",
-    "components/ui/text.tsx",
-    "components/text.tsx",
-  ];
+  const candidates = ["src/components/ui/text.tsx", "src/components/text.tsx", "components/ui/text.tsx", "components/text.tsx"];
   return candidates.find((candidate) => existsSync(resolve(root, candidate))) ?? "src/components/ui/text.tsx";
 }
 
-function detectScanInclude(root) {
-  return existsSync(resolve(root, "src")) ? "src" : ".";
-}
+function detectScanInclude(root) { return existsSync(resolve(root, "src")) ? "src" : "."; }
 
 function starterConfig(root) {
   const include = detectScanInclude(root);
@@ -80,6 +80,28 @@ duplicates:
   enabled: true
   minOccurrences: 4
   minTokens: 4
+
+semantics:
+  elements:
+    h1:
+      role: heading
+      level: 1
+    h2:
+      role: heading
+      level: 2
+    h3:
+      role: heading
+      level: 3
+    p:
+      role: body-text
+    small:
+      role: caption
+    button:
+      role: button
+    a:
+      role: link
+    input:
+      role: input
 
 components:
   Text:
@@ -101,9 +123,7 @@ components:
 `;
 }
 
-function starterBaseline() {
-  return `${JSON.stringify({ version: 2, generatedAt: null, fingerprints: [], violations: [] }, null, 2)}\n`;
-}
+function starterBaseline() { return `${JSON.stringify({ version: 2, generatedAt: null, fingerprints: [], violations: [] }, null, 2)}\n`; }
 
 function setupNotes() {
   return `# Component Vault Guard setup
@@ -113,12 +133,12 @@ The project is initialized for AST-based design-system governance.
 Recommended next steps:
 
 1. Run \`npx component-vault scan\` to inspect current findings.
-2. On an existing codebase, run \`npx component-vault baseline\` once to capture accepted legacy debt.
-3. Run \`npx component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
-4. Run \`npx component-vault context\` to export agent-readable rules.
-5. Promote a component from \`touched\` to \`full\` after its legacy debt reaches zero.
+2. Run \`npx component-vault analyze\` to inspect semantic roles and unmapped JSX.
+3. On an existing codebase, run \`npx component-vault baseline\` once to capture accepted legacy debt.
+4. Run \`npx component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
+5. Run \`npx component-vault context\` to export agent-readable rules.
 
-Edit \`component-vault.yaml\` to add governed components, forbidden imports, protected props and semantic variants.
+The \`semantics\` section maps native elements to semantic roles. Component role mappings can be added under governed components without coupling the Guard to a specific component name.
 `;
 }
 
@@ -161,38 +181,42 @@ function handleInit(options) {
   const configPath = resolve(root, String(options.config ?? DEFAULT_CONFIG));
   const baselinePath = resolve(root, String(options.baseline ?? DEFAULT_BASELINE));
   const notesPath = resolve(root, ".component-vault/README.md");
-
   const created = [];
   if (writeText(configPath, starterConfig(root), force)) created.push(toPosix(relative(root, configPath)));
   if (writeText(baselinePath, starterBaseline(), force)) created.push(toPosix(relative(root, baselinePath)));
   if (writeText(notesPath, setupNotes(), force)) created.push(toPosix(relative(root, notesPath)));
-
   if (options.ci === true) {
     const workflowPath = resolve(root, ".github/workflows/component-vault-guard.yml");
     if (writeText(workflowPath, githubWorkflow(), force)) created.push(toPosix(relative(root, workflowPath)));
   }
-
-  if (!created.length) {
-    console.log("Component Vault Guard is already initialized. Use --force to regenerate starter files.");
-  } else {
-    console.log("Component Vault Guard initialized.");
-    for (const file of created) console.log(`  + ${file}`);
-  }
-
+  if (!created.length) console.log("Component Vault Guard is already initialized. Use --force to regenerate starter files.");
+  else { console.log("Component Vault Guard initialized."); for (const file of created) console.log(`  + ${file}`); }
   console.log("\nNext:");
   console.log("  npx component-vault scan");
+  console.log("  npx component-vault analyze");
   console.log("  npx component-vault baseline   # existing codebases");
   console.log("  npx component-vault pr --base HEAD~1");
 }
 
+function handleAnalyze(options) {
+  const root = process.cwd();
+  const config = loadProjectConfig(root, options.config);
+  const report = analyzeProject(root, config);
+  const output = options.output;
+  if (typeof output === "string") {
+    const path = resolve(root, output);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+    console.log(`Semantic report: ${toPosix(relative(root, path))}`);
+  }
+  console.log(renderAnalysis(report));
+  process.exitCode = report.unmappedNodes > 0 ? 0 : 0;
+}
+
 function baselineCount(path) {
   if (!existsSync(path)) return null;
-  try {
-    const parsed = JSON.parse(readFileSync(path, "utf8"));
-    return Array.isArray(parsed.fingerprints) ? parsed.fingerprints.length : 0;
-  } catch {
-    return -1;
-  }
+  try { const parsed = JSON.parse(readFileSync(path, "utf8")); return Array.isArray(parsed.fingerprints) ? parsed.fingerprints.length : 0; }
+  catch { return -1; }
 }
 
 function handleDoctor(options) {
@@ -200,13 +224,11 @@ function handleDoctor(options) {
   const configPath = resolve(root, String(options.config ?? DEFAULT_CONFIG));
   const baselinePath = resolve(root, String(options.baseline ?? DEFAULT_BASELINE));
   const checks = [];
-
   checks.push(["Configuration", existsSync(configPath), toPosix(relative(root, configPath))]);
   const baseline = baselineCount(baselinePath);
   checks.push(["Baseline", baseline !== null && baseline >= 0, baseline === null ? "missing" : baseline < 0 ? "invalid JSON" : `${baseline} accepted error(s)`]);
   const gitDetected = existsSync(resolve(root, ".git"));
   checks.push(["Git repository", gitDetected, gitDetected ? "detected" : "not detected"]);
-
   let engineReady = false;
   if (existsSync(configPath)) {
     const result = runCore(coreArgs("scan", options), { capture: true });
@@ -214,7 +236,6 @@ function handleDoctor(options) {
     if (!engineReady && result.stderr) process.stderr.write(result.stderr);
   }
   checks.push(["TypeScript AST engine", engineReady, engineReady ? "ready" : "scan failed"]);
-
   console.log(`Component Vault Guard doctor v${VERSION}\n`);
   for (const [label, ok, detail] of checks) console.log(`${ok ? "✓" : "✕"} ${label}: ${detail}`);
   const failed = checks.filter(([, ok]) => !ok).length;
@@ -226,30 +247,12 @@ function renderPrSummary(report) {
   const summary = report.summary;
   const allowed = summary.blocking === 0;
   const heading = allowed ? "✅ Component Vault Guard allows this PR" : "❌ Component Vault Guard blocked this PR";
-  const rows = [
-    ["Migration", `${summary.migrationProgress}%`],
-    ["Legacy", String(summary.legacy)],
-    ["Resolved", String(summary.resolved)],
-    ["New", String(summary.new)],
-    ["Blocking", String(summary.blocking)],
-    ["Files scanned", String(summary.filesScanned)],
-  ];
+  const rows = [["Migration", `${summary.migrationProgress}%`], ["Legacy", String(summary.legacy)], ["Resolved", String(summary.resolved)], ["New", String(summary.new)], ["Blocking", String(summary.blocking)], ["Files scanned", String(summary.filesScanned)]];
   const findings = report.violations.slice(0, 5);
-  const lines = [
-    `## ${heading}`,
-    "",
-    `Engine: \`${report.engine ?? "unknown"}\``,
-    "",
-    "| Metric | Value |",
-    "| --- | ---: |",
-    ...rows.map(([label, value]) => `| ${label} | ${value} |`),
-    "",
-  ];
+  const lines = [`## ${heading}`, "", `Engine: \`${report.engine ?? "unknown"}\``, "", "| Metric | Value |", "| --- | ---: |", ...rows.map(([label, value]) => `| ${label} | ${value} |`), ""];
   if (findings.length) {
     lines.push("### Sample findings", "");
-    for (const finding of findings) {
-      lines.push(`- \`${finding.rule}\` \`${finding.file}:${finding.line}:${finding.column ?? 1}\` — ${finding.message}${finding.suggestion ? ` Fix: ${finding.suggestion}` : ""}`);
-    }
+    for (const finding of findings) lines.push(`- \`${finding.rule}\` \`${finding.file}:${finding.line}:${finding.column ?? 1}\` — ${finding.message}${finding.suggestion ? ` Fix: ${finding.suggestion}` : ""}`);
     lines.push("");
   }
   lines.push(allowed ? "No blocking design-system drift was introduced by this gate." : "Resolve the blocking findings before merging.", "");
@@ -268,15 +271,12 @@ function handlePr(options) {
     process.exitCode = result.status ?? 1;
     return;
   }
-
   const report = JSON.parse(readFileSync(resolve(root, reportPath), "utf8"));
   const markdown = renderPrSummary(report);
   const absoluteSummary = resolve(root, summaryPath);
   mkdirSync(dirname(absoluteSummary), { recursive: true });
   writeFileSync(absoluteSummary, markdown);
-
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
-
   const summary = report.summary;
   console.log(`Component Vault Guard PR · ${summary.blocking === 0 ? "allowed" : "blocked"}`);
   console.log(`Migration ${summary.migrationProgress}% · ${summary.legacy} legacy · ${summary.new} new · ${summary.resolved} resolved · ${summary.blocking} blocking`);
@@ -294,6 +294,9 @@ Setup:
   init [--ci] [--force]     Create component-vault.yaml, baseline and setup notes
   doctor                    Validate local Guard setup
 
+Analysis:
+  analyze [--output FILE]   Build a semantic model of the project
+
 Governance:
   scan                      Scan TypeScript/JavaScript AST and print findings
   check [--base REF]        Enforce protect, touched and full strategies
@@ -306,11 +309,13 @@ Governance:
 Options:
   --config FILE             Use another YAML configuration
   --baseline FILE           Use another baseline file
-  --output FILE             Output path for report/PR summary
+  --output FILE             Output path for analysis/report/PR summary
   --report FILE             Internal JSON report path used by the PR command
 
 Examples:
   npx component-vault init --ci
+  npx component-vault analyze
+  npx component-vault analyze --output .component-vault/semantic.json
   npx component-vault scan
   npx component-vault baseline
   npx component-vault pr --base origin/master
@@ -322,16 +327,12 @@ function main() {
   if (["help", "--help", "-h"].includes(command)) return printHelp();
   if (["version", "--version", "-v"].includes(command)) return console.log(VERSION);
   if (command === "init") return handleInit(options);
+  if (command === "analyze") return handleAnalyze(options);
   if (command === "doctor") return handleDoctor(options);
   if (command === "pr") return handlePr(options);
-
   const result = runCore(coreArgs(command, options, positional));
   process.exitCode = result.status ?? 1;
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(`Component Vault Guard: ${error instanceof Error ? error.message : String(error)}`);
-  process.exitCode = 1;
-}
+try { main(); }
+catch (error) { console.error(`Component Vault Guard: ${error instanceof Error ? error.message : String(error)}`); process.exitCode = 1; }
