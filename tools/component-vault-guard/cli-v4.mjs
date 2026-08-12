@@ -15,6 +15,36 @@ const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
 
+function readSourceFile(path) {
+  const buffer = readFileSync(path);
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) return { text: buffer.toString("utf16le"), encoding: "utf16le-bom" };
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    const swapped = Buffer.allocUnsafe(buffer.length - 2);
+    for (let index = 2; index + 1 < buffer.length; index += 2) {
+      swapped[index - 2] = buffer[index + 1];
+      swapped[index - 1] = buffer[index];
+    }
+    return { text: swapped.toString("utf16le"), encoding: "utf16be-bom" };
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) return { text: buffer.toString("utf8"), encoding: "utf8-bom" };
+  return { text: buffer.toString("utf8"), encoding: "utf8" };
+}
+
+function writeSourceFile(path, text, encoding) {
+  if (encoding === "utf16le-bom") return writeFileSync(path, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, "utf16le")]));
+  if (encoding === "utf16be-bom") {
+    const utf16 = Buffer.from(text, "utf16le");
+    const swapped = Buffer.allocUnsafe(utf16.length);
+    for (let index = 0; index + 1 < utf16.length; index += 2) {
+      swapped[index] = utf16[index + 1];
+      swapped[index + 1] = utf16[index];
+    }
+    return writeFileSync(path, Buffer.concat([Buffer.from([0xfe, 0xff]), swapped]));
+  }
+  if (encoding === "utf8-bom") return writeFileSync(path, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(text, "utf8")]));
+  return writeFileSync(path, text, "utf8");
+}
+
 function parseArgs(argv) {
   const [command = "help", ...rest] = argv;
   const options = {};
@@ -145,7 +175,7 @@ function applySemanticFixes(root, configPath, dryRun = false) {
 
   for (const file of collectFiles(root, config)) {
     const path = resolve(root, file);
-    const source = readFileSync(path, "utf8");
+    const { text: source, encoding } = readSourceFile(path);
     const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind(file));
     const edits = [];
 
@@ -185,7 +215,7 @@ function applySemanticFixes(root, configPath, dryRun = false) {
     changedFiles += 1;
     replacements += ordered.length;
     console.log(`${dryRun ? "Would fix" : "Fixed"} ${file}: ${ordered.length} semantic replacement(s)`);
-    if (!dryRun) writeFileSync(path, updated, "utf8");
+    if (!dryRun) writeSourceFile(path, updated, encoding);
   }
 
   console.log(`\nComponent Vault Semantic Fix: ${replacements} replacement(s) in ${changedFiles} file(s).`);
