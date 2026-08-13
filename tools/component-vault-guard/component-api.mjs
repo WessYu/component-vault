@@ -18,7 +18,7 @@ function propInfo(member) {
   const type = member.type;
   const result = { name: member.name.getText(), required: !member.questionToken, type: typeName(type) };
   if (type && ts.isUnionTypeNode(type)) {
-    const literals = type.types.filter(ts.isLiteralTypeNode).map((item) => item.literal.getText());
+    const literals = type.types.filter(ts.isLiteralTypeNode).map((item) => item.literal.getText().replace(/^['\"]|['\"]$/g, ""));
     if (literals.length === type.types.length) result.values = literals;
   }
   return result;
@@ -40,16 +40,70 @@ function resolvePropsType(sourceFile, parameter) {
   return found;
 }
 
-function findComponentDeclaration(node) {
-  if (ts.isFunctionDeclaration(node) && node.name && /^[A-Z]/.test(node.name.text)) return { name: node.name.text, parameter: node.parameters[0] };
-  if (ts.isVariableStatement(node)) {
-    for (const declaration of node.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || !/^[A-Z]/.test(declaration.name.text)) continue;
-      const initializer = declaration.initializer;
-      if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) return { name: declaration.name.text, parameter: initializer.parameters[0] };
+function componentFromFunction(sourceFile, name, fn) {
+  const propsType = resolvePropsType(sourceFile, fn.parameters[0]);
+  const props = (propsType?.members ?? []).map(propInfo).filter(Boolean);
+  return { name, props, composition: { children: props.some((prop) => prop.name === "children") } };
+}
+
+function findComponents(sourceFile) {
+  const components = [];
+  function visit(node) {
+    if (ts.isFunctionDeclaration(node) && node.name && /^[A-Z]/.test(node.name.text)) {
+      components.push(componentFromFunction(sourceFile, node.name.text, node));
+    }
+    if (ts.isVariableStatement(node)) {
+      for (const declaration of node.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || !/^[A-Z]/.test(declaration.name.text)) continue;
+        const initializer = declaration.initializer;
+        if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) {
+          components.push(componentFromFunction(sourceFile, declaration.name.text, initializer));
+        }
+      }
+    }
+    if (ts.isExportAssignment(node) && ts.isObjectLiteralExpression(node.expression)) {
+      for (const property of node.expression.properties) {
+        if (!ts.isPropertyAssignment(property)) continue;
+        const name = property.name.getText(sourceFile);
+        const initializer = property.initializer;
+        if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) {
+          components.push(componentFromFunction(sourceFile, name, initializer));
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+  return components;
+}
+
+function exportedObjectComponents(sourceFile) {
+  const components = [];
+  function inspectObject(object) {
+    for (const property of object.properties) {
+      if (!ts.isPropertyAssignment(property)) continue;
+      const name = property.name.getText(sourceFile);
+      const initializer = property.initializer;
+      if (ts.isIdentifier(initializer)) {
+        const declaration = sourceFile.statements.find((statement) => {
+          if (!ts.isFunctionDeclaration(statement) || !statement.name) return false;
+          return statement.name.text === initializer.text;
+        });
+        if (declaration) components.push(componentFromFunction(sourceFile, name, declaration));
+      } else if (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer)) {
+        components.push(componentFromFunction(sourceFile, name, initializer));
+      }
     }
   }
-  return null;
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name) || !ts.isObjectLiteralExpression(declaration.initializer)) continue;
+      if (!/^[A-Z]/.test(declaration.name.text)) continue;
+      inspectObject(declaration.initializer);
+    }
+  }
+  return components;
 }
 
 export function extractComponentApi(file, root = process.cwd()) {
@@ -57,18 +111,16 @@ export function extractComponentApi(file, root = process.cwd()) {
   if (!existsSync(absolute)) throw new Error(`Component source not found: ${file}`);
   const source = readFileSync(absolute, "utf8");
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind(file));
-  const components = [];
-  function visit(node) {
-    const declaration = findComponentDeclaration(node);
-    if (declaration) {
-      const propsType = resolvePropsType(sourceFile, declaration.parameter);
-      const props = (propsType?.members ?? []).map(propInfo).filter(Boolean);
-      components.push({ name: declaration.name, source: file, props, composition: { children: props.some((prop) => prop.name === "children") } });
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(sourceFile);
-  return components;
+  const direct = findComponents(sourceFile);
+  const objectComponents = exportedObjectComponents(sourceFile);
+  const seen = new Set();
+  const components = [...direct, ...objectComponents].filter((component) => {
+    const key = `${component.name}:${file}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return components.map((component) => ({ ...component, source: file }));
 }
 
 export function extractProjectApis(files, root = process.cwd()) {
