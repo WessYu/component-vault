@@ -22,6 +22,7 @@
     "guard:context": "node tools/component-vault-guard/cli.mjs context",
     "guard:doctor": "node tools/component-vault-guard/cli.mjs doctor",
     "guard:pr": "node tools/component-vault-guard/cli.mjs pr",
+    "guard:api": "node tools/component-vault-guard/component-api.mjs",
     "guard:test": "node --test tools/component-vault-guard/guard.test.mjs"
   },
   "dependencies": {
@@ -39,7 +40,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.83.0",
     "tailwind-merge": "^3.6.0",
-    "yaml": "^2.8.1",
+    "yaml": "2.8.1",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
