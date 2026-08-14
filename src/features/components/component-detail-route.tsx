@@ -2,12 +2,16 @@
 
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { AppShell } from "@/components/layout/app-shell";
+import { ComponentDetailPanel } from "@/components/detail/component-detail-panel";
 import { ComponentDetailWorkspace } from "@/features/components/component-detail-workspace";
 import { ComponentFallbackWorkspace } from "@/features/components/component-fallback-workspace";
 import { getExperience } from "@/components/experiences/experience-data";
 import { useVaultStore } from "@/stores/vault-store";
 
 export function ComponentDetailRoute({ slug }: { slug: string }) {
+  const router = useRouter();
   const components = useVaultStore((state) => state.components);
   const isHydrated = useVaultStore((state) => state.isHydrated);
   const isSyncing = useVaultStore((state) => state.isSyncing);
@@ -20,10 +24,22 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
 
   const component = components.find((item) => item.slug === slug || item.id === slug);
 
-  // Seed data is available immediately. Never block a valid component route on the optional backend.
+  // Keep dedicated interactive experiences on their purpose-built workspaces.
   if (component) {
-    const isStandaloneMotion = component.category === "Motion Experiences" && !component.slug.startsWith("trend-") && !getExperience(component.slug);
-    return isStandaloneMotion ? <ComponentFallbackWorkspace component={component} /> : <ComponentDetailWorkspace slug={component.slug} />;
+    const isRegisteredExperience = component.category === "Motion Experiences" && Boolean(getExperience(component.slug));
+    const isStandaloneMotion = component.category === "Motion Experiences" && !component.slug.startsWith("trend-") && !isRegisteredExperience;
+
+    if (isRegisteredExperience) return <ComponentDetailWorkspace slug={component.slug} />;
+    if (isStandaloneMotion) return <ComponentFallbackWorkspace component={component} />;
+
+    // All regular components use the same focused detail surface as the library.
+    // This keeps older components and newly added catalog components visually consistent.
+    return (
+      <AppShell active="Library">
+        <div className="min-h-dvh bg-[#F7F8FC]" aria-hidden="true" />
+        <ComponentDetailPanel component={component} open onClose={() => router.push("/vault/components")} />
+      </AppShell>
+    );
   }
 
   if (!isHydrated || isSyncing) {
