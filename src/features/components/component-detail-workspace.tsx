@@ -12,7 +12,7 @@ import { PreviewToolbar } from "@/components/detail/component-detail-panel";
 import { PropertiesEditor, defaultPricingOptions, defaultTableOptions, type PricingOptions, type TableOptions } from "@/components/detail/properties-editor";
 import { categoryStyle, visualCategory } from "@/components/library/category-style";
 import { ExperienceChecklist, ExperienceWorkspace } from "@/components/experiences/shared/experience-shell";
-import type { ExperienceSlug } from "@/components/experiences/experience-data";
+import { getExperience, type ExperienceSlug } from "@/components/experiences/experience-data";
 import { useVaultStore } from "@/stores/vault-store";
 import type { ComponentCategory, VaultComponent } from "@/types/vault";
 
@@ -62,9 +62,9 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
   }
 
   const style = categoryStyle(component);
-  const isMotionExperience = component.category === "Motion Experiences";
+  const hasRegisteredExperience = component.category === "Motion Experiences" && Boolean(getExperience(component.slug));
   const isEmergingTrend = component.slug.startsWith("trend-");
-  const usesExperienceWorkspace = isMotionExperience && !isEmergingTrend;
+  const usesExperienceWorkspace = hasRegisteredExperience && !isEmergingTrend;
 
   async function copyCode() {
     await navigator.clipboard.writeText(component.code);
@@ -119,7 +119,7 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
               <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={openEditor}><Pencil size={17} aria-hidden /> Edit</button>
               <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={() => navigator.clipboard.writeText(window.location.href)}><Share2 size={17} aria-hidden /> Share</button>
               <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 text-sm font-semibold text-text-primary shadow-sm" onClick={copyCode}>{copied ? <Check size={17} aria-hidden /> : <Copy size={17} aria-hidden />} {copied ? "Copied" : "Copy code"}</button>
-              {!isMotionExperience ? <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}><PanelRightOpen size={17} aria-hidden /> Customize</button> : null}
+              {!hasRegisteredExperience ? <button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-200" onClick={() => setCustomizeOpen(true)}><PanelRightOpen size={17} aria-hidden /> Customize</button> : null}
               <button className="grid size-11 place-items-center rounded-2xl border border-red-200 bg-red-50 text-red-600 shadow-sm" onClick={() => void removeComponent()} aria-label="Delete component"><Trash2 size={17} aria-hidden /></button>
             </div>
           </div>
@@ -167,15 +167,15 @@ export function ComponentDetailWorkspace({ slug }: { slug: string }) {
             <motion.div className="w-full max-w-2xl rounded-[32px] border border-[#E4E7EF] bg-white p-6 shadow-2xl" initial={{ opacity: 0, y: 14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.99 }} onMouseDown={(event) => event.stopPropagation()}>
               <div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">Edit component</h2><p className="mt-1 text-sm text-[#6D7285]">Changes are persisted in Convex.</p></div><button className="grid size-10 place-items-center rounded-2xl bg-[#F2F4FA]" onClick={() => setEditOpen(false)}><X size={18} aria-hidden /></button></div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">Name<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4 outline-none focus:border-[#6366F1]" value={draft.name} onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))} /></label>
+                <label className="text-sm font-medium sm:col-span-2">Name<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4 outline-none focus:border-[#6366F1]" value={draft.name} onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))} /></label>
                 <label className="text-sm font-medium">Slug<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4 font-mono text-sm outline-none focus:border-[#6366F1]" value={draft.slug} onChange={(event) => setDraft((value) => ({ ...value, slug: event.target.value }))} /></label>
                 <label className="text-sm font-medium sm:col-span-2">Description<textarea className="mt-2 min-h-24 w-full rounded-2xl border border-[#E4E7EF] p-4 outline-none focus:border-[#6366F1]" value={draft.description} onChange={(event) => setDraft((value) => ({ ...value, description: event.target.value }))} /></label>
-                <label className="text-sm font-medium">Category<select className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] bg-white px-4" value={draft.category} onChange={(event) => setDraft((value) => ({ ...value, category: event.target.value as ComponentCategory }))}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
-                <label className="text-sm font-medium">Version<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4" value={draft.version} onChange={(event) => setDraft((value) => ({ ...value, version: event.target.value }))} /></label>
-                <label className="text-sm font-medium sm:col-span-2">Tags<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4" value={draft.tags.join(", ")} onChange={(event) => setDraft((value) => ({ ...value, tags: event.target.value.split(",") }))} placeholder="navigation, animated, responsive" /></label>
-                <label className="flex items-center gap-3 rounded-2xl border border-[#E4E7EF] p-4 text-sm font-medium sm:col-span-2"><input type="checkbox" checked={draft.isPublic} onChange={(event) => setDraft((value) => ({ ...value, isPublic: event.target.checked }))} /> Public component</label>
+                <label className="text-sm font-medium">Version<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4 outline-none focus:border-[#6366F1]" value={draft.version} onChange={(event) => setDraft((value) => ({ ...value, version: event.target.value }))} /></label>
+                <label className="text-sm font-medium">Category<select className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] bg-white px-4 outline-none focus:border-[#6366F1]" value={draft.category} onChange={(event) => setDraft((value) => ({ ...value, category: event.target.value as ComponentCategory }))}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
+                <label className="sm:col-span-2 text-sm font-medium">Tags<input className="mt-2 h-11 w-full rounded-2xl border border-[#E4E7EF] px-4 outline-none focus:border-[#6366F1]" value={draft.tags.join(", ")} onChange={(event) => setDraft((value) => ({ ...value, tags: event.target.value.split(",").map((tag) => tag.trim()) }))} /></label>
+                <label className="sm:col-span-2 flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={draft.isPublic} onChange={(event) => setDraft((value) => ({ ...value, isPublic: event.target.checked }))} /> Public component</label>
               </div>
-              <div className="mt-6 flex justify-end gap-2"><button className="min-h-11 rounded-2xl border border-[#E4E7EF] px-4 text-sm font-semibold" onClick={() => setEditOpen(false)}>Cancel</button><button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white disabled:opacity-60" onClick={() => void saveMetadata()} disabled={savingMeta}><Save size={16} aria-hidden /> {savingMeta ? "Saving..." : "Save changes"}</button></div>
+              <div className="mt-6 flex justify-end gap-2"><button className="min-h-11 rounded-2xl border border-[#E4E7EF] px-4 text-sm font-semibold" onClick={() => setEditOpen(false)}>Cancel</button><button className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#6366F1] px-4 text-sm font-semibold text-white disabled:opacity-50" disabled={savingMeta} onClick={() => void saveMetadata()}>{savingMeta ? "Saving…" : <><Save size={17} />Save changes</>}</button></div>
             </motion.div>
           </motion.div>
         ) : null}
