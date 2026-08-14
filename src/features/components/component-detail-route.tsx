@@ -3,6 +3,8 @@
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { ComponentDetailWorkspace } from "@/features/components/component-detail-workspace";
+import { ComponentFallbackWorkspace } from "@/features/components/component-fallback-workspace";
+import { getExperience } from "@/components/experiences/experience-data";
 import { useVaultStore } from "@/stores/vault-store";
 
 export function ComponentDetailRoute({ slug }: { slug: string }) {
@@ -19,7 +21,10 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
   const component = components.find((item) => item.slug === slug || item.id === slug);
 
   // Seed data is available immediately. Never block a valid component route on the optional backend.
-  if (component) return <ComponentDetailWorkspace slug={component.slug} />;
+  if (component) {
+    const isStandaloneMotion = component.category === "Motion Experiences" && !component.slug.startsWith("trend-") && !getExperience(component.slug);
+    return isStandaloneMotion ? <ComponentFallbackWorkspace component={component} /> : <ComponentDetailWorkspace slug={component.slug} />;
+  }
 
   if (!isHydrated || isSyncing) {
     return (
@@ -42,13 +47,8 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
       <div className="max-w-md">
         <p className="text-sm font-semibold text-[#FF7664]">Component not found</p>
         <h1 className="mt-2 text-3xl font-bold text-text-primary">{slug}</h1>
-        <p className="mt-3 text-sm leading-6 text-[#6D7285]">
-          The component is not available in the current vault dataset.
-          {backendError ? ` ${backendError}` : ""}
-        </p>
-        <a className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">
-          Back to library
-        </a>
+        <p className="mt-3 text-sm leading-6 text-[#6D7285]">The component is not available in the current vault dataset.{backendError ? ` ${backendError}` : ""}</p>
+        <a className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">Back to library</a>
       </div>
     </div>
   );
