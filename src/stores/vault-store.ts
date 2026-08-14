@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { Collection, ComponentState, ComponentVariant, VaultComponent, WindowKey } from "@/types/vault";
 import { demoCollections, demoComponents } from "@/services/demo-data";
+import { baseUiReferenceComponents } from "@/services/base-ui-reference-data";
 import {
   createCollection as createCollectionRequest,
   createComponent as createComponentRequest,
@@ -83,8 +84,10 @@ const defaultWindowState: Record<WindowKey, WindowState> = {
   terminal: { minimized: false, closed: false, maximized: false },
 };
 
+const seedComponents = [...demoComponents, ...baseUiReferenceComponents];
+
 function mergeSeedComponents(components: VaultComponent[]) {
-  const byId = new Map(demoComponents.map((component) => [component.id, component]));
+  const byId = new Map(seedComponents.map((component) => [component.id, component]));
   for (const component of components) byId.set(component.id, component);
   return Array.from(byId.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
@@ -99,12 +102,12 @@ function mergeSeedCollections(collections: Collection[]) {
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
-  components: demoComponents,
+  components: seedComponents,
   collections: demoCollections,
   isHydrated: false,
   isSyncing: false,
   backendError: null,
-  activeComponentSlug: demoComponents[0].slug,
+  activeComponentSlug: seedComponents[0].slug,
   activeWindow: "browser",
   windows: defaultWindowState,
   editorTab: "Component.tsx",
