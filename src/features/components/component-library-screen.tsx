@@ -13,6 +13,7 @@ import { InteractiveExperiencesSection } from "@/components/library/interactive-
 import { ComponentDetailPanel } from "@/components/detail/component-detail-panel";
 import { visualCategory } from "@/components/library/category-style";
 import { motionEase, Reveal } from "@/components/motion/site-motion";
+import { CliShowcase } from "@/features/components/cli-showcase";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/stores/vault-store";
 import type { VaultComponent } from "@/types/vault";
@@ -133,6 +134,8 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
               </motion.button>
             </div>
           </motion.div>
+
+          {!favoriteOnly ? <Reveal className="mt-8" amount={0.08}><CliShowcase /></Reveal> : null}
 
           <motion.div
             id="component-filters"
