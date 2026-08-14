@@ -20,7 +20,7 @@ export type ComponentState =
   | "Error";
 
 export type ComponentSize = "Small" | "Medium" | "Large";
-export type ComponentVariant = "Primary" | "Secondary" | "Ghost" | "Danger" | "Success";
+export type ComponentVariant = "Primary" | "Secondary" | "Ghost" | "Danger" | "Success" | "Reference";
 
 export type VaultComponent = {
   id: string;
