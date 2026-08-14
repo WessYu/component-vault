@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Collection, ComponentState, ComponentVariant, VaultComponent, WindowKey } from "@/types/vault";
 import { demoCollections, demoComponents } from "@/services/demo-data";
-import { baseUiReferenceComponents } from "@/services/base-ui-reference-data";
+import { uiReferenceComponents } from "@/services/ui-reference-data";
 import {
   createCollection as createCollectionRequest,
   createComponent as createComponentRequest,
@@ -19,11 +19,7 @@ type EditorTab = "Component.tsx" | "styles.css" | "usage.tsx" | "notes.md";
 type InspectorTab = "PROPS" | "STATES" | "TOKENS" | "NOTES" | "USAGE";
 type DeviceMode = "Desktop" | "Tablet" | "Mobile";
 
-type WindowState = {
-  minimized: boolean;
-  closed: boolean;
-  maximized: boolean;
-};
+type WindowState = { minimized: boolean; closed: boolean; maximized: boolean };
 
 type VaultState = {
   components: VaultComponent[];
@@ -84,10 +80,10 @@ const defaultWindowState: Record<WindowKey, WindowState> = {
   terminal: { minimized: false, closed: false, maximized: false },
 };
 
-const seedComponents = [...demoComponents, ...baseUiReferenceComponents];
+const localSeedComponents = [...demoComponents, ...uiReferenceComponents];
 
 function mergeSeedComponents(components: VaultComponent[]) {
-  const byId = new Map(seedComponents.map((component) => [component.id, component]));
+  const byId = new Map(localSeedComponents.map((component) => [component.id, component]));
   for (const component of components) byId.set(component.id, component);
   return Array.from(byId.values()).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
@@ -102,12 +98,12 @@ function mergeSeedCollections(collections: Collection[]) {
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
-  components: seedComponents,
+  components: localSeedComponents,
   collections: demoCollections,
   isHydrated: false,
   isSyncing: false,
   backendError: null,
-  activeComponentSlug: seedComponents[0].slug,
+  activeComponentSlug: localSeedComponents[0].slug,
   activeWindow: "browser",
   windows: defaultWindowState,
   editorTab: "Component.tsx",
