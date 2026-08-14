@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Archive, Box, Clock, Grid2X2, Heart, LayoutGrid, List, Plus, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CliShowcase } from "@/features/components/cli-showcase";
 import { categories } from "@/services/demo-data";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/stores/vault-store";
@@ -112,7 +113,11 @@ export function ComponentLibraryScreen() {
             </button>
           </header>
 
-          <div className="mx-auto mt-6 max-w-7xl">
+          <div className="mx-auto mt-8 max-w-7xl">
+            <CliShowcase />
+          </div>
+
+          <div className="mx-auto mt-7 max-w-7xl">
             <div className="flex flex-col gap-3 rounded-2xl border border-[#e5e5e2] bg-white p-3 shadow-[0_18px_60px_rgba(15,15,15,0.04)] md:flex-row md:items-center">
               <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-[#fafafa] px-3 text-sm text-[#71717a]">
                 <Search size={16} aria-hidden />
@@ -127,10 +132,10 @@ export function ComponentLibraryScreen() {
                 <option>Data Entry</option>
               </select>
               <div className="flex rounded-xl bg-[#f4f4f2] p-1">
-                <button className={cn("rounded-lg px-3 py-2 text-sm text-[#62626d]", view === "grid" && "bg-white text-[#18181b] shadow-sm")} onClick={() => setView("grid")}>
+                <button className={cn("rounded-lg px-3 py-2 text-sm text-[#62626d]", view === "grid" && "bg-white text-[#18181b] shadow-sm")} onClick={() => setView("grid")} aria-label="Grid view">
                   <Grid2X2 size={16} aria-hidden />
                 </button>
-                <button className={cn("rounded-lg px-3 py-2 text-sm text-[#62626d]", view === "list" && "bg-white text-[#18181b] shadow-sm")} onClick={() => setView("list")}>
+                <button className={cn("rounded-lg px-3 py-2 text-sm text-[#62626d]", view === "list" && "bg-white text-[#18181b] shadow-sm")} onClick={() => setView("list")} aria-label="List view">
                   <List size={16} aria-hidden />
                 </button>
               </div>
