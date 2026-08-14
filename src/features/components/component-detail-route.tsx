@@ -16,6 +16,11 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
     if (!isHydrated) void loadVault();
   }, [isHydrated, loadVault]);
 
+  const component = components.find((item) => item.slug === slug || item.id === slug);
+
+  // Seed data is available immediately. Never block a valid component route on the optional backend.
+  if (component) return <ComponentDetailWorkspace slug={component.slug} />;
+
   if (!isHydrated || isSyncing) {
     return (
       <div className="grid min-h-dvh place-items-center bg-[#F7F8FC] px-5">
@@ -32,25 +37,19 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
     );
   }
 
-  const component = components.find((item) => item.slug === slug || item.id === slug);
-
-  if (!component) {
-    return (
-      <div className="grid min-h-dvh place-items-center bg-[#F7F8FC] px-5 text-center">
-        <div className="max-w-md">
-          <p className="text-sm font-semibold text-[#FF7664]">Component not found</p>
-          <h1 className="mt-2 text-3xl font-bold text-text-primary">{slug}</h1>
-          <p className="mt-3 text-sm leading-6 text-[#6D7285]">
-            The component is not available in the current vault dataset.
-            {backendError ? ` ${backendError}` : ""}
-          </p>
-          <a className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">
-            Back to library
-          </a>
-        </div>
+  return (
+    <div className="grid min-h-dvh place-items-center bg-[#F7F8FC] px-5 text-center">
+      <div className="max-w-md">
+        <p className="text-sm font-semibold text-[#FF7664]">Component not found</p>
+        <h1 className="mt-2 text-3xl font-bold text-text-primary">{slug}</h1>
+        <p className="mt-3 text-sm leading-6 text-[#6D7285]">
+          The component is not available in the current vault dataset.
+          {backendError ? ` ${backendError}` : ""}
+        </p>
+        <a className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">
+          Back to library
+        </a>
       </div>
-    );
-  }
-
-  return <ComponentDetailWorkspace slug={component.slug} />;
+    </div>
+  );
 }
