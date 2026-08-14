@@ -149,12 +149,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const payload = await getVaultData();
       set({ components: mergeSeedComponents(payload.components), collections: mergeSeedCollections(payload.collections), isHydrated: true, isSyncing: false });
     } catch (error) {
-      set({
-        // The seed dataset is a valid offline/read-only fallback. Do not leave routes suspended when the optional backend is unavailable.
-        isHydrated: true,
-        isSyncing: false,
-        backendError: error instanceof Error ? error.message : "Unable to load vault backend.",
-      });
+      set({ backendError: error instanceof Error ? error.message : "Unable to load vault backend.", isHydrated: true, isSyncing: false });
     }
   },
   createComponent: async (input = {}) => {
@@ -178,78 +173,98 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       const component = await updateComponentRequest(current.id, { ...patch, updatedAt: optimistic.updatedAt });
       set((state) => ({ components: state.components.map((item) => (item.id === component.id ? component : item)), activeComponentSlug: component.slug }));
+      get().addLog(`${component.name} saved to Convex.`);
       return component;
     } catch (error) {
-      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to update component." });
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to save component." });
       return null;
     }
   },
   deleteComponent: async (id) => {
+    const previousComponents = get().components;
+    const previousCollections = get().collections;
+    const current = previousComponents.find((component) => component.id === id || component.slug === id);
+    if (!current) return false;
+    set((state) => ({ components: state.components.filter((component) => component.id !== current.id), collections: state.collections.map((collection) => ({ ...collection, componentIds: collection.componentIds.filter((componentId) => componentId !== current.id) })), activeComponentSlug: state.components.find((component) => component.id !== current.id)?.slug ?? "", backendError: null }));
     try {
-      await deleteComponentRequest(id);
-      set((state) => ({ components: state.components.filter((component) => component.id !== id), activeComponentSlug: state.components.find((component) => component.id !== id)?.slug ?? demoComponents[0].slug }));
+      await deleteComponentRequest(current.id);
+      get().addLog(`${current.name} deleted from Convex.`);
       return true;
     } catch (error) {
-      set({ backendError: error instanceof Error ? error.message : "Unable to delete component." });
+      set({ components: previousComponents, collections: previousCollections, backendError: error instanceof Error ? error.message : "Unable to delete component." });
       return false;
     }
   },
   createCollection: async (input = {}) => {
+    set({ isSyncing: true, backendError: null });
     try {
       const collection = await createCollectionRequest(input);
-      set((state) => ({ collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)] }));
+      set((state) => ({ collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)], isSyncing: false }));
+      get().addLog(`${collection.name} created in Convex.`);
       return collection;
     } catch (error) {
-      set({ backendError: error instanceof Error ? error.message : "Unable to create collection." });
+      set({ backendError: error instanceof Error ? error.message : "Unable to create collection.", isSyncing: false });
       return null;
     }
   },
   updateCollection: async (id, patch) => {
+    const previous = get().collections;
+    const current = previous.find((collection) => collection.id === id);
+    if (!current) return null;
+    const optimistic = { ...current, ...patch, updatedAt: new Date().toISOString() };
+    set((state) => ({ collections: state.collections.map((collection) => (collection.id === id ? optimistic : collection)), backendError: null }));
     try {
-      const collection = await updateCollectionRequest(id, patch);
+      const collection = await updateCollectionRequest(id, { ...patch, updatedAt: optimistic.updatedAt });
       set((state) => ({ collections: state.collections.map((item) => (item.id === collection.id ? collection : item)) }));
+      get().addLog(`${collection.name} saved to Convex.`);
       return collection;
     } catch (error) {
-      set({ backendError: error instanceof Error ? error.message : "Unable to update collection." });
+      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to save collection." });
       return null;
     }
   },
   deleteCollection: async (id) => {
+    const previous = get().collections;
+    const current = previous.find((collection) => collection.id === id);
+    if (!current) return false;
+    set((state) => ({ collections: state.collections.filter((collection) => collection.id !== id), backendError: null }));
     try {
       await deleteCollectionRequest(id);
-      set((state) => ({ collections: state.collections.filter((item) => item.id !== id) }));
+      get().addLog(`${current.name} deleted from Convex.`);
       return true;
     } catch (error) {
-      set({ backendError: error instanceof Error ? error.message : "Unable to delete collection." });
+      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to delete collection." });
       return false;
     }
   },
   toggleCollectionComponent: async (collectionId, componentId) => {
     const collection = get().collections.find((item) => item.id === collectionId);
     if (!collection) return;
-    const has = collection.componentIds.includes(componentId);
-    const next = has ? collection.componentIds.filter((id) => id !== componentId) : [...collection.componentIds, componentId];
-    set((state) => ({ collections: state.collections.map((item) => (item.id === collectionId ? { ...item, componentIds: next } : item)) }));
-    try { await updateCollectionRequest(collectionId, { componentIds: next }); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update collection." }); }
+    const componentIds = collection.componentIds.includes(componentId) ? collection.componentIds.filter((id) => id !== componentId) : [...collection.componentIds, componentId];
+    await get().updateCollection(collectionId, { componentIds });
   },
   toggleFavorite: async (id) => {
-    const current = get().components.find((component) => component.id === id);
-    if (!current) return;
-    const nextFavorite = !current.isFavorite;
-    set((state) => ({ components: state.components.map((component) => component.id === id ? { ...component, isFavorite: nextFavorite } : component) }));
-    try { await toggleComponentFavorite(id, nextFavorite); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update favorite." }); }
+    const previous = get().components;
+    set((state) => ({ components: state.components.map((component) => component.id === id ? { ...component, isFavorite: !component.isFavorite } : component), backendError: null }));
+    try {
+      const component = await toggleComponentFavorite(id);
+      set((state) => ({ components: state.components.map((item) => (item.id === component.id ? component : item)) }));
+    } catch (error) {
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to update favorite." });
+    }
   },
   updateCode: async (id, field, value) => {
-    const component = get().components.find((item) => item.id === id);
-    if (!component) return;
-    set((state) => ({ components: state.components.map((item) => item.id === id ? { ...item, [field]: value, updatedAt: new Date().toISOString() } : item) }));
-    try { await updateComponentRequest(id, { [field]: value, updatedAt: new Date().toISOString() }); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update component code." }); }
+    await get().updateComponentDetails(id, { [field]: value } as Partial<VaultComponent>);
   },
   setGridEnabled: (value) => set({ gridEnabled: value }),
   setGuidesEnabled: (value) => set({ guidesEnabled: value }),
   setDeviceMode: (value) => set({ deviceMode: value }),
   setZoom: (value) => set({ zoom: value }),
-  setPreviewState: (value) => set({ previewState: value }),
-  setPreviewVariant: (value) => set({ previewVariant: value }),
+  setPreviewState: (value) => { set({ previewState: value }); get().addLog(`Preview state set to ${value}.`); },
+  setPreviewVariant: (value) => { set({ previewVariant: value }); get().addLog(`Variant switched to ${value}.`); },
   updateTableSettings: (values) => set((state) => ({ tableSettings: { ...state.tableSettings, ...values } })),
 }));
+
+export function useSelectedComponent() {
+  return useVaultStore((state) => state.components.find((component) => component.slug === state.activeComponentSlug) ?? state.components[0]);
+}
