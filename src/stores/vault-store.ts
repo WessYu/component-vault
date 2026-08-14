@@ -45,19 +45,7 @@ type VaultState = {
   zoom: number;
   previewState: ComponentState;
   previewVariant: ComponentVariant;
-  tableSettings: {
-    density: "Compact" | "Comfortable";
-    stripedRows: boolean;
-    stickyHeader: boolean;
-    borders: boolean;
-    rows: number;
-    columns: number;
-    sortable: boolean;
-    pagination: boolean;
-    radius: number;
-    rowHeight: number;
-    headerBackground: string;
-  };
+  tableSettings: { density: "Compact" | "Comfortable"; stripedRows: boolean; stickyHeader: boolean; borders: boolean; rows: number; columns: number; sortable: boolean; pagination: boolean; radius: number; rowHeight: number; headerBackground: string };
   setSelectedComponent: (slug: string) => void;
   setActiveComponentSlug: (slug: string) => void;
   setActiveWindow: (window: WindowKey) => void;
@@ -105,10 +93,7 @@ function mergeSeedCollections(collections: Collection[]) {
   const byId = new Map(demoCollections.map((collection) => [collection.id, collection]));
   for (const collection of collections) {
     const seed = byId.get(collection.id);
-    byId.set(collection.id, {
-      ...collection,
-      componentIds: Array.from(new Set([...(seed?.componentIds ?? []), ...collection.componentIds])),
-    });
+    byId.set(collection.id, { ...collection, componentIds: Array.from(new Set([...(seed?.componentIds ?? []), ...collection.componentIds])) });
   }
   return Array.from(byId.values());
 }
@@ -134,57 +119,26 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   zoom: 100,
   previewState: "Default",
   previewVariant: "Primary",
-  tableSettings: {
-    density: "Comfortable",
-    stripedRows: true,
-    stickyHeader: true,
-    borders: true,
-    rows: 5,
-    columns: 4,
-    sortable: true,
-    pagination: true,
-    radius: 4,
-    rowHeight: 42,
-    headerBackground: "#DED9CB",
-  },
+  tableSettings: { density: "Comfortable", stripedRows: true, stickyHeader: true, borders: true, rows: 5, columns: 4, sortable: true, pagination: true, radius: 4, rowHeight: 42, headerBackground: "#DED9CB" },
   setSelectedComponent: (slug) => get().setActiveComponentSlug(slug),
   setActiveComponentSlug: (slug) => {
     const selected = get().components.find((component) => component.slug === slug || component.id === slug);
     if (!selected) return;
-    set({
-      activeComponentSlug: selected.slug,
-      previewState: selected.props.state ?? "Default",
-      previewVariant: selected.props.variant ?? "Primary",
-    });
+    set({ activeComponentSlug: selected.slug, previewState: selected.props.state ?? "Default", previewVariant: selected.props.variant ?? "Primary" });
     get().addLog(`${selected.name} selected.`);
   },
   setActiveWindow: (window) => set({ activeWindow: window }),
-  toggleWindow: (window, action) =>
-    set((state) => {
-      const next = { ...state.windows[window] };
-      if (action === "minimize") next.minimized = true;
-      if (action === "maximize") next.maximized = !next.maximized;
-      if (action === "close") next.closed = true;
-      if (action === "restore") {
-        next.closed = false;
-        next.minimized = false;
-        next.maximized = false;
-      }
-
-      return {
-        activeWindow: window,
-        windows: {
-          ...state.windows,
-          [window]: next,
-        },
-      };
-    }),
+  toggleWindow: (window, action) => set((state) => {
+    const next = { ...state.windows[window] };
+    if (action === "minimize") next.minimized = true;
+    if (action === "maximize") next.maximized = !next.maximized;
+    if (action === "close") next.closed = true;
+    if (action === "restore") { next.closed = false; next.minimized = false; next.maximized = false; }
+    return { activeWindow: window, windows: { ...state.windows, [window]: next } };
+  }),
   setEditorTab: (tab) => set({ editorTab: tab, activeWindow: "editor" }),
   setInspectorTab: (tab) => set({ inspectorTab: tab, activeWindow: "inspector" }),
-  addLog: (message) =>
-    set((state) => ({
-      terminalLogs: [message, ...state.terminalLogs].slice(0, 8),
-    })),
+  addLog: (message) => set((state) => ({ terminalLogs: [message, ...state.terminalLogs].slice(0, 8) })),
   setSearch: (value) => set({ search: value }),
   setCategory: (value) => set({ category: value }),
   setViewMode: (mode) => set({ viewMode: mode }),
@@ -193,16 +147,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({ isSyncing: true, backendError: null });
     try {
       const payload = await getVaultData();
-      set({
-        components: mergeSeedComponents(payload.components),
-        collections: mergeSeedCollections(payload.collections),
-        isHydrated: true,
-        isSyncing: false,
-      });
+      set({ components: mergeSeedComponents(payload.components), collections: mergeSeedCollections(payload.collections), isHydrated: true, isSyncing: false });
     } catch (error) {
       set({
-        backendError: error instanceof Error ? error.message : "Unable to load vault backend.",
+        // The seed dataset is a valid offline/read-only fallback. Do not leave routes suspended when the optional backend is unavailable.
+        isHydrated: true,
         isSyncing: false,
+        backendError: error instanceof Error ? error.message : "Unable to load vault backend.",
       });
     }
   },
@@ -210,11 +161,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({ isSyncing: true, backendError: null });
     try {
       const component = await createComponentRequest(input);
-      set((state) => ({
-        components: [component, ...state.components.filter((item) => item.id !== component.id)],
-        activeComponentSlug: component.slug,
-        isSyncing: false,
-      }));
+      set((state) => ({ components: [component, ...state.components.filter((item) => item.id !== component.id)], activeComponentSlug: component.slug, isSyncing: false }));
       get().addLog(`${component.name} created in Convex.`);
       return component;
     } catch (error) {
@@ -227,148 +174,82 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const current = previous.find((component) => component.id === id || component.slug === id);
     if (!current) return null;
     const optimistic = { ...current, ...patch, updatedAt: new Date().toISOString() };
-    set((state) => ({
-      components: state.components.map((component) => (component.id === current.id ? optimistic : component)),
-      activeComponentSlug: patch.slug ?? state.activeComponentSlug,
-      backendError: null,
-    }));
+    set((state) => ({ components: state.components.map((component) => (component.id === current.id ? optimistic : component)), activeComponentSlug: patch.slug ?? state.activeComponentSlug, backendError: null }));
     try {
       const component = await updateComponentRequest(current.id, { ...patch, updatedAt: optimistic.updatedAt });
-      set((state) => ({
-        components: state.components.map((item) => (item.id === component.id ? component : item)),
-        activeComponentSlug: component.slug,
-      }));
-      get().addLog(`${component.name} saved to Convex.`);
+      set((state) => ({ components: state.components.map((item) => (item.id === component.id ? component : item)), activeComponentSlug: component.slug }));
       return component;
     } catch (error) {
-      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to save component." });
+      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to update component." });
       return null;
     }
   },
   deleteComponent: async (id) => {
-    const previousComponents = get().components;
-    const previousCollections = get().collections;
-    const current = previousComponents.find((component) => component.id === id || component.slug === id);
-    if (!current) return false;
-    set((state) => ({
-      components: state.components.filter((component) => component.id !== current.id),
-      collections: state.collections.map((collection) => ({
-        ...collection,
-        componentIds: collection.componentIds.filter((componentId) => componentId !== current.id),
-      })),
-      activeComponentSlug: state.components.find((component) => component.id !== current.id)?.slug ?? "",
-      backendError: null,
-    }));
     try {
-      await deleteComponentRequest(current.id);
-      get().addLog(`${current.name} deleted from Convex.`);
+      await deleteComponentRequest(id);
+      set((state) => ({ components: state.components.filter((component) => component.id !== id), activeComponentSlug: state.components.find((component) => component.id !== id)?.slug ?? demoComponents[0].slug }));
       return true;
     } catch (error) {
-      set({
-        components: previousComponents,
-        collections: previousCollections,
-        backendError: error instanceof Error ? error.message : "Unable to delete component.",
-      });
+      set({ backendError: error instanceof Error ? error.message : "Unable to delete component." });
       return false;
     }
   },
   createCollection: async (input = {}) => {
-    set({ isSyncing: true, backendError: null });
     try {
       const collection = await createCollectionRequest(input);
-      set((state) => ({
-        collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)],
-        isSyncing: false,
-      }));
-      get().addLog(`${collection.name} created in Convex.`);
+      set((state) => ({ collections: [collection, ...state.collections.filter((item) => item.id !== collection.id)] }));
       return collection;
     } catch (error) {
-      set({ backendError: error instanceof Error ? error.message : "Unable to create collection.", isSyncing: false });
+      set({ backendError: error instanceof Error ? error.message : "Unable to create collection." });
       return null;
     }
   },
   updateCollection: async (id, patch) => {
-    const previous = get().collections;
-    const current = previous.find((collection) => collection.id === id);
-    if (!current) return null;
-    const optimistic = { ...current, ...patch, updatedAt: new Date().toISOString() };
-    set((state) => ({
-      collections: state.collections.map((collection) => (collection.id === id ? optimistic : collection)),
-      backendError: null,
-    }));
     try {
-      const collection = await updateCollectionRequest(id, { ...patch, updatedAt: optimistic.updatedAt });
+      const collection = await updateCollectionRequest(id, patch);
       set((state) => ({ collections: state.collections.map((item) => (item.id === collection.id ? collection : item)) }));
-      get().addLog(`${collection.name} saved to Convex.`);
       return collection;
     } catch (error) {
-      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to save collection." });
+      set({ backendError: error instanceof Error ? error.message : "Unable to update collection." });
       return null;
     }
   },
   deleteCollection: async (id) => {
-    const previous = get().collections;
-    const current = previous.find((collection) => collection.id === id);
-    if (!current) return false;
-    set((state) => ({ collections: state.collections.filter((collection) => collection.id !== id), backendError: null }));
     try {
       await deleteCollectionRequest(id);
-      get().addLog(`${current.name} deleted from Convex.`);
+      set((state) => ({ collections: state.collections.filter((item) => item.id !== id) }));
       return true;
     } catch (error) {
-      set({ collections: previous, backendError: error instanceof Error ? error.message : "Unable to delete collection." });
+      set({ backendError: error instanceof Error ? error.message : "Unable to delete collection." });
       return false;
     }
   },
   toggleCollectionComponent: async (collectionId, componentId) => {
     const collection = get().collections.find((item) => item.id === collectionId);
     if (!collection) return;
-    const componentIds = collection.componentIds.includes(componentId)
-      ? collection.componentIds.filter((id) => id !== componentId)
-      : [...collection.componentIds, componentId];
-    await get().updateCollection(collectionId, { componentIds });
+    const has = collection.componentIds.includes(componentId);
+    const next = has ? collection.componentIds.filter((id) => id !== componentId) : [...collection.componentIds, componentId];
+    set((state) => ({ collections: state.collections.map((item) => (item.id === collectionId ? { ...item, componentIds: next } : item)) }));
+    try { await updateCollectionRequest(collectionId, { componentIds: next }); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update collection." }); }
   },
   toggleFavorite: async (id) => {
-    const previous = get().components;
-    set((state) => ({
-      components: state.components.map((component) =>
-        component.id === id ? { ...component, isFavorite: !component.isFavorite } : component,
-      ),
-      backendError: null,
-    }));
-    try {
-      const component = await toggleComponentFavorite(id);
-      set((state) => ({
-        components: state.components.map((item) => (item.id === component.id ? component : item)),
-      }));
-    } catch (error) {
-      set({ components: previous, backendError: error instanceof Error ? error.message : "Unable to update favorite." });
-    }
+    const current = get().components.find((component) => component.id === id);
+    if (!current) return;
+    const nextFavorite = !current.isFavorite;
+    set((state) => ({ components: state.components.map((component) => component.id === id ? { ...component, isFavorite: nextFavorite } : component) }));
+    try { await toggleComponentFavorite(id, nextFavorite); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update favorite." }); }
   },
   updateCode: async (id, field, value) => {
-    await get().updateComponentDetails(id, { [field]: value } as Partial<VaultComponent>);
+    const component = get().components.find((item) => item.id === id);
+    if (!component) return;
+    set((state) => ({ components: state.components.map((item) => item.id === id ? { ...item, [field]: value, updatedAt: new Date().toISOString() } : item) }));
+    try { await updateComponentRequest(id, { [field]: value, updatedAt: new Date().toISOString() }); } catch (error) { set({ backendError: error instanceof Error ? error.message : "Unable to update component code." }); }
   },
   setGridEnabled: (value) => set({ gridEnabled: value }),
   setGuidesEnabled: (value) => set({ guidesEnabled: value }),
   setDeviceMode: (value) => set({ deviceMode: value }),
   setZoom: (value) => set({ zoom: value }),
-  setPreviewState: (value) => {
-    set({ previewState: value });
-    get().addLog(`Preview state set to ${value}.`);
-  },
-  setPreviewVariant: (value) => {
-    set({ previewVariant: value });
-    get().addLog(`Variant switched to ${value}.`);
-  },
-  updateTableSettings: (values) =>
-    set((state) => ({
-      tableSettings: {
-        ...state.tableSettings,
-        ...values,
-      },
-    })),
+  setPreviewState: (value) => set({ previewState: value }),
+  setPreviewVariant: (value) => set({ previewVariant: value }),
+  updateTableSettings: (values) => set((state) => ({ tableSettings: { ...state.tableSettings, ...values } })),
 }));
-
-export function useSelectedComponent() {
-  return useVaultStore((state) => state.components.find((component) => component.slug === state.activeComponentSlug) ?? state.components[0]);
-}
