@@ -130,7 +130,7 @@ export function ComponentDetailPanel({ component, open, onClose }: { component: 
   );
 }
 
-function PreviewToolbar({ viewport, setViewport, theme, setTheme }: { viewport: "Desktop" | "Tablet" | "Mobile"; setViewport: (value: "Desktop" | "Tablet" | "Mobile") => void; theme: "Light" | "Dark"; setTheme: (value: "Light" | "Dark") => void }) {
+export function PreviewToolbar({ viewport, setViewport, theme, setTheme }: { viewport: "Desktop" | "Tablet" | "Mobile"; setViewport: (value: "Desktop" | "Tablet" | "Mobile") => void; theme: "Light" | "Dark"; setTheme: (value: "Light" | "Dark") => void }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-2.5 py-2 shadow-sm">
       <div className="flex items-center gap-1">
