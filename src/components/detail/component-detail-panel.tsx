@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Copy, Heart, Link2, Maximize2, Monitor, Share2, Smartphone, Tablet, X, ExternalLink } from "lucide-react";
+import { Check, Copy, Heart, Link2, Monitor, Share2, Smartphone, Tablet, X, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ComponentPreview } from "@/components/detail/component-preview";
