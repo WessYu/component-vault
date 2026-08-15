@@ -161,8 +161,8 @@ function UsagePanel({ component }: { component: VaultComponent }) {
         <Text.H2 className="text-sm font-semibold">Usage</Text.H2>
         <div className="mt-3 space-y-2">
           {component.usage.map((item) => (
-            <div key={item.file} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3 py-2.5">
-              <span className="min-w-0 truncate text-xs text-gray-500">{item.file}</span>
+            <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3 py-2.5">
+              <span className="min-w-0 truncate text-xs text-gray-500">{item.location || item.projectName}</span>
               <span className="shrink-0 text-xs font-semibold text-gray-900">{item.count}</span>
             </div>
           ))}
