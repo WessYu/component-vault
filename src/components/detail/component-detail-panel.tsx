@@ -105,9 +105,9 @@ export function ComponentDetailPanel({ component, open, onClose }: { component: 
                   <PropertiesEditor
                     component={selectedComponent}
                     tableOptions={tableOptions}
+                    setTableOptions={setTableOptions}
                     pricingOptions={pricingOptions}
-                    onTableOptionsChange={setTableOptions}
-                    onPricingOptionsChange={setPricingOptions}
+                    setPricingOptions={setPricingOptions}
                   />
                 ) : null}
               </div>
