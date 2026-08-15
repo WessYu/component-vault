@@ -25,9 +25,9 @@ jobs:
       - name: Test Component Vault Guard
         run: npm run guard:test
       - name: Enforce component governance
-        run: npm run guard:check
+        run: npm run guard:check -- --base "$COMPONENT_VAULT_BASE_REF"
       - name: Generate Guard PR summary
-        run: npm run guard:pr
+        run: npm run guard:pr -- --base "$COMPONENT_VAULT_BASE_REF"
       - name: Smoke test installable CLI package
         shell: bash
         run: |
