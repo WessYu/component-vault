@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>Visual component workspace + AST-based design-system governance.</strong>
+  <strong>Component workspace + AST-based design-system governance.</strong>
 </p>
 
 <p align="center">
@@ -19,85 +19,71 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-111111?style=flat-square&logo=nextdotjs" />
-  <img src="https://img.shields.io/badge/TypeScript-Compiler_API-3178C6?style=flat-square&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/React-19-111111?style=flat-square&logo=react" />
+  <img src="https://img.shields.io/badge/TypeScript-Compiler_API-3178C6?style=flat-square&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/Convex-111111?style=flat-square" />
-  <img src="https://img.shields.io/badge/Vercel-111111?style=flat-square&logo=vercel" />
+  <img src="https://img.shields.io/badge/npm-111111?style=flat-square&logo=npm" />
 </p>
 
-## What is Component Vault?
+## Overview
 
-Component Vault started as a personal component library and evolved into a full-stack workspace for creating, organizing, testing, editing and reusing interface components.
+**Component Vault** is a full-stack workspace for creating, organizing, testing, editing and reusing UI components, paired with an AST-based governance engine for enforcing design-system rules in real codebases.
 
-The project also contains **Component Vault Guard**: an AST-based governance engine that turns design-system conventions into executable rules for local development, CI and AI-assisted coding workflows.
-
-The core idea is simple:
+It is built around a simple idea:
 
 > **AI can generate code. The repository should still decide what is allowed.**
 
-## Component Vault Guard
+The project combines a visual component workspace with **Component Vault Guard**, a deterministic governance tool for local development, CI, pull requests and AI-assisted coding workflows.
 
-The Guard analyzes TypeScript, TSX, JavaScript and JSX through the **TypeScript Compiler API**. Instead of relying only on text searches, it works with the AST to inspect real imports, JSX elements and properties.
+## Why Component Vault Guard?
+
+Design-system drift is rarely caused by one large mistake. It accumulates through small inconsistencies:
+
+- raw semantic elements replacing governed components;
+- imports that bypass approved component boundaries;
+- protected visual props being overridden;
+- repeated class combinations spreading through the codebase;
+- AI-generated code that works technically but violates the project's UI contract.
+
+Documentation and code review can catch some of these problems. Guard turns the rules into **machine-checkable, repeatable policies**.
+
+## How it works
 
 ```text
-Source Code
+Source code
     │
     ▼
-TypeScript / TSX AST
-    │
-    ├── Component rules
-    ├── Import rules
-    ├── Property rules
-    ├── Semantic rules
-    └── Custom forbidden patterns
+TypeScript Compiler API
     │
     ▼
-Guard Engine
+AST analysis
     │
-    ├── Baseline
-    ├── Semantic analysis
-    ├── Autofix
-    ├── Migration strategy
-    └── Finding classification
+    ├── component rules
+    ├── import rules
+    ├── property rules
+    ├── semantic rules
+    └── custom forbidden patterns
     │
     ▼
-CLI / Report / CI
+Component Vault Guard
+    │
+    ├── scan / analyze
+    ├── baseline
+    ├── deterministic autofix
+    ├── migration strategies
+    └── PR reporting
+    │
+    ▼
+CLI · CI · reports
 ```
 
-### Why build it?
-
-Design-system drift usually happens gradually:
-
-- a raw `<h1>` appears instead of the governed typography component;
-- a component is imported directly from a dependency that should be hidden;
-- a developer overrides a protected visual prop;
-- the same static class combination gets copied across multiple files;
-- an AI coding agent generates code that technically works but violates the project's UI contract.
-
-Documentation and code review can catch some of this. The Guard makes the rules **machine-checkable and repeatable**.
+Unlike a text-only search, the Guard analyzes TypeScript/TSX/JavaScript/JSX through the **TypeScript Compiler API**, allowing rules to reason about real imports, JSX elements and properties.
 
 ## Semantic governance
 
-The Guard can model UI by semantic role instead of coupling a policy to one HTML element or component name.
+Policies can be defined by **semantic role** rather than being coupled to one HTML element or component name.
 
-```text
-JSX / TS AST
-     │
-     ▼
-semantic role + metadata
-     │
-     ▼
-project-owned YAML mappings
-     │
-     ├── analyze
-     ├── scan
-     ├── fix
-     └── CI / PR gate
-```
-
-For example, a project can define `h1` as the semantic role `heading` at level `1`, then map that role to its own governed component. Another project can use a completely different component name without changing the Guard itself.
-
-The YAML configuration remains the source of truth:
+For example, a project can map `h1` to the semantic role `heading` at level `1`, then define which component should govern that role:
 
 ```yaml
 semantics:
@@ -119,62 +105,28 @@ semantics:
         button: {}
 ```
 
-This keeps the governance model generalizable: the engine understands semantic facts, while the repository defines what those facts mean and which components should govern them.
+The repository's YAML configuration remains the **source of truth**. The engine understands semantic facts; the project decides what those facts mean.
 
 ## Rules
 
-| Rule | What it catches |
+| Rule | Purpose |
 | --- | --- |
-| `CV001` | Direct imports of governed components from forbidden sources |
-| `CV002` | Protected visual-property overrides |
-| `CV003` | Raw semantic JSX where a governed variant exists |
-| `CV004` | Repeated static class combinations |
-| `CV005` | Configurable repository-specific forbidden patterns |
-| `CV006` | Semantic elements that should use a governed component |
-
-## Autofix
-
-Version `0.4.1` adds a deterministic autofix flow for supported governance and semantic findings.
-
-Preview the proposed changes first:
-
-```bash
-npx component-vault fix --dry-run
-```
-
-Then apply supported replacements:
-
-```bash
-npx component-vault fix
-```
-
-A typical workflow is:
-
-```text
-scan / analyze
-      ↓
-fix --dry-run
-      ↓
-review
-      ↓
-fix
-      ↓
-scan again
-```
-
-The autofix uses the same repository-owned mappings as the analyzer. It does not guess a replacement when no governed target can be resolved; those findings are reported as skipped instead.
+| `CV001` | Detect forbidden direct imports |
+| `CV002` | Detect protected visual-property overrides |
+| `CV003` | Detect raw semantic JSX where a governed variant exists |
+| `CV004` | Detect repeated static class combinations |
+| `CV005` | Enforce repository-specific forbidden patterns |
+| `CV006` | Enforce semantic elements through governed components |
 
 ## CLI
 
 ### Govern your codebase from the terminal
 
-**Deterministic governance for AI-assisted development.** Analyze your codebase with the TypeScript Compiler API, enforce repository-owned UI rules, and automatically fix supported violations.
+**Deterministic governance for AI-assisted development.**
 
-The CLI is published on npm as `@wess2001/component-vault` and exposes the `component-vault` executable.
+The CLI is published as `@wess2001/component-vault` and exposes the `component-vault` executable.
 
 ### Quick start
-
-Run it without installing the package permanently:
 
 ```bash
 npx @wess2001/component-vault@latest init
@@ -182,20 +134,20 @@ npx component-vault analyze
 npx component-vault scan
 ```
 
-For an existing project with legacy violations:
+For an existing codebase with accepted legacy violations:
 
 ```bash
 npx component-vault baseline
 ```
 
-For CI / pull requests:
+For pull requests:
 
 ```bash
 npx component-vault init --ci
 npx component-vault pr --base origin/master
 ```
 
-### CLI workflow
+### Workflow
 
 ```text
 init
@@ -221,16 +173,34 @@ analyze                   inspect semantic roles and coverage
 fix [--dry-run]           automatically fix supported findings
 check --base REF          enforce governance strategies
 baseline                  capture accepted legacy debt
-report --output FILE      generate the full JSON migration report
+report --output FILE      generate the migration report
 pr --base REF             generate a PR summary and enforce the gate
 context                   export agent-readable rules
 explain CV001             explain a Guard rule
 explain CV006             explain a semantic finding
 ```
 
-### What makes the CLI different?
+## Autofix
 
-It is intentionally **not an AI reviewer**.
+Supported findings can be fixed deterministically using the same repository-owned mappings used by the analyzer.
+
+Preview changes:
+
+```bash
+npx component-vault fix --dry-run
+```
+
+Apply supported changes:
+
+```bash
+npx component-vault fix
+```
+
+The fixer does not guess when a governed target cannot be resolved; unsupported findings are reported instead.
+
+## AI-assisted development
+
+Component Vault Guard is intentionally **not an AI reviewer**.
 
 ```text
 AI coding agent
@@ -247,43 +217,17 @@ Component Vault Guard
       └── blocked / fixable
 ```
 
-The agent can use `component-vault context` to understand project rules, but final enforcement remains deterministic and repository-controlled. Supported autofixes use the same rules instead of asking an AI model to invent transformations.
-
-## YAML is the source of truth
-
-Governance rules live in `component-vault.yaml` rather than inside an AI agent or editor integration.
-
-```yaml
-version: 1
-
-scan:
-  include: [src]
-  exclude: [node_modules, .next, dist, build, coverage, .git]
-  extensions: [.ts, .tsx, .js, .jsx]
-
-components:
-  Text:
-    source: src/components/ui/text.tsx
-    allowedImportFiles: [src/components/ui/text.tsx]
-    forbiddenImports: [tamagui, "@radix-ui/themes"]
-    forbiddenProps: [fontSize, lineHeight, fontWeight]
-    strategy: touched
-    rawElements:
-      h1: H1
-      h2: H2
-      p: Paragraph
-      small: Caption
-```
+Agents can use `component-vault context` to read repository rules, while enforcement remains deterministic and controlled by the repository. Autofixes use the same configured rules rather than asking an AI model to invent transformations.
 
 ## Brownfield migration
 
-Existing codebases should not have to fix every historical violation before adopting governance.
+Existing projects do not need to fix every historical violation before adopting governance.
 
-Component Vault Guard supports three enforcement strategies:
+Guard supports three enforcement strategies:
 
 - **`protect`** — accept known baseline debt and block newly introduced violations;
-- **`touched`** — require governed violations to be fixed when a legacy file is changed;
-- **`full`** — block every governed violation.
+- **`touched`** — require violations to be fixed when a legacy file is changed;
+- **`full`** — block all governed violations.
 
 ```text
 Legacy code
@@ -292,35 +236,29 @@ Legacy code
 Baseline
     │
     ├── existing debt → accepted
-    │
-    └── touched file → migrate
-                         │
-                         ▼
-                    full enforcement
+    └── touched file  → migrate
+                           │
+                           ▼
+                      enforcement
 ```
 
-The PR reporting model also tracks:
+PR reporting also classifies findings as **legacy**, **new**, **resolved** and **blocking**.
 
-- **legacy** — already present in the baseline;
-- **new** — introduced by the current change;
-- **resolved** — previously known violations that were fixed;
-- **blocking** — findings that prevent the gate from passing.
+## CI / Pull Requests
 
-## GitHub Actions
+`component-vault init --ci` can create a GitHub Actions workflow for pull-request validation.
 
-`component-vault init --ci` can create a workflow that runs the Guard on pull requests.
+The PR command can generate a Markdown summary for `GITHUB_STEP_SUMMARY`, making governance findings visible directly in the workflow.
 
-When running in GitHub Actions, the PR command can append its Markdown summary to `GITHUB_STEP_SUMMARY`.
+## Demo project
 
-## Demo / brownfield example
-
-`examples/messy-app` is a deliberately inconsistent project used to exercise the governance lifecycle:
+`examples/messy-app` is a deliberately inconsistent project used to exercise the brownfield lifecycle:
 
 ```text
-scan → baseline → change → PR gate → legacy/new/resolved/blocking
+scan → baseline → change → PR gate → legacy / new / resolved / blocking
 ```
 
-The project also validates the npm artifact by packaging the CLI, installing the generated `.tgz` in a separate test project and running the published command there. This checks the actual package contents rather than only the source tree.
+The project also validates the CLI package by generating the npm artifact, installing the generated `.tgz` in a separate test project and running the packaged command.
 
 ## Project structure
 
@@ -331,9 +269,9 @@ examples/messy-app/            Brownfield demonstration
 src/                           Component Vault application
 ```
 
-## Application
+## Component Vault workspace
 
-The main Component Vault workspace includes:
+The main application provides:
 
 - component creation, editing and deletion;
 - live previews and responsive states;
@@ -343,7 +281,7 @@ The main Component Vault workspace includes:
 - persistent workspace preferences;
 - protected administration;
 - Motion Experiences and reusable UI patterns;
-- the Guard dashboard at `/vault/guard`;
+- Guard dashboard at `/vault/guard`;
 - migration metrics, baseline debt and findings with file/line/column information.
 
 ## Stack
@@ -368,7 +306,7 @@ cd component-vault
 npm install
 ```
 
-Then configure the required Convex environment and run:
+Configure the required Convex environment, then run:
 
 ```bash
 npx convex dev
@@ -379,13 +317,20 @@ The application runs at `http://localhost:3000`.
 
 ## Project status
 
-The current npm package is:
+Current CLI package:
 
 ```text
 @wess2001/component-vault@0.4.1
 ```
 
-Version `0.4.1` focuses on the Guard's semantic governance model and deterministic autofix workflow, while the project continues evolving around configurable governance, brownfield migration and better tooling for AI-assisted development.
+Version `0.4.1` focuses on semantic governance and deterministic autofix while the project continues evolving around configurable governance, brownfield migration and tooling for AI-assisted development.
+
+## Links
+
+- **Live Demo:** https://component-vault-dun.vercel.app/
+- **npm:** https://www.npmjs.com/package/@wess2001/component-vault
+- **Portfolio:** https://wessyu-arquivo.vercel.app/
+- **Issues:** https://github.com/WessYu/component-vault/issues
 
 ## Author
 
