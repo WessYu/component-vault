@@ -119,7 +119,7 @@ semantics:
         button: {}
 ```
 
-This is the part that makes the governance model generalizable: the engine understands semantic facts, while the repository defines what those facts mean and which components should govern them.
+This keeps the governance model generalizable: the engine understands semantic facts, while the repository defines what those facts mean and which components should govern them.
 
 ## Rules
 
@@ -131,22 +131,6 @@ This is the part that makes the governance model generalizable: the engine under
 | `CV004` | Repeated static class combinations |
 | `CV005` | Configurable repository-specific forbidden patterns |
 | `CV006` | Semantic elements that should use a governed component |
-
-Example:
-
-```tsx
-<h1>Título de teste</h1>
-<button>Salvar</button>
-```
-
-can produce a semantic finding such as:
-
-```text
-[CV006] Semantic element requires governed component
-src/test.tsx:10:7
-  <button> is mapped to semantic role 'button' and a governed component is available.
-  → Use the project's governed Button component for 'button'.
-```
 
 ## Autofix
 
@@ -180,6 +164,91 @@ scan again
 
 The autofix uses the same repository-owned mappings as the analyzer. It does not guess a replacement when no governed target can be resolved; those findings are reported as skipped instead.
 
+## CLI
+
+### Govern your codebase from the terminal
+
+**Deterministic governance for AI-assisted development.** Analyze your codebase with the TypeScript Compiler API, enforce repository-owned UI rules, and automatically fix supported violations.
+
+The CLI is published on npm as `@wess2001/component-vault` and exposes the `component-vault` executable.
+
+### Quick start
+
+Run it without installing the package permanently:
+
+```bash
+npx @wess2001/component-vault@latest init
+npx component-vault analyze
+npx component-vault scan
+```
+
+For an existing project with legacy violations:
+
+```bash
+npx component-vault baseline
+```
+
+For CI / pull requests:
+
+```bash
+npx component-vault init --ci
+npx component-vault pr --base origin/master
+```
+
+### CLI workflow
+
+```text
+init
+  ↓
+analyze
+  ↓
+scan
+  ↓
+fix --dry-run
+  ↓
+fix
+  ↓
+check / pr
+```
+
+### Commands
+
+```text
+init [--ci] [--force]     initialize governance files
+doctor                    validate local setup
+scan                      scan TypeScript/JavaScript AST
+analyze                   inspect semantic roles and coverage
+fix [--dry-run]           automatically fix supported findings
+check --base REF          enforce governance strategies
+baseline                  capture accepted legacy debt
+report --output FILE      generate the full JSON migration report
+pr --base REF             generate a PR summary and enforce the gate
+context                   export agent-readable rules
+explain CV001             explain a Guard rule
+explain CV006             explain a semantic finding
+```
+
+### What makes the CLI different?
+
+It is intentionally **not an AI reviewer**.
+
+```text
+AI coding agent
+      │
+      │ generates / edits
+      ▼
+Repository code
+      │
+      │ verified by
+      ▼
+Component Vault Guard
+      │
+      ├── allowed
+      └── blocked / fixable
+```
+
+The agent can use `component-vault context` to understand project rules, but final enforcement remains deterministic and repository-controlled. Supported autofixes use the same rules instead of asking an AI model to invent transformations.
+
 ## YAML is the source of truth
 
 Governance rules live in `component-vault.yaml` rather than inside an AI agent or editor integration.
@@ -205,8 +274,6 @@ components:
       p: Paragraph
       small: Caption
 ```
-
-This keeps policy explicit, reviewable and independent from whichever AI tool or IDE is being used.
 
 ## Brownfield migration
 
@@ -239,107 +306,11 @@ The PR reporting model also tracks:
 - **resolved** — previously known violations that were fixed;
 - **blocking** — findings that prevent the gate from passing.
 
-## CLI
-
-The Guard is published on npm as `@wess2001/component-vault` and exposes the `component-vault` executable.
-
-### Install
-
-```bash
-npm install -D @wess2001/component-vault
-```
-
-Or run it without adding it to your project:
-
-```bash
-npx @wess2001/component-vault@latest init
-```
-
-### Quick start
-
-```bash
-npx component-vault init
-npx component-vault analyze
-npx component-vault scan
-```
-
-For an existing project:
-
-```bash
-npx component-vault baseline
-```
-
-For CI:
-
-```bash
-npx component-vault init --ci
-npx component-vault pr --base origin/master
-```
-
-### Commands
-
-```text
-init [--ci] [--force]     initialize governance files
-doctor                    validate local setup
-scan                      scan TypeScript/JavaScript AST
-analyze                   inspect semantic roles and coverage
-fix [--dry-run]           automatically fix supported findings
-check --base REF          enforce governance strategies
-baseline                  capture accepted legacy debt
-report --output FILE      generate the full JSON migration report
-pr --base REF             generate a PR summary and enforce the gate
-context                   export agent-readable rules
-explain CV001             explain a Guard rule
-explain CV006             explain a semantic finding
-```
-
-## AI-assisted development
-
-Component Vault Guard is deliberately **not an AI reviewer**.
-
-The separation is intentional:
-
-```text
-AI coding agent
-      │
-      │ generates / edits
-      ▼
-Repository code
-      │
-      │ verified by
-      ▼
-Component Vault Guard
-      │
-      ├── allowed
-      └── blocked / fixable
-```
-
-The agent can use `component-vault context` to understand project rules, but the final enforcement remains deterministic and repository-controlled. Supported autofixes use those same rules instead of asking an AI model to invent transformations.
-
 ## GitHub Actions
 
 `component-vault init --ci` can create a workflow that runs the Guard on pull requests.
 
-The intended workflow is:
-
-```text
-Developer / AI agent
-        │
-        ▼
-component-vault check / pr
-        │
-        ▼
-TypeScript AST analysis
-        │
-   ┌────┴────┐
-   │         │
- allowed   violation
-   │         │
-   ▼         ▼
- CI pass   CI block
-```
-
-When running in GitHub Actions, the PR command can also append its Markdown summary to `GITHUB_STEP_SUMMARY`.
+When running in GitHub Actions, the PR command can append its Markdown summary to `GITHUB_STEP_SUMMARY`.
 
 ## Demo / brownfield example
 
@@ -354,10 +325,10 @@ The project also validates the npm artifact by packaging the CLI, installing the
 ## Project structure
 
 ```text
-packages/component-vault/     Published npm CLI
- tools/component-vault-guard/  Guard engine + tests
- examples/messy-app/           Brownfield demonstration
- src/                          Component Vault application
+packages/component-vault/      Published npm CLI
+tools/component-vault-guard/   Guard engine + tests
+examples/messy-app/            Brownfield demonstration
+src/                           Component Vault application
 ```
 
 ## Application
@@ -408,7 +379,7 @@ The application runs at `http://localhost:3000`.
 
 ## Project status
 
-The current npm package being prepared is:
+The current npm package is:
 
 ```text
 @wess2001/component-vault@0.4.1
