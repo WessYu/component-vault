@@ -7,83 +7,79 @@
 </p>
 
 <p align="center">
-  <strong>Component workspace + AST-based design-system governance.</strong>
+  <strong>AST-based component governance and design-system tooling for real codebases.</strong>
 </p>
 
 <p align="center">
   <a href="https://component-vault-dun.vercel.app/">Live Demo</a> ·
   <a href="https://www.npmjs.com/package/@wess2001/component-vault">npm CLI</a> ·
-  <a href="https://github.com/WessYu/component-vault">GitHub</a> ·
-  <a href="https://wessyu-arquivo.vercel.app/">Portfolio</a>
+  <a href="https://github.com/WessYu/component-vault">Source</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-111111?style=flat-square&logo=nextdotjs" />
-  <img src="https://img.shields.io/badge/React-19-111111?style=flat-square&logo=react" />
-  <img src="https://img.shields.io/badge/TypeScript-Compiler_API-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Convex-111111?style=flat-square" />
-  <img src="https://img.shields.io/badge/npm-111111?style=flat-square&logo=npm" />
+  <img src="https://img.shields.io/badge/Next.js-16-111111?style=flat-square&logo=nextdotjs" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/React-19-111111?style=flat-square&logo=react" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-Compiler_API-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Compiler API" />
+  <img src="https://img.shields.io/badge/Node.js-20+-111111?style=flat-square&logo=nodedotjs" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/npm-111111?style=flat-square&logo=npm" alt="npm" />
 </p>
 
-## Overview
+## The problem
 
-**Component Vault** is a full-stack workspace for creating, organizing, testing, editing and reusing UI components, paired with an AST-based governance engine for enforcing design-system rules in real codebases.
+Design-system drift usually happens through small changes that are individually reasonable:
 
-It is built around a simple idea:
+- a raw HTML element replaces a governed component;
+- an import bypasses an approved component boundary;
+- a protected visual prop is overridden;
+- the same class combination is copied across multiple files;
+- AI-generated code follows the syntax of the project but not its UI rules.
 
-> **AI can generate code. The repository should still decide what is allowed.**
+Documentation and code review help, but they depend on people remembering and enforcing the same rules repeatedly.
 
-The project combines a visual component workspace with **Component Vault Guard**, a deterministic governance tool for local development, CI, pull requests and AI-assisted coding workflows.
+**Component Vault turns those rules into executable, repository-owned policies.**
 
-## Why Component Vault Guard?
+## What it is
 
-Design-system drift is rarely caused by one large mistake. It accumulates through small inconsistencies:
+Component Vault is a full-stack component workspace paired with **Component Vault Guard**, an AST-based governance engine for local development, CI and pull requests.
 
-- raw semantic elements replacing governed components;
-- imports that bypass approved component boundaries;
-- protected visual props being overridden;
-- repeated class combinations spreading through the codebase;
-- AI-generated code that works technically but violates the project's UI contract.
-
-Documentation and code review can catch some of these problems. Guard turns the rules into **machine-checkable, repeatable policies**.
-
-## How it works
+The Guard analyzes TypeScript, TSX, JavaScript and JSX through the **TypeScript Compiler API** and evaluates the result against rules defined by the repository.
 
 ```text
-Source code
-    │
-    ▼
+Codebase
+   │
+   ▼
 TypeScript Compiler API
-    │
-    ▼
-AST analysis
-    │
-    ├── component rules
-    ├── import rules
-    ├── property rules
-    ├── semantic rules
-    └── custom forbidden patterns
-    │
-    ▼
+   │
+   ▼
+AST + semantic analysis
+   │
+   ├── component rules
+   ├── import rules
+   ├── property rules
+   ├── semantic rules
+   └── custom forbidden patterns
+   │
+   ▼
 Component Vault Guard
-    │
-    ├── scan / analyze
-    ├── baseline
-    ├── deterministic autofix
-    ├── migration strategies
-    └── PR reporting
-    │
-    ▼
-CLI · CI · reports
+   │
+   ├── scan / analyze
+   ├── baseline / migration
+   ├── deterministic autofix
+   └── PR reporting
+   │
+   ▼
+CLI · CI · development workflow
 ```
 
-Unlike a text-only search, the Guard analyzes TypeScript/TSX/JavaScript/JSX through the **TypeScript Compiler API**, allowing rules to reason about real imports, JSX elements and properties.
+The important separation is intentional:
+
+> **The engine understands the code. The repository decides what is allowed.**
 
 ## Semantic governance
 
-Policies can be defined by **semantic role** rather than being coupled to one HTML element or component name.
+The semantic layer allows policies to describe **meaning**, rather than coupling a rule to one tag or component name.
 
-For example, a project can map `h1` to the semantic role `heading` at level `1`, then define which component should govern that role:
+For example, a repository can define `h1` as the semantic role `heading` at level `1` and map that role to its own typography component:
 
 ```yaml
 semantics:
@@ -96,16 +92,15 @@ semantics:
       role: button
 
   components:
-    Text.H1:
+    Typography:
       roles:
         heading:
-          level: 1
-    Button:
-      roles:
-        button: {}
+          variants:
+            h1:
+              level: 1
 ```
 
-The repository's YAML configuration remains the **source of truth**. The engine understands semantic facts; the project decides what those facts mean.
+This keeps the governance vocabulary **repository-owned**. One Design System can use `Typography`, another can use `Text`, and the policy does not need to change the Guard's implementation.
 
 ## Rules
 
@@ -120,13 +115,9 @@ The repository's YAML configuration remains the **source of truth**. The engine 
 
 ## CLI
 
-### Govern your codebase from the terminal
+The published package is `@wess2001/component-vault` and exposes the `component-vault` command.
 
-**Deterministic governance for AI-assisted development.**
-
-The CLI is published as `@wess2001/component-vault` and exposes the `component-vault` executable.
-
-### Quick start
+### Start in an existing project
 
 ```bash
 npx @wess2001/component-vault@latest init
@@ -134,33 +125,43 @@ npx component-vault analyze
 npx component-vault scan
 ```
 
-For an existing codebase with accepted legacy violations:
+For brownfield adoption:
 
 ```bash
 npx component-vault baseline
+npx component-vault check --base origin/master
 ```
 
-For pull requests:
+For pull-request enforcement:
 
 ```bash
 npx component-vault init --ci
 npx component-vault pr --base origin/master
 ```
 
-### Workflow
+### Deterministic autofix
+
+Supported findings can be fixed using the same repository configuration used by the analyzer.
+
+```bash
+npx component-vault fix --dry-run
+npx component-vault fix
+```
+
+The fixer is deliberately conservative. If a governed target cannot be resolved from the repository configuration, the finding is reported instead of being changed heuristically.
+
+Recommended workflow:
 
 ```text
-init
-  ↓
-analyze
-  ↓
-scan
-  ↓
+scan / analyze
+      ↓
 fix --dry-run
-  ↓
+      ↓
+review
+      ↓
 fix
-  ↓
-check / pr
+      ↓
+scan again
 ```
 
 ### Commands
@@ -170,37 +171,21 @@ init [--ci] [--force]     initialize governance files
 doctor                    validate local setup
 scan                      scan TypeScript/JavaScript AST
 analyze                   inspect semantic roles and coverage
-fix [--dry-run]           automatically fix supported findings
+fix [--dry-run]           fix supported findings
 check --base REF          enforce governance strategies
 baseline                  capture accepted legacy debt
-report --output FILE      generate the migration report
-pr --base REF             generate a PR summary and enforce the gate
+report --output FILE      generate migration report
+pr --base REF             generate PR summary and enforce the gate
 context                   export agent-readable rules
 explain CV001             explain a Guard rule
 explain CV006             explain a semantic finding
 ```
 
-## Autofix
-
-Supported findings can be fixed deterministically using the same repository-owned mappings used by the analyzer.
-
-Preview changes:
-
-```bash
-npx component-vault fix --dry-run
-```
-
-Apply supported changes:
-
-```bash
-npx component-vault fix
-```
-
-The fixer does not guess when a governed target cannot be resolved; unsupported findings are reported instead.
-
 ## AI-assisted development
 
-Component Vault Guard is intentionally **not an AI reviewer**.
+Component Vault is **not an AI reviewer**.
+
+The intended relationship is:
 
 ```text
 AI coding agent
@@ -217,38 +202,38 @@ Component Vault Guard
       └── blocked / fixable
 ```
 
-Agents can use `component-vault context` to read repository rules, while enforcement remains deterministic and controlled by the repository. Autofixes use the same configured rules rather than asking an AI model to invent transformations.
+Agents can read repository rules through `component-vault context`, while enforcement remains deterministic and controlled by the codebase.
 
 ## Brownfield migration
 
-Existing projects do not need to fix every historical violation before adopting governance.
+Governance should not require a one-shot rewrite of an existing application.
 
 Guard supports three enforcement strategies:
 
 - **`protect`** — accept known baseline debt and block newly introduced violations;
 - **`touched`** — require violations to be fixed when a legacy file is changed;
-- **`full`** — block all governed violations.
+- **`full`** — enforce all governed violations.
 
 ```text
-Legacy code
-    │
-    ▼
-Baseline
-    │
-    ├── existing debt → accepted
-    └── touched file  → migrate
-                           │
-                           ▼
-                      enforcement
+Existing code
+     │
+     ▼
+  baseline
+     │
+     ├── existing debt → accepted
+     └── changed file  → migrate
+                              │
+                              ▼
+                         enforcement
 ```
 
-PR reporting also classifies findings as **legacy**, **new**, **resolved** and **blocking**.
+PR reporting can classify findings as **legacy, new, resolved and blocking**, making migration progress visible instead of hiding existing debt.
 
 ## CI / Pull Requests
 
 `component-vault init --ci` can create a GitHub Actions workflow for pull-request validation.
 
-The PR command can generate a Markdown summary for `GITHUB_STEP_SUMMARY`, making governance findings visible directly in the workflow.
+`component-vault pr` can generate a Markdown summary for `GITHUB_STEP_SUMMARY`, keeping governance findings visible alongside the change being reviewed.
 
 ## Demo project
 
@@ -258,33 +243,24 @@ The PR command can generate a Markdown summary for `GITHUB_STEP_SUMMARY`, making
 scan → baseline → change → PR gate → legacy / new / resolved / blocking
 ```
 
-The project also validates the CLI package by generating the npm artifact, installing the generated `.tgz` in a separate test project and running the packaged command.
+It also provides a packaged-CLI validation path by generating the npm artifact, installing the generated `.tgz` in a separate project and running the published command locally.
 
-## Project structure
+## Component workspace
 
-```text
-packages/component-vault/      Published npm CLI
-tools/component-vault-guard/   Guard engine + tests
-examples/messy-app/            Brownfield demonstration
-src/                           Component Vault application
-```
-
-## Component Vault workspace
-
-The main application provides:
+The main application provides a workspace for creating and maintaining UI components, including:
 
 - component creation, editing and deletion;
 - live previews and responsive states;
 - code, usage, accessibility and notes;
 - search and command palette;
-- favorites and personal collections;
+- favorites and collections;
 - persistent workspace preferences;
 - protected administration;
 - Motion Experiences and reusable UI patterns;
 - Guard dashboard at `/vault/guard`;
-- migration metrics, baseline debt and findings with file/line/column information.
+- migration metrics and findings with file/line/column information.
 
-## Stack
+## Architecture & stack
 
 | Area | Technologies |
 | --- | --- |
@@ -294,7 +270,7 @@ The main application provides:
 | Backend | Convex |
 | Validation | Zod, React Hook Form |
 | AST / CLI | TypeScript Compiler API, Node.js, YAML |
-| Quality | Component Vault Guard, GitHub Actions, TypeScript strict |
+| Quality | Guard tests, GitHub Actions, TypeScript strict |
 | Package | npm |
 | Deploy | Vercel |
 
@@ -306,7 +282,7 @@ cd component-vault
 npm install
 ```
 
-Configure the required Convex environment, then run:
+Configure the required backend environment, then run:
 
 ```bash
 npx convex dev
@@ -315,25 +291,33 @@ npm run dev
 
 The application runs at `http://localhost:3000`.
 
+For the Guard:
+
+```bash
+npm run guard:test
+npm run guard
+npm run guard:check
+```
+
 ## Project status
 
-Current CLI package:
+The CLI is currently published as:
 
 ```text
 @wess2001/component-vault@0.4.1
 ```
 
-Version `0.4.1` focuses on semantic governance and deterministic autofix while the project continues evolving around configurable governance, brownfield migration and tooling for AI-assisted development.
+The current focus is semantic governance, deterministic autofix, brownfield migration and tooling for AI-assisted development.
 
 ## Links
 
 - **Live Demo:** https://component-vault-dun.vercel.app/
 - **npm:** https://www.npmjs.com/package/@wess2001/component-vault
-- **Portfolio:** https://wessyu-arquivo.vercel.app/
 - **Issues:** https://github.com/WessYu/component-vault/issues
+- **Portfolio:** https://wessyu-arquivo.vercel.app/
 
 ## Author
 
-**Wesley Cruz** — Front-end Developer & Designer
+**Wesley Cruz** — Front-End Developer
 
 [GitHub](https://github.com/WessYu) · [Portfolio](https://wessyu-arquivo.vercel.app/) · [LinkedIn](https://www.linkedin.com/in/wesley-santos-cruz-b57589213/)
