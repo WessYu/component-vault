@@ -110,3 +110,6 @@ export function UsersPage() {
     loading: false,
   },
 };
+
+// Compatibility export for older imports while the catalog migrates to the descriptive name above.
+export const cliWorkflowComponent = tableDataGridComponent;
