@@ -20,10 +20,8 @@ function matchesPattern(file, pattern) {
   return new RegExp(`^${escaped}$`).test(file);
 }
 
-function loadConfig(root, configPath = DEFAULT_CONFIG) {
-  const path = resolve(root, configPath);
-  if (!existsSync(path)) throw new Error(`Configuration not found: ${configPath}`);
-  const config = YAML.parse(readFileSync(path, "utf8"));
+function normalizeConfig(input) {
+  const config = structuredClone(input);
   if (!config || config.version !== 1) throw new Error("component-vault.yaml must use version: 1");
   config.scan ??= {};
   config.scan.include ??= ["src"];
@@ -35,6 +33,12 @@ function loadConfig(root, configPath = DEFAULT_CONFIG) {
   config.semantics.components ??= {};
   config.semantics.strict ??= false;
   return config;
+}
+
+function loadConfig(root, configPath = DEFAULT_CONFIG) {
+  const path = resolve(root, configPath);
+  if (!existsSync(path)) throw new Error(`Configuration not found: ${configPath}`);
+  return normalizeConfig(YAML.parse(readFileSync(path, "utf8")));
 }
 
 function collectFiles(root, config) {
@@ -149,6 +153,9 @@ function governedTagForElement(config, elementName, element) {
     const configured = componentRoles.get(candidate);
     if (configured && configured.role === element.role && (element.level === undefined || configured.config?.level === element.level)) return candidate;
     if (configured && configured.role === element.role && element.level === undefined) return candidate;
+    // rawElements is already an explicit repository-owned mapping. It remains
+    // a valid deterministic fallback when the optional semantic map is absent.
+    if (!configured) return candidate;
   }
 
   for (const [name, definition] of Object.entries(config.semantics.components ?? {})) {
@@ -209,8 +216,12 @@ function semanticScan(root, config) {
         if (element) {
           const location = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
           const governed = governedForElement(componentRoles, element);
-          if (governed.length) {
-            const names = governed.map(([name]) => name);
+          const fix = governedTagForElement(config, tag, element);
+          const componentName = fix?.split(".")[0];
+          const componentSource = componentName && config.components?.[componentName]?.source;
+          const insideGovernedComponent = componentSource && toPosix(String(componentSource)) === toPosix(file);
+          if (!insideGovernedComponent && (governed.length || fix)) {
+            const names = governed.length ? governed.map(([name]) => name) : [fix];
             findings.push({
               code: "CV006",
               title: "Semantic element requires governed component",
@@ -222,7 +233,7 @@ function semanticScan(root, config) {
               level: element.level,
               element: tag,
               governedComponents: names,
-              fix: governedTagForElement(config, tag, element),
+              fix,
               snippet: node.getText(sourceFile).replace(/\s+/g, " ").slice(0, 280),
               message: `<${tag}> is mapped to semantic role '${element.role}' and a governed component is available.`,
               suggestion: `Use the project's governed ${names.join(" / ")} component for '${element.role}'.`,
@@ -291,4 +302,4 @@ function explainSemantic(finding) {
   ].filter(Boolean).join("\n");
 }
 
-export { analyze, explainSemantic, loadConfig, semanticScan, componentRoleMap, elementFacts, governedTagForElement, collectFiles, scriptKind };
+export { analyze, explainSemantic, loadConfig, normalizeConfig, semanticScan, componentRoleMap, elementFacts, governedTagForElement, collectFiles, scriptKind };

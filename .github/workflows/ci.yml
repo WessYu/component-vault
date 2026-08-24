@@ -39,12 +39,24 @@ jobs:
           cd "$smoke_dir"
           npm init -y >/dev/null 2>&1
           npm install "$package_path" --silent
-          mkdir -p src
+          mkdir -p src/components/ui src/pages
+          printf '%s\n' 'export const Text = { H1: (props) => <h1 {...props} /> };' > src/components/ui/text.tsx
           git init -q
           git config user.email "guard@example.com"
           git config user.name "Component Vault CI"
           ./node_modules/.bin/component-vault --version
           ./node_modules/.bin/component-vault init
+          printf '%s\n' 'export const Page = ({ user }) => <h1 data-user={user?.name}>Título: {user?.name}</h1>;' > src/pages/page.tsx
+          if ./node_modules/.bin/component-vault scan; then
+            echo "Expected the raw h1 fixture to fail the scan"
+            exit 1
+          fi
+          ./node_modules/.bin/component-vault fix --dry-run
+          grep -q '<h1' src/pages/page.tsx
+          ./node_modules/.bin/component-vault fix
+          grep -q 'import { Text }' src/pages/page.tsx
+          grep -q '<Text.H1' src/pages/page.tsx
+          node --input-type=module -e 'import("@wess2001/component-vault").then(({ scanProject }) => { const result = scanProject(); if (result.summary.total !== 0) process.exit(1); })'
           git add .
           git commit -qm "initialize smoke fixture"
           ./node_modules/.bin/component-vault doctor

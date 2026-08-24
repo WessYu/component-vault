@@ -22,7 +22,7 @@
     "guard:context": "node tools/component-vault-guard/cli.mjs context",
     "guard:doctor": "node tools/component-vault-guard/cli.mjs doctor",
     "guard:pr": "node tools/component-vault-guard/cli.mjs pr",
-    "guard:test": "node --test tools/component-vault-guard/guard.test.mjs"
+    "guard:test": "node --test tools/component-vault-guard/*.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

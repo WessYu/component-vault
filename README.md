@@ -150,6 +150,8 @@ npx component-vault fix
 
 The fixer is deliberately conservative. If a governed target cannot be resolved from the repository configuration, the finding is reported instead of being changed heuristically.
 
+When a replacement introduces a component such as `Text.H1`, the fixer also verifies the component export and adds the required import. Existing aliases are preserved. If the import cannot be proven, the source file is left unchanged.
+
 Recommended workflow:
 
 ```text
@@ -180,6 +182,25 @@ context                   export agent-readable rules
 explain CV001             explain a Guard rule
 explain CV006             explain a semantic finding
 ```
+
+## Programmatic API
+
+Version `0.5.0` exposes the same deterministic engine for build tools, codemods and custom CI integrations:
+
+```js
+import { defineConfig, scanProject } from "@wess2001/component-vault";
+
+const config = defineConfig({
+  version: 1,
+  scan: { include: ["src"] },
+  components: {},
+});
+
+const result = scanProject({ root: process.cwd(), config });
+console.log(result.summary);
+```
+
+The public API also exports `analyzeProject` and `fixProject`. Programmatic fixes default to dry-run; pass `{ dryRun: false }` to write verified edits.
 
 ## AI-assisted development
 
@@ -301,13 +322,13 @@ npm run guard:check
 
 ## Project status
 
-The CLI is currently published as:
+The repository currently targets:
 
 ```text
-@wess2001/component-vault@0.4.1
+@wess2001/component-vault@0.5.0
 ```
 
-The current focus is semantic governance, deterministic autofix, brownfield migration and tooling for AI-assisted development.
+The `0.5.0` release adds a programmatic API, import-safe semantic autofix and end-to-end coverage for the packaged v4 CLI. Check npm for the latest published version.
 
 ## Links
 

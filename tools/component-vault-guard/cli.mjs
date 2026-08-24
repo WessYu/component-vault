@@ -6,7 +6,7 @@ import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
 
-const VERSION = "0.3.0";
+const VERSION = "0.5.0";
 const CORE_PATH = fileURLToPath(new URL("./cli-v2.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";

@@ -6,44 +6,15 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import process from "node:process";
-import ts from "typescript";
 import YAML from "yaml";
-import { analyze, collectFiles, elementFacts, explainSemantic, governedTagForElement, loadConfig, scriptKind, semanticScan } from "./semantic.mjs";
+import { applySemanticFixes } from "./autofix.mjs";
+import { applyConfiguredFixes } from "./fix.mjs";
+import { analyze, explainSemantic, loadConfig, semanticScan } from "./semantic.mjs";
 
-const VERSION = "0.4.1";
+const VERSION = "0.5.0";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
-
-function readSourceFile(path) {
-  const buffer = readFileSync(path);
-  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) return { text: buffer.toString("utf16le"), encoding: "utf16le-bom" };
-  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
-    const swapped = Buffer.allocUnsafe(buffer.length - 2);
-    for (let index = 2; index + 1 < buffer.length; index += 2) {
-      swapped[index - 2] = buffer[index + 1];
-      swapped[index - 1] = buffer[index];
-    }
-    return { text: swapped.toString("utf16le"), encoding: "utf16be-bom" };
-  }
-  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) return { text: buffer.toString("utf8"), encoding: "utf8-bom" };
-  return { text: buffer.toString("utf8"), encoding: "utf8" };
-}
-
-function writeSourceFile(path, text, encoding) {
-  if (encoding === "utf16le-bom") return writeFileSync(path, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, "utf16le")]));
-  if (encoding === "utf16be-bom") {
-    const utf16 = Buffer.from(text, "utf16le");
-    const swapped = Buffer.allocUnsafe(utf16.length);
-    for (let index = 0; index + 1 < utf16.length; index += 2) {
-      swapped[index] = utf16[index + 1];
-      swapped[index + 1] = utf16[index];
-    }
-    return writeFileSync(path, Buffer.concat([Buffer.from([0xfe, 0xff]), swapped]));
-  }
-  if (encoding === "utf8-bom") return writeFileSync(path, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(text, "utf8")]));
-  return writeFileSync(path, text, "utf8");
-}
 
 function parseArgs(argv) {
   const [command = "help", ...rest] = argv;
@@ -166,79 +137,20 @@ function printAnalyze(root, configPath) {
   }
 }
 
-function applySemanticFixes(root, configPath, dryRun = false) {
-  const config = loadConfig(root, configPath);
-  const elements = elementFacts(config);
-  let changedFiles = 0;
-  let replacements = 0;
-  let skipped = 0;
-
-  for (const file of collectFiles(root, config)) {
-    const path = resolve(root, file);
-    const { text: source, encoding } = readSourceFile(path);
-    const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind(file));
-    const edits = [];
-
-    function addTagEdit(tagNode, replacement) {
-      edits.push({ start: tagNode.getStart(sourceFile), end: tagNode.getEnd(), replacement });
-    }
-
-    function visit(node) {
-      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
-        const tag = node.tagName.getText(sourceFile);
-        const element = elements.get(tag);
-        if (element) {
-          const target = governedTagForElement(config, tag, element);
-          if (target && target !== tag) {
-            addTagEdit(node.tagName, target);
-            if (ts.isJsxOpeningElement(node) && node.parent && ts.isJsxElement(node.parent)) {
-              const closing = node.parent.closingElement;
-              if (closing) addTagEdit(closing.tagName, target);
-            }
-          } else {
-            skipped += 1;
-          }
-        }
-      }
-      ts.forEachChild(node, visit);
-    }
-
-    visit(sourceFile);
-    if (!edits.length) continue;
-
-    const unique = new Map(edits.map((edit) => [`${edit.start}:${edit.end}`, edit]));
-    const ordered = [...unique.values()].sort((a, b) => b.start - a.start);
-    let updated = source;
-    for (const edit of ordered) updated = `${updated.slice(0, edit.start)}${edit.replacement}${updated.slice(edit.end)}`;
-
-    if (updated === source) continue;
-    changedFiles += 1;
-    replacements += ordered.length;
-    console.log(`${dryRun ? "Would fix" : "Fixed"} ${file}: ${ordered.length} semantic replacement(s)`);
-    if (!dryRun) writeSourceFile(path, updated, encoding);
-  }
-
-  console.log(`\nComponent Vault Semantic Fix: ${replacements} replacement(s) in ${changedFiles} file(s).`);
-  if (skipped) console.log(`Skipped ${skipped} semantic occurrence(s) without a resolvable governed target.`);
-  return { changedFiles, replacements, skipped };
-}
-
-function handleFix(root, options, positional) {
+function handleFix(root, options) {
   const configPath = typeof options.config === "string" ? options.config : DEFAULT_CONFIG;
   const dryRun = options["dry-run"] === true || options.check === true;
 
   console.log("Component Vault Guard Autofix\n");
+  const config = loadConfig(root, configPath);
+  const configured = applyConfiguredFixes(root, config, { dryRun, logger: console.log });
+  const semantic = applySemanticFixes(root, config, { dryRun, logger: console.log });
+  const total = configured.replacements + semantic.replacements + semantic.importsAdded;
 
-  const legacy = runLegacy("fix", options, positional);
-  printLegacy(legacy);
-  if (legacy.status !== 0) {
-    process.exitCode = legacy.status ?? 1;
-    return;
-  }
-
-  const semantic = applySemanticFixes(root, configPath, dryRun);
-  process.exitCode = 0;
-  if (!semantic.replacements && !legacy.stdout?.includes("replacement(s)")) console.log("\nNo automatically fixable findings were found.");
+  console.log(`\nComponent Vault Fix: ${total} edit(s) in ${new Set([...configured.changes, ...semantic.changes].map((item) => item.file)).size} file(s).`);
+  if (semantic.skipped) console.log(`Skipped ${semantic.skipped} semantic occurrence(s) because a safe import could not be resolved.`);
+  if (!total) console.log("No automatically fixable findings were found.");
+  process.exitCode = options.check === true && total ? 1 : 0;
 }
 
 function help() {
@@ -257,7 +169,7 @@ function main() {
     if (result.status === 0) semanticInit(root, configPath);
     process.exitCode = result.status ?? 1; return;
   }
-  if (command === "fix") return handleFix(root, options, positional);
+  if (command === "fix") return handleFix(root, options);
   if (command === "baseline") {
     const result = runLegacy(command, options, positional); printLegacy(result);
     if (result.status === 0) { const config = loadConfig(root, configPath); writeSemanticBaseline(root, semanticScan(root, config).findings); console.log(`Component Vault Semantic Guard: baseline written to ${SEMANTIC_BASELINE}`); }

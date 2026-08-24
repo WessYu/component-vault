@@ -2,7 +2,7 @@
 
 AST-based **semantic design-system governance** for developers, CI pipelines and AI coding agents.
 
-Component Vault started as a configurable AST guard for Design System rules. Version `0.4` adds a semantic layer so policies can describe **what a piece of UI means**, instead of hard-coding one component name or one JSX tag.
+Component Vault started as a configurable AST guard for Design System rules. Version `0.5.0` combines semantic governance, import-safe autofix and a public programmatic API.
 
 ## Quick start
 
@@ -12,6 +12,30 @@ npx component-vault init
 npx component-vault analyze
 npx component-vault scan
 ```
+
+## Programmatic API
+
+Use the Guard inside build scripts, codemods or custom CI checks:
+
+```js
+import { defineConfig, scanProject } from "@wess2001/component-vault";
+
+const config = defineConfig({
+  version: 1,
+  scan: { include: ["src"] },
+  components: {},
+});
+
+const result = scanProject({ root: process.cwd(), config });
+console.log(result.findings);
+```
+
+Available exports:
+
+- `defineConfig(config)` validates and normalizes an in-memory policy.
+- `scanProject(options)` returns structured AST and semantic findings.
+- `analyzeProject(options)` returns semantic coverage and facts.
+- `fixProject(options)` previews safe edits by default; set `dryRun: false` to write them.
 
 For an existing codebase, capture current debt once:
 
@@ -28,7 +52,7 @@ npx component-vault pr --base origin/master
 
 ## Autofix
 
-Version `0.4.1` adds a deterministic autofix command for supported governance and semantic findings.
+Version `0.5.0` adds import-safe deterministic autofix for supported governance and semantic findings.
 
 Preview changes without modifying files:
 
@@ -44,7 +68,21 @@ npx component-vault fix
 
 The Guard resolves configured semantic mappings from `component-vault.yaml` and can replace native semantic elements with their configured governed components. For example, a configured `<button>` → `Button` mapping can be applied automatically.
 
-The autofix is intentionally conservative: findings without a resolvable governed target are reported as skipped instead of being changed heuristically.
+The autofix is intentionally conservative: it verifies the configured component export, adds the required import and preserves existing aliases. Findings without a provable target and import are reported as skipped instead of being changed heuristically.
+
+For projects that use path aliases or barrel exports, declare the import explicitly:
+
+```yaml
+components:
+  Text:
+    source: src/components/ui/text.tsx
+    import:
+      from: "@/components/ui/text"
+      kind: named
+      name: Text
+    rawElements:
+      h1: H1
+```
 
 A recommended workflow is:
 
