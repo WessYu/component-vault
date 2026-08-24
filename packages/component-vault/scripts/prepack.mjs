@@ -9,7 +9,7 @@ const binPath = resolve(packageRoot, "bin/component-vault.mjs");
 
 mkdirSync(libDir, { recursive: true });
 
-for (const file of ["cli.mjs", "cli-v2.mjs", "cli-v4.mjs", "semantic.mjs"]) {
+for (const file of ["api.d.ts", "api.mjs", "autofix.mjs", "cli.mjs", "cli-v2.mjs", "cli-v4.mjs", "fix.mjs", "semantic.mjs"]) {
   const source = resolve(repoRoot, `tools/component-vault-guard/${file}`);
   const destination = resolve(libDir, file);
   writeFileSync(destination, readFileSync(source, "utf8"));

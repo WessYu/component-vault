@@ -3,11 +3,12 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, relative, resolve, sep, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 import ts from "typescript";
 import YAML from "yaml";
 
-const VERSION = "0.3.4";
+const VERSION = "0.5.0";
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
 const RULES = { CV001: "Direct component import", CV002: "Forbidden variant override", CV003: "Raw semantic element", CV004: "Repeated static style", CV005: "Forbidden pattern" };
@@ -29,10 +30,8 @@ function parseArgs(argv) {
   return { command, options };
 }
 
-function loadConfig(root, path = DEFAULT_CONFIG) {
-  const file = resolve(root, path);
-  if (!existsSync(file)) throw new Error(`Configuration not found: ${path}`);
-  const config = YAML.parse(readFileSync(file, "utf8"));
+function normalizeConfig(input) {
+  const config = structuredClone(input);
   if (!config || config.version !== 1) throw new Error("component-vault.yaml must use version: 1");
   config.scan ??= {};
   config.scan.include ??= ["src"];
@@ -46,6 +45,12 @@ function loadConfig(root, path = DEFAULT_CONFIG) {
   config.rules ??= {};
   config.rules.forbiddenPatterns ??= [];
   return config;
+}
+
+function loadConfig(root, path = DEFAULT_CONFIG) {
+  const file = resolve(root, path);
+  if (!existsSync(file)) throw new Error(`Configuration not found: ${path}`);
+  return normalizeConfig(YAML.parse(readFileSync(file, "utf8")));
 }
 
 function wildcard(pattern) {
@@ -449,4 +454,17 @@ function main() {
   }
 }
 
-main();
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) main();
+
+export {
+  DEFAULT_BASELINE,
+  DEFAULT_CONFIG,
+  blocking,
+  collectFiles,
+  loadBaseline,
+  loadConfig,
+  normalizeConfig,
+  report,
+  scan,
+};

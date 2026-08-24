@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -35,6 +36,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+packages/component-vault/*.tgz
+packages/component-vault/component-vault-test/
 
 # env files (can opt-in for committing if needed)
 .env*
