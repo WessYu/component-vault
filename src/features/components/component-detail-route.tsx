@@ -8,6 +8,7 @@ import { ComponentDetailPanel } from "@/components/detail/component-detail-panel
 import { ComponentDetailWorkspace } from "@/features/components/component-detail-workspace";
 import { ComponentFallbackWorkspace } from "@/features/components/component-fallback-workspace";
 import { getExperience } from "@/components/experiences/experience-data";
+import { cliWorkflowComponent } from "@/services/catalog-components";
 import { useVaultStore } from "@/stores/vault-store";
 
 export function ComponentDetailRoute({ slug }: { slug: string }) {
@@ -22,7 +23,8 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
     if (!isHydrated) void loadVault();
   }, [isHydrated, loadVault]);
 
-  const component = components.find((item) => item.slug === slug || item.id === slug);
+  const component = components.find((item) => item.slug === slug || item.id === slug)
+    ?? (slug === cliWorkflowComponent.slug || slug === cliWorkflowComponent.id ? cliWorkflowComponent : undefined);
 
   // Keep dedicated interactive experiences on their purpose-built workspaces.
   if (component) {
