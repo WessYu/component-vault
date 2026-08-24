@@ -14,13 +14,18 @@ import { ComponentDetailPanel } from "@/components/detail/component-detail-panel
 import { visualCategory } from "@/components/library/category-style";
 import { motionEase, Reveal } from "@/components/motion/site-motion";
 import { CliShowcase } from "@/features/components/cli-showcase";
+import { cliWorkflowComponent } from "@/services/catalog-components";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/stores/vault-store";
 import type { VaultComponent } from "@/types/vault";
 
 export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?: boolean }) {
   const router = useRouter();
-  const components = useVaultStore((state) => state.components);
+  const storedComponents = useVaultStore((state) => state.components);
+  const components = useMemo(
+    () => storedComponents.some((component) => component.id === cliWorkflowComponent.id) ? storedComponents : [cliWorkflowComponent, ...storedComponents],
+    [storedComponents],
+  );
   const activeComponentSlug = useVaultStore((state) => state.activeComponentSlug);
   const setActiveComponentSlug = useVaultStore((state) => state.setActiveComponentSlug);
   const toggleFavorite = useVaultStore((state) => state.toggleFavorite);
