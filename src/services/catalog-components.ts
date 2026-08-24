@@ -1,6 +1,6 @@
 import type { VaultComponent } from "@/types/vault";
 
-export const cliWorkflowComponent: VaultComponent = {
+export const tableDataGridComponent: VaultComponent = {
   id: "catalog-table-data-grid",
   userId: "demo-user",
   name: "Table / Data Grid",
