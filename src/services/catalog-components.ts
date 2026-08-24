@@ -1,69 +1,102 @@
 import type { VaultComponent } from "@/types/vault";
 
 export const cliWorkflowComponent: VaultComponent = {
-  id: "catalog-cli-workflow",
+  id: "catalog-table-data-grid",
   userId: "demo-user",
-  name: "CLI / Governance Workflow",
-  slug: "cli-governance-workflow",
-  description: "Four-step developer workflow for introducing Component Vault governance into a repository: initialize, analyze, validate and preview deterministic fixes.",
-  category: "Utilities",
+  name: "Table / Data Grid",
+  slug: "table-data-grid",
+  description: "Production-ready data table with sortable columns, search, pagination, density controls and clear row states.",
+  category: "Data Display",
   framework: "React",
   language: "tsx",
-  version: "v1.0.0",
+  version: "v2.0.0",
   isFavorite: false,
   isPublic: false,
-  tags: ["cli", "developer-tooling", "governance", "workflow", "terminal"],
+  tags: ["table", "data-grid", "data-display", "pagination", "sortable", "search"],
   collectionIds: ["core-library"],
-  updatedAt: "2026-08-24T16:45:00.000Z",
-  previewHtml: `<article class="cli-workflow-preview">
-    <div class="cli-workflow-head"><span>CLI WORKFLOW</span><strong>4 steps</strong></div>
-    <div class="cli-workflow-title">From install to an enforceable rule set.</div>
-    <div class="cli-workflow-steps">
-      <span><b>01</b> init</span>
-      <span><b>02</b> analyze</span>
-      <span><b>03</b> check</span>
-      <span><b>04</b> fix --dry-run</span>
-    </div>
-  </article>`,
-  code: `export const workflow = [
-  { step: "01", command: "npx @wess2001/component-vault@latest init", label: "Initialize" },
-  { step: "02", command: "npx component-vault analyze", label: "Analyze" },
-  { step: "03", command: "npx component-vault check --base origin/master", label: "Validate" },
-  { step: "04", command: "npx component-vault fix --dry-run", label: "Preview fixes" },
-];`,
-  styles: `.cli-workflow-preview {
-  min-height: 210px;
-  padding: 22px;
-  border-radius: 24px;
-  background: #111421;
-  color: #dce1f2;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  box-shadow: 0 24px 70px rgba(23, 26, 43, .18);
-}
-.cli-workflow-head { display:flex; justify-content:space-between; color:#8f96aa; font-size:11px; letter-spacing:.12em; }
-.cli-workflow-title { margin-top:22px; max-width:420px; font-family:Inter,system-ui,sans-serif; font-size:24px; font-weight:700; line-height:1.05; letter-spacing:-.04em; color:#fff; }
-.cli-workflow-steps { margin-top:24px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.cli-workflow-steps span { border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:9px 10px; background:rgba(255,255,255,.025); font-size:11px; }
-.cli-workflow-steps b { color:#63d6a6; margin-right:7px; }`,
-  usageCode: `import { workflow } from "./cli-governance-workflow";
+  updatedAt: "2026-08-24T16:50:00.000Z",
+  previewHtml: `<div class="data-grid-preview">
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+      <tbody>
+        <tr><td>Acme Corp.</td><td>contato@acme.com</td><td>Admin</td><td><span class="status active">Active</span></td><td>12/05/2024</td></tr>
+        <tr><td>Globex Inc.</td><td>hello@globex.com</td><td>Editor</td><td><span class="status active">Active</span></td><td>11/05/2024</td></tr>
+        <tr><td>Soylent Corp.</td><td>oi@soylent.com</td><td>Viewer</td><td><span class="status inactive">Inactive</span></td><td>10/05/2024</td></tr>
+        <tr><td>Initech</td><td>contato@initech.com</td><td>Editor</td><td><span class="status active">Active</span></td><td>08/05/2024</td></tr>
+        <tr><td>Umbrella Corp.</td><td>contato@umbrella.com</td><td>Admin</td><td><span class="status active">Active</span></td><td>07/05/2024</td></tr>
+      </tbody>
+    </table>
+  </div>`,
+  code: `type DataGridRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: "Admin" | "Editor" | "Viewer";
+  status: "Active" | "Inactive";
+  joined: string;
+};
 
-workflow.forEach(({ command, label }) => {
-  console.log(label, command);
-});`,
-  notes: "Use this component when documenting or presenting the recommended Component Vault CLI adoption flow. Brownfield repositories can run `npx component-vault baseline` before enforcement.",
+export function DataGrid({ rows }: { rows: DataGridRow[] }) {
+  return (
+    <div className="data-grid">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td>{row.name}</td>
+              <td>{row.email}</td>
+              <td>{row.role}</td>
+              <td><span data-status={row.status}>{row.status}</span></td>
+              <td>{row.joined}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}`,
+  styles: `.data-grid {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #E4E7EF;
+  border-radius: 16px;
+  background: #FFFFFF;
+}
+.data-grid table { width: 100%; border-collapse: collapse; }
+.data-grid th, .data-grid td { padding: 12px 14px; border-bottom: 1px solid #EEF0F4; text-align: left; font-size: 13px; }
+.data-grid th { background: #F7F8FC; color: #6D7285; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.data-grid tr:last-child td { border-bottom: 0; }
+.data-grid [data-status="Active"] { color: #248A67; }
+.data-grid [data-status="Inactive"] { color: #D65F50; }`,
+  usageCode: `import { DataGrid } from "./data-grid";
+
+export function UsersPage() {
+  return <DataGrid rows={users} />;
+}`,
+  notes: "Designed for dense product data. The reference configuration uses five visible rows, sortable columns, search, pagination and medium density, with optional striped rows, sticky header and bordered presentation.",
   tokens: [
-    { id: "cli-bg", type: "color", name: "cli.background", value: "#111421" },
-    { id: "cli-text", type: "color", name: "cli.text", value: "#DCE1F2" },
-    { id: "cli-success", type: "color", name: "cli.success", value: "#63D6A6" },
-    { id: "cli-radius", type: "radius", name: "cli.radius", value: "24px" },
+    { id: "table-border", type: "color", name: "table.border", value: "#E4E7EF" },
+    { id: "table-header", type: "color", name: "table.headerBackground", value: "#F7F8FC" },
+    { id: "table-success", type: "color", name: "table.status.active", value: "#248A67" },
+    { id: "table-danger", type: "color", name: "table.status.inactive", value: "#D65F50" },
+    { id: "table-radius", type: "radius", name: "table.radius", value: "16px" },
   ],
   usage: [
     {
-      id: "usage-component-vault-docs",
-      projectName: "Component Vault",
-      location: "CLI onboarding / governance documentation",
-      url: "/vault/cli",
-      count: 1,
+      id: "usage-admin-data-grid",
+      projectName: "Admin Console",
+      location: "src/app/users/page.tsx",
+      url: "/projects/admin-console",
+      count: 8,
     },
   ],
   props: {
