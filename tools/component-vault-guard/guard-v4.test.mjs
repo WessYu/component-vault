@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,6 +44,19 @@ semantics:
 function run(root, args) {
   return spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8" });
 }
+
+test("v4 init forwards CI options and creates an honest starter", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-v4-init-"));
+  mkdirSync(join(root, "src"), { recursive: true });
+  const result = run(root, ["init", "--ci"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const config = readFileSync(join(root, "component-vault.yaml"), "utf8");
+  assert.match(config, /components: \{\}/);
+  assert.doesNotMatch(config, /src\/components\/ui\/text\.tsx/);
+  const workflowPath = join(root, ".github/workflows/component-vault-guard.yml");
+  assert.ok(existsSync(workflowPath));
+  assert.match(readFileSync(workflowPath, "utf8"), /@wess2001\/component-vault@latest/);
+});
 
 test("v4 fix adds a proven import and preserves complex UTF-8 JSX", () => {
   const root = fixture();
@@ -122,8 +135,20 @@ test("v4 scan and analyze execute the semantic engine", () => {
   writeFileSync(join(root, "src/pages/bad.tsx"), `export const Page = () => <h1>Finding</h1>;\n`);
   const scan = run(root, ["scan"]);
   assert.equal(scan.status, 1, scan.stderr + scan.stdout);
-  assert.match(scan.stdout, /CV006/);
+  assert.equal((scan.stdout.match(/\[CV003\]/g) ?? []).length, 0);
+  assert.equal((scan.stdout.match(/\[CV006\]/g) ?? []).length, 1);
   const analysis = run(root, ["analyze"]);
   assert.equal(analysis.status, 0, analysis.stderr + analysis.stdout);
   assert.match(analysis.stdout, /Semantic findings: 1/);
+});
+
+test("v4 semantic scan honors legacy CV003 ignore comments", () => {
+  const root = fixture();
+  writeFileSync(
+    join(root, "src/pages/ignored.tsx"),
+    `export const Page = () => (\n  // component-vault-ignore CV003\n  <h1>Intentional exception</h1>\n);\n`,
+  );
+  const scan = run(root, ["scan"]);
+  assert.equal(scan.status, 0, scan.stderr + scan.stdout);
+  assert.doesNotMatch(scan.stdout, /ignored\.tsx/);
 });

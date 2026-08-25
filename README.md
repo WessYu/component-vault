@@ -120,7 +120,8 @@ The published package is `@wess2001/component-vault` and exposes the `component-
 ### Start in an existing project
 
 ```bash
-npx @wess2001/component-vault@latest init
+npm install -D @wess2001/component-vault
+npx component-vault init
 npx component-vault analyze
 npx component-vault scan
 ```
@@ -185,7 +186,7 @@ explain CV006             explain a semantic finding
 
 ## Programmatic API
 
-Version `0.5.0` exposes the same deterministic engine for build tools, codemods and custom CI integrations:
+Version `0.5.0` introduced the same deterministic engine for build tools, codemods and custom CI integrations:
 
 ```js
 import { defineConfig, scanProject } from "@wess2001/component-vault";
@@ -325,10 +326,10 @@ npm run guard:check
 The repository currently targets:
 
 ```text
-@wess2001/component-vault@0.5.0
+@wess2001/component-vault@0.5.1
 ```
 
-The `0.5.0` release adds a programmatic API, import-safe semantic autofix and end-to-end coverage for the packaged v4 CLI. Check npm for the latest published version.
+The `0.5.1` release hardens real-project onboarding: it no longer invents a missing `Text` component, validates configured source paths, removes duplicate semantic findings and generates a current, scoped GitHub Actions workflow.
 
 ## Links
 

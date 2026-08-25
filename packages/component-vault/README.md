@@ -2,7 +2,7 @@
 
 AST-based **semantic design-system governance** for developers, CI pipelines and AI coding agents.
 
-Component Vault started as a configurable AST guard for Design System rules. Version `0.5.0` combines semantic governance, import-safe autofix and a public programmatic API.
+Component Vault started as a configurable AST guard for Design System rules. Version `0.5.1` combines semantic governance, import-safe autofix, a public programmatic API and safer real-project onboarding.
 
 ## Quick start
 
@@ -12,6 +12,8 @@ npx component-vault init
 npx component-vault analyze
 npx component-vault scan
 ```
+
+`init` only preconfigures a `Text` component when a supported source file actually exists. Otherwise it creates an honest `components: {}` starter; add your real governed components, then run `doctor` to validate every configured source path.
 
 ## Programmatic API
 

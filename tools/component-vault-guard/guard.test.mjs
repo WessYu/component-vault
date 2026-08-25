@@ -119,10 +119,36 @@ test("init creates a five-minute starter setup and doctor validates it", () => {
   assert.ok(existsSync(join(root, "component-vault.baseline.json")));
   assert.ok(existsSync(join(root, ".component-vault/README.md")));
   assert.ok(existsSync(join(root, ".github/workflows/component-vault-guard.yml")));
+  const config = readFileSync(join(root, "component-vault.yaml"), "utf8");
+  assert.match(config, /components: \{\}/);
+  assert.doesNotMatch(config, /src\/components\/ui\/text\.tsx/);
+  const workflow = readFileSync(join(root, ".github/workflows/component-vault-guard.yml"), "utf8");
+  assert.match(workflow, /actions\/checkout@v6/);
+  assert.match(workflow, /actions\/setup-node@v6/);
+  assert.match(workflow, /node-version: 24/);
+  assert.match(workflow, /@wess2001\/component-vault@latest/);
   initGit(root);
   result = run(root, ["doctor"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(result.stdout, /Guard setup looks ready/);
+});
+
+test("doctor reports a configured component whose source is missing", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-doctor-"));
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "component-vault.yaml"), `version: 1
+scan:
+  include: [src]
+components:
+  Text:
+    source: src/components/text.tsx
+`);
+  writeFileSync(join(root, "component-vault.baseline.json"), '{"version":2,"fingerprints":[],"violations":[]}\n');
+  initGit(root);
+  const result = run(root, ["doctor"]);
+  assert.equal(result.status, 1, result.stderr + result.stdout);
+  assert.match(result.stdout, /Component Text/);
+  assert.match(result.stdout, /src\/components\/text\.tsx is missing/);
 });
 
 test("pr command writes a concise summary and fails on blocking drift", () => {

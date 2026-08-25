@@ -34,8 +34,8 @@ test("public API scans and analyzes without invoking the CLI", () => {
   const result = scanProject({ root, config });
   assert.equal(result.engine, "typescript-ast");
   assert.equal(result.summary.filesScanned, 2);
-  assert.ok(result.findings.some((finding) => finding.rule === "CV003"));
-  assert.ok(result.findings.some((finding) => finding.rule === "CV006"));
+  assert.equal(result.findings.filter((finding) => finding.rule === "CV003").length, 0);
+  assert.equal(result.findings.filter((finding) => finding.rule === "CV006").length, 1);
   const analysis = analyzeProject({ root, config });
   assert.equal(analysis.findings.length, 1);
 });

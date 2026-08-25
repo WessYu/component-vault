@@ -11,7 +11,7 @@ import { applySemanticFixes } from "./autofix.mjs";
 import { applyConfiguredFixes } from "./fix.mjs";
 import { analyze, explainSemantic, loadConfig, semanticScan } from "./semantic.mjs";
 
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
@@ -41,6 +41,9 @@ function coreArgs(command, options, positional = []) {
   const args = [command, ...positional];
   for (const key of ["base", "config", "baseline", "output", "report"]) {
     if (typeof options[key] === "string") args.push(`--${key}`, options[key]);
+  }
+  for (const key of ["ci", "force"]) {
+    if (options[key] === true) args.push(`--${key}`);
   }
   if (options["dry-run"] === true) args.push("--dry-run");
   if (options.check === true) args.push("--check");

@@ -5,8 +5,9 @@ import { spawnSync } from "node:child_process";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
+import YAML from "yaml";
 
-const VERSION = "0.5.0";
+const VERSION = "0.5.1";
 const CORE_PATH = fileURLToPath(new URL("./cli-v2.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
@@ -59,7 +60,7 @@ function detectTextSource(root) {
     "components/ui/text.tsx",
     "components/text.tsx",
   ];
-  return candidates.find((candidate) => existsSync(resolve(root, candidate))) ?? "src/components/ui/text.tsx";
+  return candidates.find((candidate) => existsSync(resolve(root, candidate)));
 }
 
 function detectScanInclude(root) {
@@ -69,19 +70,8 @@ function detectScanInclude(root) {
 function starterConfig(root) {
   const include = detectScanInclude(root);
   const textSource = detectTextSource(root);
-  return `version: 1
-
-scan:
-  include: [${include}]
-  exclude: [node_modules, .next, dist, build, coverage, .git]
-  extensions: [.ts, .tsx, .js, .jsx]
-
-duplicates:
-  enabled: true
-  minOccurrences: 4
-  minTokens: 4
-
-components:
+  const components = textSource
+    ? `components:
   Text:
     source: ${textSource}
     allowedImportFiles: [${textSource}]
@@ -97,7 +87,21 @@ components:
       H1: Main page title
       H2: Section heading
       Paragraph: Default body text
-      Caption: Secondary supporting text
+      Caption: Secondary supporting text`
+    : "components: {}";
+  return `version: 1
+
+scan:
+  include: [${include}]
+  exclude: [node_modules, .next, dist, build, coverage, .git]
+  extensions: [.ts, .tsx, .js, .jsx]
+
+duplicates:
+  enabled: true
+  minOccurrences: 4
+  minTokens: 4
+
+${components}
 `;
 }
 
@@ -112,11 +116,13 @@ The project is initialized for AST-based design-system governance.
 
 Recommended next steps:
 
-1. Run \`npx component-vault scan\` to inspect current findings.
-2. On an existing codebase, run \`npx component-vault baseline\` once to capture accepted legacy debt.
-3. Run \`npx component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
-4. Run \`npx component-vault context\` to export agent-readable rules.
-5. Promote a component from \`touched\` to \`full\` after its legacy debt reaches zero.
+1. Add the real components you want to govern to \`component-vault.yaml\`.
+2. Run \`npx @wess2001/component-vault doctor\` to validate their source paths.
+3. Run \`npx @wess2001/component-vault scan\` to inspect current findings.
+4. On an existing codebase, run \`npx @wess2001/component-vault baseline\` once to capture accepted legacy debt.
+5. Run \`npx @wess2001/component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
+6. Run \`npx @wess2001/component-vault context\` to export agent-readable rules.
+7. Promote a component from \`touched\` to \`full\` after its legacy debt reaches zero.
 
 Edit \`component-vault.yaml\` to add governed components, forbidden imports, protected props and semantic variants.
 `;
@@ -135,16 +141,16 @@ jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Component Vault Guard
-        run: npx --yes component-vault@latest pr --base "\${{ github.event.pull_request.base.sha }}"
+        run: npx --yes @wess2001/component-vault@latest pr --base "\${{ github.event.pull_request.base.sha }}"
 `;
 }
 
@@ -180,9 +186,9 @@ function handleInit(options) {
   }
 
   console.log("\nNext:");
-  console.log("  npx component-vault scan");
-  console.log("  npx component-vault baseline   # existing codebases");
-  console.log("  npx component-vault pr --base HEAD~1");
+  console.log("  npx @wess2001/component-vault scan");
+  console.log("  npx @wess2001/component-vault baseline   # existing codebases");
+  console.log("  npx @wess2001/component-vault pr --base HEAD~1");
 }
 
 function baselineCount(path) {
@@ -195,6 +201,28 @@ function baselineCount(path) {
   }
 }
 
+function componentSourceChecks(root, configPath) {
+  if (!existsSync(configPath)) return [];
+  try {
+    const config = YAML.parse(readFileSync(configPath, "utf8")) ?? {};
+    const components = Object.entries(config.components ?? {});
+    if (!components.length) return [["Governed components", true, "none configured yet"]];
+    return components.map(([name, definition]) => {
+      const source = definition && typeof definition === "object" ? definition.source : null;
+      const found = typeof source === "string" && existsSync(resolve(root, source));
+      const detail =
+        typeof source !== "string"
+          ? "source is not configured"
+          : found
+            ? toPosix(source)
+            : `${toPosix(source)} is missing`;
+      return [`Component ${name}`, found, detail];
+    });
+  } catch (error) {
+    return [["Configuration syntax", false, error instanceof Error ? error.message : "invalid YAML"]];
+  }
+}
+
 function handleDoctor(options) {
   const root = process.cwd();
   const configPath = resolve(root, String(options.config ?? DEFAULT_CONFIG));
@@ -202,6 +230,7 @@ function handleDoctor(options) {
   const checks = [];
 
   checks.push(["Configuration", existsSync(configPath), toPosix(relative(root, configPath))]);
+  checks.push(...componentSourceChecks(root, configPath));
   const baseline = baselineCount(baselinePath);
   checks.push(["Baseline", baseline !== null && baseline >= 0, baseline === null ? "missing" : baseline < 0 ? "invalid JSON" : `${baseline} accepted error(s)`]);
   const gitDetected = existsSync(resolve(root, ".git"));
