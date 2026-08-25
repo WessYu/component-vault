@@ -1,0 +1,43 @@
+version: 1
+
+scan:
+  include: [src]
+  exclude: [node_modules, dist, coverage, .git]
+  extensions: [.ts, .tsx, .js, .jsx]
+
+duplicates:
+  enabled: false
+
+components:
+  Text:
+    source: src/components/ui/text.tsx
+    allowedImportFiles: [src/components/ui/text.tsx]
+    import:
+      from: "@/components/ui/text"
+      kind: named
+      name: Text
+    strategy: touched
+    rawElements:
+      h1: H1
+      p: Paragraph
+  Button:
+    source: src/components/ui/button.tsx
+    allowedImportFiles: [src/components/ui/button.tsx]
+    import:
+      from: "@/components/ui/button"
+      kind: named
+      name: Button
+    strategy: touched
+    semanticRole: button
+
+semantics:
+  strict: false
+  elements:
+    h1: { role: heading, level: 1 }
+    p: { role: body-text }
+    button: { role: button }
+  components:
+    Text:
+      variants:
+        H1: { role: heading, level: 1 }
+        Paragraph: { role: body-text }

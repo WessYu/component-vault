@@ -8,7 +8,7 @@ import process from "node:process";
 import ts from "typescript";
 import YAML from "yaml";
 
-const VERSION = "0.5.1";
+const VERSION = "0.6.0";
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
 const RULES = { CV001: "Direct component import", CV002: "Forbidden variant override", CV003: "Raw semantic element", CV004: "Repeated static style", CV005: "Forbidden pattern" };

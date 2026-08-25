@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import process from "node:process";
 import YAML from "yaml";
 
-const VERSION = "0.5.1";
+const VERSION = "0.6.0";
 const CORE_PATH = fileURLToPath(new URL("./cli-v2.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
@@ -39,7 +39,7 @@ function parseArgs(argv) {
 
 function coreArgs(command, options, positional = []) {
   const args = [command, ...positional];
-  for (const key of ["base", "config", "baseline", "output"]) {
+  for (const key of ["base", "config", "baseline", "output", "format"]) {
     if (typeof options[key] === "string") args.push(`--${key}`, options[key]);
   }
   return args;
@@ -116,13 +116,14 @@ The project is initialized for AST-based design-system governance.
 
 Recommended next steps:
 
-1. Add the real components you want to govern to \`component-vault.yaml\`.
-2. Run \`npx @wess2001/component-vault doctor\` to validate their source paths.
-3. Run \`npx @wess2001/component-vault scan\` to inspect current findings.
-4. On an existing codebase, run \`npx @wess2001/component-vault baseline\` once to capture accepted legacy debt.
-5. Run \`npx @wess2001/component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
-6. Run \`npx @wess2001/component-vault context\` to export agent-readable rules.
-7. Promote a component from \`touched\` to \`full\` after its legacy debt reaches zero.
+1. Run \`npx @wess2001/component-vault discover\` to preview exported component candidates.
+2. Review the preview, then run \`npx @wess2001/component-vault discover --write\` to merge proven candidates.
+3. Run \`npx @wess2001/component-vault doctor\` to validate their source paths.
+4. Run \`npx @wess2001/component-vault scan\` to inspect current findings.
+5. On an existing codebase, run \`npx @wess2001/component-vault baseline\` once to capture accepted legacy debt.
+6. Run \`npx @wess2001/component-vault pr --base HEAD~1\` to generate a concise PR gate summary.
+7. Run \`npx @wess2001/component-vault context\` to export agent-readable rules.
+8. Promote a component from \`touched\` to \`full\` after its legacy debt reaches zero.
 
 Edit \`component-vault.yaml\` to add governed components, forbidden imports, protected props and semantic variants.
 `;
@@ -186,6 +187,7 @@ function handleInit(options) {
   }
 
   console.log("\nNext:");
+  console.log("  npx @wess2001/component-vault discover");
   console.log("  npx @wess2001/component-vault scan");
   console.log("  npx @wess2001/component-vault baseline   # existing codebases");
   console.log("  npx @wess2001/component-vault pr --base HEAD~1");
@@ -206,7 +208,7 @@ function componentSourceChecks(root, configPath) {
   try {
     const config = YAML.parse(readFileSync(configPath, "utf8")) ?? {};
     const components = Object.entries(config.components ?? {});
-    if (!components.length) return [["Governed components", true, "none configured yet"]];
+    if (!components.length) return [["Governed components", true, "none configured yet", "warning"]];
     return components.map(([name, definition]) => {
       const source = definition && typeof definition === "object" ? definition.source : null;
       const found = typeof source === "string" && existsSync(resolve(root, source));
@@ -233,21 +235,34 @@ function handleDoctor(options) {
   checks.push(...componentSourceChecks(root, configPath));
   const baseline = baselineCount(baselinePath);
   checks.push(["Baseline", baseline !== null && baseline >= 0, baseline === null ? "missing" : baseline < 0 ? "invalid JSON" : `${baseline} accepted error(s)`]);
-  const gitDetected = existsSync(resolve(root, ".git"));
+  const gitCheck = spawnSync("git", ["rev-parse", "--is-inside-work-tree"], { cwd: root, encoding: "utf8" });
+  const gitDetected = gitCheck.status === 0 && gitCheck.stdout.trim() === "true";
   checks.push(["Git repository", gitDetected, gitDetected ? "detected" : "not detected"]);
 
   let engineReady = false;
   if (existsSync(configPath)) {
     const result = runCore(coreArgs("scan", options), { capture: true });
     engineReady = result.status === 0;
-    if (!engineReady && result.stderr) process.stderr.write(result.stderr);
+    if (!engineReady && result.stderr && options.format !== "json") process.stderr.write(result.stderr);
   }
   checks.push(["TypeScript AST engine", engineReady, engineReady ? "ready" : "scan failed"]);
 
+  const normalized = checks.map(([label, ok, detail, status]) => ({
+    label,
+    status: ok ? status ?? "pass" : "fail",
+    detail,
+  }));
+  const failed = normalized.filter((check) => check.status === "fail").length;
+  const warnings = normalized.filter((check) => check.status === "warning").length;
+  if (options.format === "json") {
+    console.log(JSON.stringify({ command: "doctor", version: VERSION, ok: failed === 0, warnings, checks: normalized }, null, 2));
+    if (failed) process.exitCode = 1;
+    return;
+  }
+
   console.log(`Component Vault Guard doctor v${VERSION}\n`);
-  for (const [label, ok, detail] of checks) console.log(`${ok ? "✓" : "✕"} ${label}: ${detail}`);
-  const failed = checks.filter(([, ok]) => !ok).length;
-  console.log(failed ? `\n${failed} setup check(s) need attention.` : "\nGuard setup looks ready.");
+  for (const check of normalized) console.log(`${check.status === "pass" ? "✓" : check.status === "warning" ? "⚠" : "✕"} ${check.label}: ${check.detail}`);
+  console.log(failed ? `\n${failed} setup check(s) need attention.` : warnings ? `\nGuard setup is valid with ${warnings} warning(s).` : "\nGuard setup looks ready.");
   if (failed) process.exitCode = 1;
 }
 
@@ -321,10 +336,11 @@ Usage:
 
 Setup:
   init [--ci] [--force]     Create component-vault.yaml, baseline and setup notes
-  doctor                    Validate local Guard setup
+  discover [--write]        Detect exported components and suggest configuration
+  doctor [--format json]    Validate local Guard setup
 
 Governance:
-  scan                      Scan TypeScript/JavaScript AST and print findings
+  scan [--format json]      Scan TypeScript/JavaScript AST and print findings
   check [--base REF]        Enforce protect, touched and full strategies
   baseline                  Capture current AST errors as accepted legacy
   report [--output FILE]    Generate the full JSON migration report
@@ -334,12 +350,14 @@ Governance:
 
 Options:
   --config FILE             Use another YAML configuration
+  --format json             Emit structured JSON for scan or doctor
   --baseline FILE           Use another baseline file
   --output FILE             Output path for report/PR summary
   --report FILE             Internal JSON report path used by the PR command
 
 Examples:
   npx component-vault init --ci
+  npx component-vault discover --write
   npx component-vault scan
   npx component-vault baseline
   npx component-vault pr --base origin/master

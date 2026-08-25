@@ -82,20 +82,29 @@ function importPlan(root, file, componentName, rule) {
   const explicit = rule.import;
   if (explicit && typeof explicit === "object" && typeof explicit.from === "string") {
     return {
-      from: explicit.from,
-      kind: explicit.kind === "default" ? "default" : "named",
-      name: String(explicit.name ?? componentName),
+      plan: {
+        from: explicit.from,
+        kind: explicit.kind === "default" ? "default" : "named",
+        name: String(explicit.name ?? componentName),
+      },
+      reason: null,
     };
   }
 
-  if (typeof rule.source !== "string") return null;
+  if (typeof rule.source !== "string") {
+    return { plan: null, reason: `${componentName} has no configured source or explicit import.` };
+  }
   const sourcePath = resolve(root, rule.source);
-  if (!existsSync(sourcePath)) return null;
+  if (!existsSync(sourcePath)) {
+    return { plan: null, reason: `Configured source ${toPosix(String(rule.source))} does not exist.` };
+  }
   const source = readSourceFile(sourcePath).text;
   const sourceFile = ts.createSourceFile(rule.source, source, ts.ScriptTarget.Latest, true, scriptKind(rule.source));
   const exported = exportedAs(sourceFile, componentName);
-  if (!exported) return null;
-  return { ...exported, from: importModuleForFile(root, file, rule.source) };
+  if (!exported) {
+    return { plan: null, reason: `${toPosix(String(rule.source))} does not export ${componentName}.` };
+  }
+  return { plan: { ...exported, from: importModuleForFile(root, file, rule.source) }, reason: null };
 }
 
 function existingImport(sourceFile, componentName, expectedModule) {
@@ -154,6 +163,7 @@ function applySemanticFixes(root, config, options = {}) {
   let importsAdded = 0;
   let skipped = 0;
   const changes = [];
+  const skippedDetails = [];
 
   for (const file of collectFiles(root, config)) {
     const path = resolve(root, file);
@@ -179,21 +189,26 @@ function applySemanticFixes(root, config, options = {}) {
     const components = new Set(tagPairs.map(({ target }) => target.split(".")[0]));
     const localNames = new Map();
     const importEdits = [];
-    const unavailable = new Set();
+    const unavailable = new Map();
     for (const componentName of components) {
       const rule = config.components?.[componentName] ?? {};
       if (rule.source && toPosix(file) === toPosix(String(rule.source))) {
-        unavailable.add(componentName);
+        unavailable.set(componentName, `The finding is inside the configured ${componentName} source file.`);
         continue;
       }
-      const plan = importPlan(root, file, componentName, rule);
-      const found = existingImport(sourceFile, componentName, plan?.from);
+      const resolution = importPlan(root, file, componentName, rule);
+      const plan = resolution.plan;
+      const found = plan ? existingImport(sourceFile, componentName, plan.from) : null;
       if (found) {
         localNames.set(componentName, found.localName);
         continue;
       }
-      if (!plan || hasTopLevelBinding(sourceFile, componentName)) {
-        unavailable.add(componentName);
+      if (!plan) {
+        unavailable.set(componentName, resolution.reason);
+        continue;
+      }
+      if (hasTopLevelBinding(sourceFile, componentName)) {
+        unavailable.set(componentName, `A top-level binding named ${componentName} conflicts with the required import from ${plan.from}.`);
         continue;
       }
       const statement = plan.kind === "default"
@@ -207,7 +222,17 @@ function applySemanticFixes(root, config, options = {}) {
     for (const { node, target } of tagPairs) {
       const [componentName] = target.split(".");
       if (unavailable.has(componentName)) {
+        const location = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
         skipped += 1;
+        skippedDetails.push({
+          file,
+          line: location.line + 1,
+          column: location.character + 1,
+          element: node.tagName.getText(sourceFile),
+          target,
+          component: componentName,
+          reason: unavailable.get(componentName),
+        });
         continue;
       }
       const replacement = `${localNames.get(componentName)}${target.slice(componentName.length)}`;
@@ -233,7 +258,7 @@ function applySemanticFixes(root, config, options = {}) {
     if (!dryRun) writeSourceFile(path, updated, encoding);
   }
 
-  return { changedFiles, replacements, importsAdded, skipped, changes };
+  return { changedFiles, replacements, importsAdded, skipped, skippedDetails, changes };
 }
 
 export { applySemanticFixes, readSourceFile, writeSourceFile };

@@ -1,0 +1,28 @@
+{
+  "name": "component-vault-react-vite-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "vault:discover": "component-vault discover",
+    "vault:doctor": "component-vault doctor",
+    "vault:scan": "component-vault scan",
+    "vault:scan:json": "component-vault scan --format json",
+    "vault:fix:dry": "component-vault fix --dry-run",
+    "vault:fix": "component-vault fix"
+  },
+  "dependencies": {
+    "@wess2001/component-vault": "^0.6.0",
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}

@@ -7,11 +7,13 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import process from "node:process";
 import YAML from "yaml";
+import { scanProject } from "./api.mjs";
 import { applySemanticFixes } from "./autofix.mjs";
+import { discoverComponents, writeDiscoveredComponents } from "./discover.mjs";
 import { applyConfiguredFixes } from "./fix.mjs";
 import { analyze, explainSemantic, loadConfig, semanticScan } from "./semantic.mjs";
 
-const VERSION = "0.5.1";
+const VERSION = "0.6.0";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
@@ -39,7 +41,7 @@ function parseArgs(argv) {
 
 function coreArgs(command, options, positional = []) {
   const args = [command, ...positional];
-  for (const key of ["base", "config", "baseline", "output", "report"]) {
+  for (const key of ["base", "config", "baseline", "output", "report", "format"]) {
     if (typeof options[key] === "string") args.push(`--${key}`, options[key]);
   }
   for (const key of ["ci", "force"]) {
@@ -103,6 +105,25 @@ function printSemanticFindings(findings) {
   console.log(`\nComponent Vault Semantic Guard: ${findings.length} new semantic violation(s).`);
 }
 
+function scanJson(root, configPath) {
+  const config = loadConfig(root, configPath);
+  const result = scanProject({ root, config });
+  const baseline = readSemanticBaseline(root);
+  const findings = result.findings.filter((finding) => finding.rule !== "CV006" || !baseline.has(fingerprint(finding)));
+  const byRule = {};
+  for (const finding of findings) byRule[finding.rule] = (byRule[finding.rule] ?? 0) + 1;
+  const payload = {
+    command: "scan",
+    version: VERSION,
+    ok: findings.length === 0,
+    summary: { total: findings.length, filesScanned: result.files.length, byRule },
+    files: result.files,
+    findings,
+  };
+  console.log(JSON.stringify(payload, null, 2));
+  process.exitCode = payload.ok ? 0 : 1;
+}
+
 function semanticInit(root, configPath) {
   const path = resolve(root, configPath);
   if (!existsSync(path)) return;
@@ -140,6 +161,49 @@ function printAnalyze(root, configPath) {
   }
 }
 
+function handleDiscover(root, configPath, options) {
+  const config = loadConfig(root, configPath);
+  const discovery = discoverComponents(root, config);
+  const writeResult = options.write === true
+    ? writeDiscoveredComponents(root, configPath, discovery)
+    : { written: [], skippedExisting: [], configPath };
+  const configured = new Set(Object.keys(config.components ?? {}));
+  const payload = {
+    command: "discover",
+    version: VERSION,
+    dryRun: options.write !== true,
+    filesScanned: discovery.filesScanned,
+    components: discovery.components.map(({ definition, ...component }) => ({
+      ...component,
+      configured: configured.has(component.name),
+      definition,
+    })),
+    ...writeResult,
+  };
+
+  if (options.format === "json") {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  console.log("Component Vault Discover\n");
+  if (!payload.components.length) console.log("No exported React components were discovered.");
+  for (const component of payload.components) {
+    const variants = component.variants.map((variant) => variant.name);
+    console.log(`${component.configured ? "•" : "✓"} ${component.name} — ${component.source}${component.configured ? " (already configured)" : ""}`);
+    console.log(`  Export: ${component.exportKind}${component.importFrom ? ` · Import: ${component.importFrom}` : ""}`);
+    if (variants.length) console.log(`  Variants: ${variants.join(", ")}`);
+    else if (component.rootElement) console.log(`  Semantic root: <${component.rootElement}>`);
+  }
+  console.log(`\n${payload.components.length} component candidate(s) found in ${payload.filesScanned} file(s).`);
+  if (options.write === true) {
+    console.log(`Written: ${payload.written.length ? payload.written.join(", ") : "none"}.`);
+    if (payload.skippedExisting.length) console.log(`Preserved existing: ${payload.skippedExisting.join(", ")}.`);
+  } else {
+    console.log("Preview only. Run discover --write to merge new candidates into component-vault.yaml.");
+  }
+}
+
 function handleFix(root, options) {
   const configPath = typeof options.config === "string" ? options.config : DEFAULT_CONFIG;
   const dryRun = options["dry-run"] === true || options.check === true;
@@ -151,13 +215,26 @@ function handleFix(root, options) {
   const total = configured.replacements + semantic.replacements + semantic.importsAdded;
 
   console.log(`\nComponent Vault Fix: ${total} edit(s) in ${new Set([...configured.changes, ...semantic.changes].map((item) => item.file)).size} file(s).`);
-  if (semantic.skipped) console.log(`Skipped ${semantic.skipped} semantic occurrence(s) because a safe import could not be resolved.`);
+  if (semantic.skipped) {
+    console.log(`Skipped ${semantic.skipped} semantic occurrence(s):`);
+    const groups = new Map();
+    for (const detail of semantic.skippedDetails) {
+      const key = `${detail.component}\u0000${detail.reason}`;
+      const group = groups.get(key) ?? { component: detail.component, reason: detail.reason, count: 0, files: new Set() };
+      group.count += 1;
+      group.files.add(detail.file);
+      groups.set(key, group);
+    }
+    for (const group of groups.values()) {
+      console.log(`  - ${group.component}: ${group.reason} (${group.count} occurrence(s) in ${[...group.files].join(", ")})`);
+    }
+  }
   if (!total) console.log("No automatically fixable findings were found.");
   process.exitCode = options.check === true && total ? 1 : 0;
 }
 
 function help() {
-  console.log(`Component Vault Guard v${VERSION}\n\nUsage:\n  npx component-vault <command> [options]\n\nSetup:\n  init [--ci] [--force]     Initialize governance and semantic mappings\n  doctor                    Validate local Guard setup\n\nGovernance:\n  scan                      Scan AST and semantic roles\n  check [--base REF]        Enforce governance and semantic policies\n  fix [--dry-run]           Automatically fix supported governance and semantic findings\n  baseline                  Capture accepted legacy findings\n  report [--output FILE]    Generate migration report\n  pr [--base REF]           Generate PR gate summary\n  context                   Export agent-readable rules\n  explain CV001             Explain a Guard rule\n\nSemantic model:\n  analyze                   Inspect semantic roles, coverage and mappings\n  explain CV006             Explain a semantic finding\n\nOptions:\n  --config FILE             Use another YAML configuration\n  --baseline FILE           Use another baseline file\n  --output FILE             Output path for report/PR summary\n  --report FILE             Internal report path used by PR\n  --dry-run                 Preview supported fixes without changing files\n\nExamples:\n  npx component-vault analyze\n  npx component-vault scan\n  npx component-vault fix --dry-run\n  npx component-vault fix\n  npx component-vault baseline\n  npx component-vault check\n  npx component-vault pr --base origin/master\n`);
+  console.log(`Component Vault Guard v${VERSION}\n\nUsage:\n  npx component-vault <command> [options]\n\nSetup:\n  init [--ci] [--force]     Initialize governance and semantic mappings\n  discover [--write]        Detect exported components and suggest configuration\n  doctor                    Validate local Guard setup\n\nGovernance:\n  scan                      Scan AST and semantic roles\n  check [--base REF]        Enforce governance and semantic policies\n  fix [--dry-run]           Automatically fix supported governance and semantic findings\n  baseline                  Capture accepted legacy findings\n  report [--output FILE]    Generate migration report\n  pr [--base REF]           Generate PR gate summary\n  context                   Export agent-readable rules\n  explain CV001             Explain a Guard rule\n\nSemantic model:\n  analyze                   Inspect semantic roles, coverage and mappings\n  explain CV006             Explain a semantic finding\n\nOptions:\n  --config FILE             Use another YAML configuration\n  --format json             Emit structured JSON for scan, doctor or discover\n  --baseline FILE           Use another baseline file\n  --output FILE             Output path for report/PR summary\n  --report FILE             Internal report path used by PR\n  --dry-run                 Preview supported fixes without changing files\n  --write                   Merge discovered components into the YAML configuration\n\nExamples:\n  npx component-vault discover\n  npx component-vault discover --write\n  npx component-vault doctor --format json\n  npx component-vault scan --format json\n  npx component-vault fix --dry-run\n  npx component-vault fix\n  npx component-vault baseline\n  npx component-vault check\n  npx component-vault pr --base origin/master\n`);
 }
 
 function main() {
@@ -167,6 +244,7 @@ function main() {
   if (["help", "--help", "-h"].includes(command)) return help();
   if (["version", "--version", "-v"].includes(command)) return console.log(VERSION);
   if (command === "analyze") return printAnalyze(root, configPath);
+  if (command === "discover") return handleDiscover(root, configPath, options);
   if (command === "init") {
     const result = runLegacy(command, options, positional); printLegacy(result);
     if (result.status === 0) semanticInit(root, configPath);
@@ -178,6 +256,7 @@ function main() {
     if (result.status === 0) { const config = loadConfig(root, configPath); writeSemanticBaseline(root, semanticScan(root, config).findings); console.log(`Component Vault Semantic Guard: baseline written to ${SEMANTIC_BASELINE}`); }
     process.exitCode = result.status ?? 1; return;
   }
+  if (command === "scan" && options.format === "json") return scanJson(root, configPath);
   if (["scan", "check"].includes(command)) {
     const result = runLegacy(command, options, positional); printLegacy(result);
     const findings = semanticFindings(root, configPath, true); printSemanticFindings(findings);

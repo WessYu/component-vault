@@ -122,9 +122,14 @@ The published package is `@wess2001/component-vault` and exposes the `component-
 ```bash
 npm install -D @wess2001/component-vault
 npx component-vault init
+npx component-vault discover
+npx component-vault discover --write
+npx component-vault doctor
 npx component-vault analyze
 npx component-vault scan
 ```
+
+`discover` inspects exported React components and compound variants, recognizes proven TypeScript path aliases, and previews the YAML definitions it can add. It never changes the policy unless `--write` is passed, and existing definitions are preserved.
 
 For brownfield adoption:
 
@@ -149,7 +154,7 @@ npx component-vault fix --dry-run
 npx component-vault fix
 ```
 
-The fixer is deliberately conservative. If a governed target cannot be resolved from the repository configuration, the finding is reported instead of being changed heuristically.
+The fixer is deliberately conservative. If a governed target cannot be resolved from the repository configuration, the finding is reported instead of being changed heuristically. Every skipped group includes the exact missing source, export or binding-conflict reason and the affected files.
 
 When a replacement introduces a component such as `Text.H1`, the fixer also verifies the component export and adds the required import. Existing aliases are preserved. If the import cannot be proven, the source file is left unchanged.
 
@@ -171,8 +176,9 @@ scan again
 
 ```text
 init [--ci] [--force]     initialize governance files
-doctor                    validate local setup
-scan                      scan TypeScript/JavaScript AST
+discover [--write]        detect exports and safely merge new component definitions
+doctor [--format json]    validate local setup with pass, warning and failure states
+scan [--format json]      scan TypeScript/JavaScript AST
 analyze                   inspect semantic roles and coverage
 fix [--dry-run]           fix supported findings
 check --base REF          enforce governance strategies
@@ -183,6 +189,10 @@ context                   export agent-readable rules
 explain CV001             explain a Guard rule
 explain CV006             explain a semantic finding
 ```
+
+Use `--format json` with `scan`, `doctor` or `discover` for CI, editor integrations and other automation.
+
+The runnable [React + Vite example](./examples/react-vite) demonstrates discovery, JSON output, a non-writing dry-run, safe import insertion and a clean follow-up scan.
 
 ## Programmatic API
 
@@ -326,10 +336,10 @@ npm run guard:check
 The repository currently targets:
 
 ```text
-@wess2001/component-vault@0.5.1
+@wess2001/component-vault@0.6.0
 ```
 
-The `0.5.1` release hardens real-project onboarding: it no longer invents a missing `Text` component, validates configured source paths, removes duplicate semantic findings and generates a current, scoped GitHub Actions workflow.
+The `0.6.0` release hardens real-project onboarding with deterministic component discovery, structured JSON output, explicit warnings, detailed autofix skip reasons, validated component sources, deduplicated semantic findings and a current scoped GitHub Actions workflow.
 
 ## Links
 
