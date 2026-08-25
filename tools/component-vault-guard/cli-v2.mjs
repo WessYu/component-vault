@@ -8,7 +8,7 @@ import process from "node:process";
 import ts from "typescript";
 import YAML from "yaml";
 
-const VERSION = "0.5.0";
+const VERSION = "0.6.0";
 const DEFAULT_CONFIG = "component-vault.yaml";
 const DEFAULT_BASELINE = "component-vault.baseline.json";
 const RULES = { CV001: "Direct component import", CV002: "Forbidden variant override", CV003: "Raw semantic element", CV004: "Repeated static style", CV005: "Forbidden pattern" };
@@ -246,7 +246,8 @@ function scan(root, config) {
           if (allowedFile(file, rule)) continue;
           const raw = rule.rawElements ?? {};
 
-          if (Object.hasOwn(raw, tag) && !ignored(sourceFile, node.getStart(sourceFile), "CV003")) {
+          const hasExplicitSemanticRule = Object.hasOwn(config.semantics?.elements ?? {}, tag);
+          if (Object.hasOwn(raw, tag) && !hasExplicitSemanticRule && !ignored(sourceFile, node.getStart(sourceFile), "CV003")) {
             const variant = raw[tag];
             findings.push(
               violation({

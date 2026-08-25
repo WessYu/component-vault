@@ -86,6 +86,13 @@ function getTagName(node, sourceFile) {
   return node.tagName.getText(sourceFile);
 }
 
+function ignored(sourceFile, start, ...rules) {
+  const line = sourceFile.getLineAndCharacterOfPosition(start).line;
+  const lines = sourceFile.text.split(/\r?\n/);
+  const context = lines.slice(Math.max(0, line - 1), line + 1).join("\n");
+  return rules.some((rule) => context.includes(`component-vault-ignore ${rule}`)) || context.includes("component-vault-ignore all");
+}
+
 function addRoleEntry(map, name, role, config = {}) {
   if (!name || !role) return;
   map.set(name, { role: String(role), config: config && typeof config === "object" ? config : {} });
@@ -123,11 +130,6 @@ function elementFacts(config) {
   for (const [element, definition] of Object.entries(config.semantics.elements ?? {})) {
     if (!definition || typeof definition !== "object") continue;
     map.set(element, { role: String(definition.role ?? element), ...definition });
-  }
-  for (const [name, definition] of Object.entries(config.components ?? {})) {
-    for (const [element, variant] of Object.entries(definition.rawElements ?? {})) {
-      if (!map.has(element)) map.set(element, { role: String(definition.semanticRole ?? name), variant: String(variant) });
-    }
   }
   return map;
 }
@@ -220,7 +222,7 @@ function semanticScan(root, config) {
           const componentName = fix?.split(".")[0];
           const componentSource = componentName && config.components?.[componentName]?.source;
           const insideGovernedComponent = componentSource && toPosix(String(componentSource)) === toPosix(file);
-          if (!insideGovernedComponent && (governed.length || fix)) {
+          if (!insideGovernedComponent && (governed.length || fix) && !ignored(sourceFile, node.getStart(sourceFile), "CV006", "CV003")) {
             const names = governed.length ? governed.map(([name]) => name) : [fix];
             findings.push({
               code: "CV006",

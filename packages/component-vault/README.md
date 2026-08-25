@@ -2,16 +2,23 @@
 
 AST-based **semantic design-system governance** for developers, CI pipelines and AI coding agents.
 
-Component Vault started as a configurable AST guard for Design System rules. Version `0.5.0` combines semantic governance, import-safe autofix and a public programmatic API.
+Component Vault started as a configurable AST guard for Design System rules. Version `0.6.0` adds deterministic component discovery, structured CLI output and safer real-project onboarding to the semantic governance and autofix engine.
 
 ## Quick start
 
 ```bash
 npm install -D @wess2001/component-vault
 npx component-vault init
+npx component-vault discover
+npx component-vault discover --write
+npx component-vault doctor
 npx component-vault analyze
 npx component-vault scan
 ```
+
+`init` only preconfigures a `Text` component when a supported source file actually exists. Otherwise it creates an honest `components: {}` starter; add your real governed components, then run `doctor` to validate every configured source path.
+
+`discover` finds proven named/default React exports, compound variants, semantic root elements and TypeScript path aliases. The default mode is a non-writing preview. `--write` merges only new candidates and preserves every existing component policy.
 
 ## Programmatic API
 
@@ -68,7 +75,7 @@ npx component-vault fix
 
 The Guard resolves configured semantic mappings from `component-vault.yaml` and can replace native semantic elements with their configured governed components. For example, a configured `<button>` → `Button` mapping can be applied automatically.
 
-The autofix is intentionally conservative: it verifies the configured component export, adds the required import and preserves existing aliases. Findings without a provable target and import are reported as skipped instead of being changed heuristically.
+The autofix is intentionally conservative: it verifies the configured component export, adds the required import and preserves existing aliases. Findings without a provable target and import are reported as skipped with the exact missing-source, missing-export or binding-conflict reason.
 
 For projects that use path aliases or barrel exports, declare the import explicitly:
 
@@ -264,8 +271,9 @@ This creates:
 
 ```text
 init [--ci] [--force]  initialize governance and semantic mappings
-doctor                 validate setup
-scan                   scan AST and semantic roles
+discover [--write]     detect exports and safely merge new component definitions
+doctor [--format json] validate setup with pass, warning and failure states
+scan [--format json]   scan AST and semantic roles
 check --base REF       enforce protect/touched/full + semantic policies
 fix [--dry-run]        automatically fix supported findings
 baseline               capture accepted legacy debt
@@ -276,6 +284,8 @@ analyze                inspect semantic roles and coverage
 explain CV001          explain a rule
 explain CV006          explain a semantic finding
 ```
+
+`scan`, `doctor` and `discover` support `--format json` for deterministic CI, editor and build-tool integration.
 
 ## Existing AST rules
 

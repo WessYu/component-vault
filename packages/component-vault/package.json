@@ -1,6 +1,6 @@
 {
   "name": "@wess2001/component-vault",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "AST-based semantic design-system governance for developers, CI and AI coding agents.",
   "type": "module",
   "main": "./lib/api.mjs",

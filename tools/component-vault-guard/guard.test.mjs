@@ -119,10 +119,54 @@ test("init creates a five-minute starter setup and doctor validates it", () => {
   assert.ok(existsSync(join(root, "component-vault.baseline.json")));
   assert.ok(existsSync(join(root, ".component-vault/README.md")));
   assert.ok(existsSync(join(root, ".github/workflows/component-vault-guard.yml")));
+  const config = readFileSync(join(root, "component-vault.yaml"), "utf8");
+  assert.match(config, /components: \{\}/);
+  assert.doesNotMatch(config, /src\/components\/ui\/text\.tsx/);
+  const workflow = readFileSync(join(root, ".github/workflows/component-vault-guard.yml"), "utf8");
+  assert.match(workflow, /actions\/checkout@v6/);
+  assert.match(workflow, /actions\/setup-node@v6/);
+  assert.match(workflow, /node-version: 24/);
+  assert.match(workflow, /@wess2001\/component-vault@latest/);
   initGit(root);
   result = run(root, ["doctor"]);
   assert.equal(result.status, 0, result.stderr + result.stdout);
-  assert.match(result.stdout, /Guard setup looks ready/);
+  assert.match(result.stdout, /⚠ Governed components: none configured yet/);
+  assert.match(result.stdout, /Guard setup is valid with 1 warning/);
+  result = run(root, ["doctor", "--format", "json"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const doctor = JSON.parse(result.stdout);
+  assert.equal(doctor.ok, true);
+  assert.equal(doctor.warnings, 1);
+  assert.equal(doctor.checks.find((check) => check.label === "Governed components")?.status, "warning");
+});
+
+test("doctor reports a configured component whose source is missing", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-doctor-"));
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "component-vault.yaml"), `version: 1
+scan:
+  include: [src]
+components:
+  Text:
+    source: src/components/text.tsx
+`);
+  writeFileSync(join(root, "component-vault.baseline.json"), '{"version":2,"fingerprints":[],"violations":[]}\n');
+  initGit(root);
+  const result = run(root, ["doctor"]);
+  assert.equal(result.status, 1, result.stderr + result.stdout);
+  assert.match(result.stdout, /Component Text/);
+  assert.match(result.stdout, /src\/components\/text\.tsx is missing/);
+});
+
+test("doctor detects a Git worktree from a nested project", () => {
+  const root = mkdtempSync(join(tmpdir(), "cv-guard-monorepo-"));
+  mkdirSync(join(root, "examples/app/src"), { recursive: true });
+  writeFileSync(join(root, "examples/app/component-vault.yaml"), "version: 1\nscan:\n  include: [src]\ncomponents: {}\n");
+  writeFileSync(join(root, "examples/app/component-vault.baseline.json"), '{"version":2,"fingerprints":[],"violations":[]}\n');
+  initGit(root);
+  const result = run(join(root, "examples/app"), ["doctor"]);
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.match(result.stdout, /✓ Git repository: detected/);
 });
 
 test("pr command writes a concise summary and fails on blocking drift", () => {
