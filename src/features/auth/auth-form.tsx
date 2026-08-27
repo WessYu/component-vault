@@ -7,7 +7,6 @@ import { AlertTriangle, CheckCircle2, LockKeyhole, LogIn, UserPlus } from "lucid
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand/brand-mark";
-import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { localLogin, localRegister, requestLocalPasswordReset } from "@/services/vault-service";
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from "./auth-schema";
 
@@ -41,24 +40,8 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   async function onSubmit(values: LoginInput | RegisterInput) {
     setMessage(null);
-    const supabase = getSupabaseBrowserClient();
-
     try {
-      if (supabase) {
-        const result =
-          mode === "login"
-            ? await supabase.auth.signInWithPassword(values)
-            : await supabase.auth.signUp({
-                email: values.email,
-                password: values.password,
-                options: { data: { name: "name" in values ? values.name : "" } },
-              });
-
-        if (result.error) {
-          setMessage(result.error.message);
-          return;
-        }
-      } else if (mode === "login") {
+      if (mode === "login") {
         await localLogin({ email: values.email, password: values.password, remember: rememberLogin });
       } else {
         await localRegister({
@@ -93,19 +76,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setIsResetting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        const result = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (result.error) {
-          setMessage(result.error.message);
-        } else {
-          setMessage("Password reset email sent.");
-        }
-        return;
-      }
-
       const result = await requestLocalPasswordReset(email);
       if (result.resetUrl) {
         const resetUrl = new URL(result.resetUrl);
@@ -218,12 +188,10 @@ export function AuthForm({ mode }: AuthFormProps) {
             <div className="mt-5 rounded-3xl border border-[#E4E7EF] bg-[#F7F8FC] p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-text-primary">
                 <LockKeyhole size={16} aria-hidden />
-                {isSupabaseConfigured ? "Supabase connected" : "Secure backend session"}
+                Secure Convex session
               </div>
               <p className="mt-2 text-sm leading-6 text-[#6D7285]">
-                {isSupabaseConfigured
-                  ? "Authentication is handled by the configured Supabase project."
-                  : "A senha nunca é salva no navegador pelo Component Vault. A sessão usa um cookie httpOnly e o navegador pode oferecer o próprio gerenciador de senhas."}
+                A senha nunca é salva no navegador pelo Component Vault. A sessão usa um cookie httpOnly e o navegador pode oferecer o próprio gerenciador de senhas.
               </p>
             </div>
 

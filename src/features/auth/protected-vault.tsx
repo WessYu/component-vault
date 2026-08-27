@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase";
 import { getLocalSession } from "@/services/vault-service";
 
 export function ProtectedVault({ children }: { children: React.ReactNode }) {
@@ -13,20 +12,8 @@ export function ProtectedVault({ children }: { children: React.ReactNode }) {
     let mounted = true;
     async function checkSession() {
       try {
-        if (!isSupabaseConfigured) {
-          await getLocalSession();
-          if (!mounted) return;
-          setReady(true);
-          return;
-        }
-
-        const supabase = getSupabaseBrowserClient();
-        const { data } = await supabase!.auth.getSession();
+        await getLocalSession();
         if (!mounted) return;
-        if (!data.session) {
-          router.replace("/login");
-          return;
-        }
         setReady(true);
       } catch {
         if (mounted) {

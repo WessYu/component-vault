@@ -22,13 +22,13 @@
     "guard:context": "node tools/component-vault-guard/cli.mjs context",
     "guard:doctor": "node tools/component-vault-guard/cli.mjs doctor",
     "guard:pr": "node tools/component-vault-guard/cli.mjs pr",
-    "guard:test": "node --test tools/component-vault-guard/*.test.mjs"
+    "guard:test": "node --test tools/component-vault-guard/*.test.mjs",
+    "test:backend": "node --test --experimental-strip-types src/lib/*.test.ts",
+    "lint:backend": "eslint convex/*.ts src/lib src/app/api src/app/vault/admin/page.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
     "@monaco-editor/react": "^4.7.0",
-    "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.8",
     "@tanstack/react-query": "^5.101.4",
     "clsx": "^2.1.1",
     "convex": "^1.42.3",
