@@ -1,31 +1,25 @@
-import { NextResponse } from "next/server";
-import { createLocalSession, getUserByEmail, publicUser, verifyPassword } from "@/lib/vault-db";
-
-const cookieName = "component-vault-session";
+import { apiError, apiJson, assertTrustedOrigin, parseJson, requestFingerprint } from "@/lib/api-security";
+import { loginRequestSchema } from "@/lib/api-schemas";
+import { sessionCookieName, sessionCookieOptions } from "@/lib/auth-cookie";
+import { consumeApiRateLimit, createLocalSession, getUserByEmail, publicUser, verifyPassword } from "@/lib/vault-db";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { email?: string; password?: string; remember?: boolean };
-  const email = body.email?.trim().toLowerCase();
-  const password = body.password ?? "";
-  const remember = body.remember !== false;
+  try {
+    assertTrustedOrigin(request);
+    const body = await parseJson(request, loginRequestSchema, 16 * 1024);
+    await consumeApiRateLimit(`login:${requestFingerprint(request, body.email)}`, 8, 15 * 60 * 1000);
 
-  if (!email || !password) {
-    return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    const user = await getUserByEmail(body.email);
+    const passwordMatches = await verifyPassword(body.password, user?.passwordHash);
+    if (!user || !passwordMatches) {
+      return apiJson({ error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password." } }, { status: 401 });
+    }
+
+    const session = await createLocalSession(user.id);
+    const response = apiJson({ user: publicUser(user) });
+    response.cookies.set(sessionCookieName, session.id, sessionCookieOptions(body.remember ? new Date(session.expiresAt) : undefined));
+    return response;
+  } catch (error) {
+    return apiError(error);
   }
-
-  const user = await getUserByEmail(email);
-  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
-  }
-
-  const session = await createLocalSession(user.id);
-  const response = NextResponse.json({ user: publicUser(user) });
-  response.cookies.set(cookieName, session.id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    ...(remember ? { expires: new Date(session.expiresAt) } : {}),
-  });
-  return response;
 }

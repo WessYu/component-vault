@@ -1,5 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import {
+  componentPropsValidator,
+  componentUsageValidator,
+  designTokenValidator,
+  preferencesValidator,
+  roleValidator,
+} from "./validators";
 
 export default defineSchema({
   users: defineTable({
@@ -8,17 +15,9 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.string(),
     createdAt: v.string(),
-    role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
+    role: v.optional(roleValidator),
     favoriteComponentIds: v.optional(v.array(v.string())),
-    workspacePreferences: v.optional(v.object({
-      gridSize: v.number(),
-      defaultViewport: v.union(v.literal("Desktop"), v.literal("Tablet"), v.literal("Mobile")),
-      autosaveDebounce: v.number(),
-      previewTheme: v.union(v.literal("Light"), v.literal("Dark")),
-      componentReviewRequests: v.boolean(),
-      tokenDriftAlerts: v.boolean(),
-      weeklyUsageDigest: v.boolean(),
-    })),
+    workspacePreferences: v.optional(preferencesValidator),
   })
     .index("by_user_id", ["userId"])
     .index("by_email", ["email"]),
@@ -40,12 +39,19 @@ export default defineSchema({
   })
     .index("by_token_hash", ["tokenHash"])
     .index("by_user_id", ["userId"]),
+  apiRateLimits: defineTable({
+    key: v.string(),
+    windowStartedAt: v.number(),
+    count: v.number(),
+    expiresAt: v.number(),
+  }).index("by_key", ["key"]),
   components: defineTable({
     componentId: v.string(),
     userId: v.string(),
     name: v.string(),
     slug: v.string(),
     description: v.string(),
+    // Kept wide during migration; all new writes and public returns are normalized.
     category: v.string(),
     framework: v.string(),
     language: v.string(),
@@ -60,17 +66,23 @@ export default defineSchema({
     collectionIds: v.array(v.string()),
     updatedAt: v.string(),
     previewHtml: v.string(),
-    tokens: v.array(v.any()),
-    usage: v.array(v.any()),
-    props: v.any(),
+    tokens: v.array(designTokenValidator),
+    usage: v.array(componentUsageValidator),
+    props: componentPropsValidator,
   })
     .index("by_component_id", ["componentId"])
-    .index("by_slug", ["slug"]),
+    .index("by_slug", ["slug"])
+    .index("by_user_id", ["userId"])
+    .index("by_user_id_and_slug", ["userId", "slug"])
+    .index("by_is_public", ["isPublic"]),
   collections: defineTable({
     collectionId: v.string(),
+    userId: v.optional(v.string()),
     name: v.string(),
     description: v.string(),
     componentIds: v.array(v.string()),
     updatedAt: v.string(),
-  }).index("by_collection_id", ["collectionId"]),
+  })
+    .index("by_collection_id", ["collectionId"])
+    .index("by_user_id", ["userId"]),
 });

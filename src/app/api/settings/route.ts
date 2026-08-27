@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { apiError, apiJson, assertTrustedOrigin, parseJson, requestFingerprint } from "@/lib/api-security";
+import { workspacePreferencesSchema } from "@/lib/api-schemas";
+import { sessionCookieName } from "@/lib/auth-cookie";
 import {
+  consumeApiRateLimit,
   defaultWorkspacePreferences,
   getWorkspacePreferences,
   updateWorkspacePreferences,
   type WorkspacePreferences,
 } from "@/lib/vault-db";
-
-const cookieName = "component-vault-session";
 
 function normalizePreferences(input: Partial<WorkspacePreferences>): WorkspacePreferences {
   return {
@@ -26,24 +27,33 @@ function normalizePreferences(input: Partial<WorkspacePreferences>): WorkspacePr
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get(cookieName)?.value;
-  if (!sessionId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  try {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(sessionCookieName)?.value;
+    if (!sessionId) return apiJson({ error: { code: "AUTHENTICATION_REQUIRED", message: "Authentication required." } }, { status: 401 });
 
-  const preferences = await getWorkspacePreferences(sessionId);
-  if (!preferences) return NextResponse.json({ error: "Session expired." }, { status: 401 });
+    const preferences = await getWorkspacePreferences(sessionId);
+    if (!preferences) return apiJson({ error: { code: "SESSION_EXPIRED", message: "Session expired." } }, { status: 401 });
 
-  return NextResponse.json({ preferences });
+    return apiJson({ preferences });
+  } catch (error) {
+    return apiError(error);
+  }
 }
 
 export async function PATCH(request: Request) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get(cookieName)?.value;
-  if (!sessionId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  try {
+    assertTrustedOrigin(request);
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get(sessionCookieName)?.value;
+    if (!sessionId) return apiJson({ error: { code: "AUTHENTICATION_REQUIRED", message: "Authentication required." } }, { status: 401 });
+    await consumeApiRateLimit(`settings:${requestFingerprint(request, sessionId)}`, 60, 60 * 1000);
 
-  const body = (await request.json()) as Partial<WorkspacePreferences>;
-  const preferences = await updateWorkspacePreferences(sessionId, normalizePreferences(body));
-  if (!preferences) return NextResponse.json({ error: "Session expired." }, { status: 401 });
-
-  return NextResponse.json({ preferences });
+    const body = await parseJson(request, workspacePreferencesSchema, 16 * 1024);
+    const preferences = await updateWorkspacePreferences(sessionId, normalizePreferences(body));
+    if (!preferences) return apiJson({ error: { code: "SESSION_EXPIRED", message: "Session expired." } }, { status: 401 });
+    return apiJson({ preferences });
+  } catch (error) {
+    return apiError(error);
+  }
 }

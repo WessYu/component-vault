@@ -20,6 +20,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Test backend security contracts
+        run: npm run test:backend
+      - name: Lint backend boundaries
+        run: npm run lint:backend
       - name: Test Component Vault Guard
         run: npm run guard:test
       - name: Enforce component governance

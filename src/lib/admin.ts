@@ -5,16 +5,7 @@ type RoleCandidate = {
   role?: VaultRole;
 };
 
-function configuredAdminEmails() {
-  return (process.env.VAULT_ADMIN_EMAIL ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export function resolveVaultRole(user: RoleCandidate): VaultRole {
-  const email = user.email.trim().toLowerCase();
-  if (configuredAdminEmails().includes(email)) return "admin";
   return user.role === "admin" ? "admin" : "user";
 }
 

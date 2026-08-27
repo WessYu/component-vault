@@ -19,6 +19,7 @@ type SessionUser = {
   id: string;
   name: string;
   email: string;
+  role: "admin" | "user";
   favoriteComponentIds?: string[];
   workspacePreferences?: WorkspacePreferences;
 };
@@ -32,9 +33,13 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
     },
   });
 
-  const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: string | { code?: string; message?: string };
+    message?: string;
+  };
   if (!response.ok) {
-    throw new Error(payload.error || payload.message || `Request failed with ${response.status}`);
+    const errorMessage = typeof payload.error === "string" ? payload.error : payload.error?.message;
+    throw new Error(errorMessage || payload.message || `Request failed with ${response.status}`);
   }
   return payload as T;
 }
@@ -147,7 +152,7 @@ export async function saveWorkspacePreferences(preferences: WorkspacePreferences
 }
 
 export async function requestLocalPasswordReset(email: string) {
-  return requestJson<{ message: string; resetUrl: string | null }>("/api/auth/local/password-reset/request", {
+  return requestJson<{ message: string; resetUrl?: string | null }>("/api/auth/local/password-reset/request", {
     method: "POST",
     body: JSON.stringify({ email }),
   });

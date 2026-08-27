@@ -1,21 +1,26 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { apiError, apiJson } from "@/lib/api-security";
+import { readSessionCookie } from "@/lib/auth-cookie";
 import { getFavoriteComponentIds, readVaultDb } from "@/lib/vault-db";
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("component-vault-session")?.value;
-  const [database, favoriteComponentIds] = await Promise.all([
-    readVaultDb(),
-    getFavoriteComponentIds(sessionId),
-  ]);
+  try {
+    const cookieStore = await cookies();
+    const sessionId = readSessionCookie(cookieStore);
+    const [database, favoriteComponentIds] = await Promise.all([
+      readVaultDb(sessionId),
+      getFavoriteComponentIds(sessionId),
+    ]);
 
-  const favoriteSet = new Set(favoriteComponentIds);
-  return NextResponse.json({
-    components: database.components.map((component) => ({
-      ...component,
-      isFavorite: favoriteSet.has(component.id),
-    })),
-    collections: database.collections,
-  });
+    const favoriteSet = new Set(favoriteComponentIds);
+    return apiJson({
+      components: database.components.map((component) => ({
+        ...component,
+        isFavorite: favoriteSet.has(component.id),
+      })),
+      collections: database.collections,
+    });
+  } catch (error) {
+    return apiError(error);
+  }
 }

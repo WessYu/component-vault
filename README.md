@@ -306,6 +306,23 @@ The main application provides a workspace for creating and maintaining UI compon
 | Package | npm |
 | Deploy | Vercel |
 
+## Backend security
+
+The application uses Next.js Route Handlers as a backend-for-frontend and Convex as the only database. The production boundary includes:
+
+- opaque session tokens stored only as SHA-256 hashes in Convex;
+- `httpOnly`, `Secure`, `SameSite=Strict`, host-only cookies;
+- ownership checks inside Convex mutations;
+- strict request and return validators;
+- bounded streaming JSON parsing and payload limits;
+- origin checks and distributed, atomic rate limits;
+- single-use, hashed password-reset tokens;
+- generic authentication and recovery responses;
+- no-store API responses with request IDs;
+- readiness monitoring at `/api/health`.
+
+Administrator access comes only from the persisted `users.role` value. Matching an email address or changing a client payload cannot grant administrator privileges.
+
 ## Run locally
 
 ```bash
@@ -314,7 +331,15 @@ cd component-vault
 npm install
 ```
 
-Configure the required backend environment, then run:
+Copy `.env.example` to `.env.local`. Generate one random secret with at least 32 characters and set the same value in the Next.js environment and the Convex deployment:
+
+```bash
+npx convex env set COMPONENT_VAULT_SERVER_SECRET
+```
+
+Set `APP_URL` to the canonical application origin. Production password recovery also requires `RESEND_API_KEY` and `PASSWORD_RESET_FROM_EMAIL`. `ENABLE_LOCAL_BACKEND_FALLBACK` is development-only and should remain `false` unless Convex is intentionally offline.
+
+Then run:
 
 ```bash
 npx convex dev

@@ -1,25 +1,24 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { getVaultComponent, toggleUserFavorite } from "@/lib/vault-db";
+import { apiError, apiJson, assertTrustedOrigin, requestFingerprint } from "@/lib/api-security";
+import { readSessionCookie } from "@/lib/auth-cookie";
+import { consumeApiRateLimit, getVaultComponent, toggleUserFavorite } from "@/lib/vault-db";
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function POST(_request: Request, context: Context) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get("component-vault-session")?.value;
-  if (!sessionId) return NextResponse.json({ error: "Sign in to save favorites." }, { status: 401 });
-
-  const { id } = await context.params;
-  const component = await getVaultComponent(id);
-  if (!component) return NextResponse.json({ error: "Component not found." }, { status: 404 });
-
-  const favoriteComponentIds = await toggleUserFavorite(sessionId, component.id);
-  if (!favoriteComponentIds) return NextResponse.json({ error: "Your session expired. Sign in again." }, { status: 401 });
-
-  return NextResponse.json({
-    component: {
-      ...component,
-      isFavorite: favoriteComponentIds.includes(component.id),
-    },
-  });
+export async function POST(request: Request, context: Context) {
+  try {
+    assertTrustedOrigin(request);
+    const cookieStore = await cookies();
+    const sessionId = readSessionCookie(cookieStore);
+    if (!sessionId) return apiJson({ error: { code: "AUTHENTICATION_REQUIRED", message: "Sign in to save favorites." } }, { status: 401 });
+    await consumeApiRateLimit(`favorite:${requestFingerprint(request, sessionId)}`, 120, 60 * 1000);
+    const { id } = await context.params;
+    const component = await getVaultComponent(id, sessionId);
+    if (!component) return apiJson({ error: { code: "NOT_FOUND", message: "Component not found." } }, { status: 404 });
+    const favoriteComponentIds = await toggleUserFavorite(sessionId, component.id);
+    if (!favoriteComponentIds) return apiJson({ error: { code: "SESSION_EXPIRED", message: "Your session expired. Sign in again." } }, { status: 401 });
+    return apiJson({ component: { ...component, isFavorite: favoriteComponentIds.includes(component.id) } });
+  } catch (error) {
+    return apiError(error);
+  }
 }

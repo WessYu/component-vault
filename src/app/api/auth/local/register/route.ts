@@ -1,31 +1,19 @@
-import { NextResponse } from "next/server";
-import { createLocalSession, createLocalUser, publicUser } from "@/lib/vault-db";
-
-const cookieName = "component-vault-session";
+import { apiError, apiJson, assertTrustedOrigin, parseJson, requestFingerprint } from "@/lib/api-security";
+import { registerRequestSchema } from "@/lib/api-schemas";
+import { sessionCookieName, sessionCookieOptions } from "@/lib/auth-cookie";
+import { consumeApiRateLimit, createLocalSession, createLocalUser, publicUser } from "@/lib/vault-db";
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { name?: string; email?: string; password?: string };
-  const name = body.name?.trim() || "Vault User";
-  const email = body.email?.trim().toLowerCase();
-  const password = body.password ?? "";
-
-  if (!email || password.length < 6) {
-    return NextResponse.json({ error: "A valid email and password with 6+ characters are required." }, { status: 400 });
-  }
-
   try {
-    const user = await createLocalUser({ name, email, password });
+    assertTrustedOrigin(request);
+    const body = await parseJson(request, registerRequestSchema, 16 * 1024);
+    await consumeApiRateLimit(`register:${requestFingerprint(request, body.email)}`, 4, 60 * 60 * 1000);
+    const user = await createLocalUser(body);
     const session = await createLocalSession(user.id);
-    const response = NextResponse.json({ user: publicUser(user) }, { status: 201 });
-    response.cookies.set(cookieName, session.id, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      expires: new Date(session.expiresAt),
-    });
+    const response = apiJson({ user: publicUser(user) }, { status: 201 });
+    response.cookies.set(sessionCookieName, session.id, sessionCookieOptions(new Date(session.expiresAt)));
     return response;
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to register user." }, { status: 409 });
+    return apiError(error);
   }
 }
