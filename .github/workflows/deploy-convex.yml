@@ -1,0 +1,42 @@
+name: Deploy Convex
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "convex/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-convex.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: convex-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy production backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy functions and schema
+        run: npx convex deploy --typecheck enable --codegen enable --message "$GITHUB_SHA"
