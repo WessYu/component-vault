@@ -40,3 +40,9 @@ jobs:
 
       - name: Deploy functions and schema
         run: npx convex deploy --typecheck enable --codegen enable --message "$GITHUB_SHA"
+
+      - name: Verify production health
+        run: >-
+          curl --fail-with-body --silent --show-error
+          --retry 5 --retry-delay 3 --retry-all-errors
+          https://component-vault-dun.vercel.app/api/health
