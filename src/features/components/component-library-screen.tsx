@@ -180,7 +180,7 @@ export function ComponentLibraryScreen({ favoriteOnly = false }: { favoriteOnly?
         </div>
       </section>
 
-      <ComponentDetailPanel component={selectedComponent} open={panelOpen && Boolean(selectedComponent)} onClose={() => { setPanelOpen(false); window.history.replaceState(null, "", favoriteOnly ? "/vault/favorites" : "/vault/components"); }} />
+      <ComponentDetailPanel key={`${selectedComponent?.id ?? "none"}-${panelOpen ? "open" : "closed"}`} component={selectedComponent} open={panelOpen && Boolean(selectedComponent)} onClose={() => { setPanelOpen(false); window.history.replaceState(null, "", favoriteOnly ? "/vault/favorites" : "/vault/components"); }} />
 
       <AnimatePresence>
         {selectedComponent && panelOpen ? (

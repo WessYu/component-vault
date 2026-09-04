@@ -2,6 +2,7 @@
   "name": "component-vault-app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -23,6 +24,9 @@
     "guard:doctor": "node tools/component-vault-guard/cli.mjs doctor",
     "guard:pr": "node tools/component-vault-guard/cli.mjs pr",
     "guard:test": "node --test tools/component-vault-guard/*.test.mjs",
+    "demo:proof": "node scripts/prove-product.mjs",
+    "typecheck": "tsc --noEmit",
+    "release:check": "npm run test:backend && npm run guard:test && npm run lint && npm run typecheck && npm run guard:check -- --base HEAD && npm run demo:proof && npm run build",
     "test:backend": "node --test --experimental-strip-types src/lib/*.test.ts",
     "lint:backend": "eslint convex/*.ts src/lib src/app/api src/app/vault/admin/page.tsx"
   },

@@ -26,6 +26,8 @@ jobs:
         run: npm run lint:backend
       - name: Test Component Vault Guard
         run: npm run guard:test
+      - name: Typecheck application and backend
+        run: npm run typecheck
       - name: Enforce component governance
         run: npm run guard:check -- --base "$COMPONENT_VAULT_BASE_REF"
       - name: Generate Guard PR summary
@@ -62,6 +64,8 @@ jobs:
           git add .
           git commit -qm "initialize smoke fixture"
           ./node_modules/.bin/component-vault doctor
+      - name: Run reproducible product proof
+        run: npm run demo:proof
       - name: Build application
         shell: bash
         run: |
@@ -91,6 +95,12 @@ jobs:
         with:
           name: component-vault-guard-pr-summary
           path: .component-vault/pr-summary.md
+      - name: Upload reproducible product proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-vault-product-proof
+          path: artifacts/component-vault-demo
       - name: Assert build success
         shell: bash
         run: test "$(cat build-exit-code)" = "0"

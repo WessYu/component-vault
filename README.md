@@ -194,6 +194,24 @@ Use `--format json` with `scan`, `doctor` or `discover` for CI, editor integrati
 
 The runnable [React + Vite example](./examples/react-vite) demonstrates discovery, JSON output, a non-writing dry-run, safe import insertion and a clean follow-up scan.
 
+## Reproducible product proof
+
+Run one command from the repository root to exercise the public product story against the CLI package users actually install:
+
+```bash
+npm run demo:proof
+```
+
+The proof packs `@wess2001/component-vault`, installs the tarball in a separate React/Vite project and verifies this sequence:
+
+```text
+discover → failing scan → JSON report → fix --dry-run → safe fix → clean scan → production build
+```
+
+The committed fixture currently proves **2 discovered component candidates, 3 blocking CV006 findings, zero dry-run writes, 8 deterministic edits, a clean follow-up scan and a green Vite build**. CI reruns the sequence and uploads the before/after source, full transcript and generated report as the `component-vault-product-proof` artifact.
+
+Release and portfolio claims are governed by the explicit [release-readiness checklist](./docs/release-readiness.md).
+
 ## Programmatic API
 
 Version `0.5.0` introduced the same deterministic engine for build tools, codemods and custom CI integrations:

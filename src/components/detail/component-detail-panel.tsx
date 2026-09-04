@@ -32,14 +32,6 @@ export function ComponentDetailPanel({ component, open, onClose }: { component: 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, open]);
 
-  useEffect(() => {
-    if (!open) return;
-    setTab("Preview");
-    setViewport("Desktop");
-    setTheme("Light");
-    setCopied(false);
-  }, [component?.id, open]);
-
   if (!component) return null;
   const selectedComponent = component;
   const style = categoryStyle(selectedComponent);

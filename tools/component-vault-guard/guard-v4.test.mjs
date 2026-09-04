@@ -202,6 +202,26 @@ test("v4 scan and analyze execute the semantic engine", () => {
   assert.match(analysis.stdout, /Semantic findings: 1/);
 });
 
+test("v4 report and PR include semantic findings in their blocking totals", () => {
+  const root = fixture();
+  writeFileSync(join(root, "src/pages/bad.tsx"), `export const Page = () => <h1>Finding</h1>;\n`);
+
+  const reportResult = run(root, ["report", "--output", "report.json"]);
+  assert.equal(reportResult.status, 0, reportResult.stderr + reportResult.stdout);
+  const report = JSON.parse(readFileSync(join(root, "report.json"), "utf8"));
+  assert.equal(report.engine, "typescript-ast+semantic");
+  assert.equal(report.summary.new, 1);
+  assert.equal(report.summary.blocking, 1);
+  assert.equal(report.violations.filter((finding) => finding.rule === "CV006").length, 1);
+
+  const prResult = run(root, ["pr"]);
+  assert.equal(prResult.status, 1, prResult.stderr + prResult.stdout);
+  assert.match(prResult.stdout, /1 blocking/);
+  const summary = readFileSync(join(root, ".component-vault/pr-summary.md"), "utf8");
+  assert.match(summary, /Component Vault Guard blocked this PR/);
+  assert.match(summary, /CV006/);
+});
+
 test("v4 semantic scan honors legacy CV003 ignore comments", () => {
   const root = fixture();
   writeFileSync(

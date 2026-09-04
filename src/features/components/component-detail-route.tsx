@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
@@ -39,7 +40,7 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
     return (
       <AppShell active="Library">
         <div className="min-h-dvh bg-[#F7F8FC]" aria-hidden="true" />
-        <ComponentDetailPanel component={component} open onClose={() => router.push("/vault/components")} />
+        <ComponentDetailPanel key={component.id} component={component} open onClose={() => router.push("/vault/components")} />
       </AppShell>
     );
   }
@@ -66,7 +67,7 @@ export function ComponentDetailRoute({ slug }: { slug: string }) {
         <p className="text-sm font-semibold text-[#FF7664]">Component not found</p>
         <h1 className="mt-2 text-3xl font-bold text-text-primary">{slug}</h1>
         <p className="mt-3 text-sm leading-6 text-[#6D7285]">The component is not available in the current vault dataset.{backendError ? ` ${backendError}` : ""}</p>
-        <a className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">Back to library</a>
+        <Link className="mt-6 inline-flex min-h-11 items-center rounded-2xl bg-[#6366F1] px-5 text-sm font-semibold text-white" href="/vault/components">Back to library</Link>
       </div>
     </div>
   );

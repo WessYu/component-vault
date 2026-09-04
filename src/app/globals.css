@@ -79,7 +79,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid #18181b;
+  outline: 2px solid #806cff;
   outline-offset: 2px;
 }
 

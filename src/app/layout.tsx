@@ -18,8 +18,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Component Vault",
-  description: "A living visual playground for exploring, testing, documenting and reusing interface components.",
+  title: "Component Vault — Design-system governance as code",
+  description: "Deterministic AST checks, conservative fixes and pull-request gates for React component systems.",
 };
 
 export default function RootLayout({

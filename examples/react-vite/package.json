@@ -15,14 +15,15 @@
   },
   "dependencies": {
     "@wess2001/component-vault": "^0.6.0",
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.2.2",
+    "typescript": "5.9.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7"
   }
 }

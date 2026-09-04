@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
+import { dirname, relative, resolve, sep } from "node:path";
 import process from "node:process";
 import YAML from "yaml";
 import { scanProject } from "./api.mjs";
 import { applySemanticFixes } from "./autofix.mjs";
+import { blocking } from "./cli-v2.mjs";
 import { discoverComponents, writeDiscoveredComponents } from "./discover.mjs";
 import { applyConfiguredFixes } from "./fix.mjs";
 import { analyze, explainSemantic, loadConfig, semanticScan } from "./semantic.mjs";
@@ -17,6 +18,10 @@ const VERSION = "0.6.0";
 const CORE_PATH = fileURLToPath(new URL("./cli.mjs", import.meta.url));
 const DEFAULT_CONFIG = "component-vault.yaml";
 const SEMANTIC_BASELINE = ".component-vault/semantic-baseline.json";
+
+function toPosix(value) {
+  return value.split(sep).join("/");
+}
 
 function parseArgs(argv) {
   const [command = "help", ...rest] = argv;
@@ -90,6 +95,112 @@ function semanticFindings(root, configPath, includeBaseline = true) {
   const result = semanticScan(root, config);
   const baseline = includeBaseline ? readSemanticBaseline(root) : new Set();
   return result.findings.map((item) => ({ ...item, fingerprint: fingerprint(item) })).filter((item) => !baseline.has(item.fingerprint));
+}
+
+function renderPrSummary(report) {
+  const summary = report.summary;
+  const allowed = summary.blocking === 0;
+  const rows = [
+    ["Migration", `${summary.migrationProgress}%`],
+    ["Legacy", String(summary.legacy)],
+    ["Resolved", String(summary.resolved)],
+    ["New", String(summary.new)],
+    ["Blocking", String(summary.blocking)],
+    ["Files scanned", String(summary.filesScanned)],
+  ];
+  const lines = [
+    `## ${allowed ? "✅ Component Vault Guard allows this PR" : "❌ Component Vault Guard blocked this PR"}`,
+    "",
+    `Engine: \`${report.engine ?? "unknown"}\``,
+    "",
+    "| Metric | Value |",
+    "| --- | ---: |",
+    ...rows.map(([label, value]) => `| ${label} | ${value} |`),
+    "",
+  ];
+  const findings = report.violations.filter((finding) => finding.blocking !== false).slice(0, 5);
+  if (findings.length) {
+    lines.push("### Sample findings", "");
+    for (const finding of findings) {
+      lines.push(`- \`${finding.rule}\` \`${finding.file}:${finding.line}:${finding.column ?? 1}\` — ${finding.message}${finding.suggestion ? ` Fix: ${finding.suggestion}` : ""}`);
+    }
+    lines.push("");
+  }
+  lines.push(allowed ? "No blocking design-system drift was introduced by this gate." : "Resolve the blocking findings before merging.", "");
+  return `${lines.join("\n")}\n`;
+}
+
+function writeCombinedReport(root, configPath, options) {
+  const output = typeof options.output === "string" ? options.output : "public/component-vault-report.json";
+  const legacy = runLegacy("report", { ...options, output });
+  if (legacy.status !== 0) {
+    printLegacy(legacy);
+    return null;
+  }
+
+  const reportPath = resolve(root, output);
+  const report = JSON.parse(readFileSync(reportPath, "utf8"));
+  const config = loadConfig(root, configPath);
+  const baseline = readSemanticBaseline(root);
+  const semantic = semanticScan(root, config).findings.map((finding) => ({
+    ...finding,
+    fingerprint: fingerprint(finding),
+  }));
+  const current = new Set(semantic.map((finding) => finding.fingerprint));
+  const semanticLegacy = semantic.filter((finding) => baseline.has(finding.fingerprint));
+  const semanticFresh = semantic.filter((finding) => !baseline.has(finding.fingerprint));
+  const semanticResolved = [...baseline].filter((item) => !current.has(item)).length;
+  const semanticBlocked = blocking(
+    root,
+    semanticFresh,
+    config,
+    typeof options.base === "string" ? options.base : undefined,
+  );
+  const blockedFingerprints = new Set(semanticBlocked.map((finding) => finding.fingerprint));
+
+  report.engine = "typescript-ast+semantic";
+  report.violations = [
+    ...report.violations,
+    ...semantic.map((finding) => ({
+      ...finding,
+      rule: finding.code,
+      classification: baseline.has(finding.fingerprint) ? "legacy" : "new",
+      blocking: blockedFingerprints.has(finding.fingerprint),
+    })),
+  ];
+  report.summary.legacy += semanticLegacy.length;
+  report.summary.new += semanticFresh.length;
+  report.summary.resolved += semanticResolved;
+  report.summary.blocking += semanticBlocked.length;
+  const baselineTotal = report.summary.legacy + report.summary.resolved;
+  report.summary.migrationProgress = baselineTotal
+    ? Math.round((report.summary.resolved / baselineTotal) * 100)
+    : report.summary.new
+      ? 0
+      : 100;
+  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  console.log(`Component Vault: report generated with ${report.summary.blocking} blocking violation(s).`);
+  return report;
+}
+
+function writePrSummary(root, configPath, options) {
+  const reportPath = typeof options.report === "string" ? options.report : ".component-vault/pr-report.json";
+  const summaryPath = typeof options.output === "string" ? options.output : ".component-vault/pr-summary.md";
+  const report = writeCombinedReport(root, configPath, { ...options, output: reportPath });
+  if (!report) {
+    process.exitCode = 1;
+    return;
+  }
+  const markdown = renderPrSummary(report);
+  const absoluteSummary = resolve(root, summaryPath);
+  mkdirSync(dirname(absoluteSummary), { recursive: true });
+  writeFileSync(absoluteSummary, markdown, "utf8");
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown);
+  const summary = report.summary;
+  console.log(`Component Vault Guard PR · ${summary.blocking === 0 ? "allowed" : "blocked"}`);
+  console.log(`Migration ${summary.migrationProgress}% · ${summary.legacy} legacy · ${summary.new} new · ${summary.resolved} resolved · ${summary.blocking} blocking`);
+  console.log(`Summary: ${toPosix(relative(root, absoluteSummary))}`);
+  if (summary.blocking > 0) process.exitCode = 1;
 }
 
 function printSemanticFindings(findings) {
@@ -256,6 +367,10 @@ function main() {
     if (result.status === 0) { const config = loadConfig(root, configPath); writeSemanticBaseline(root, semanticScan(root, config).findings); console.log(`Component Vault Semantic Guard: baseline written to ${SEMANTIC_BASELINE}`); }
     process.exitCode = result.status ?? 1; return;
   }
+  if (command === "report") {
+    if (!writeCombinedReport(root, configPath, options)) process.exitCode = 1;
+    return;
+  }
   if (command === "scan" && options.format === "json") return scanJson(root, configPath);
   if (["scan", "check"].includes(command)) {
     const result = runLegacy(command, options, positional); printLegacy(result);
@@ -263,10 +378,7 @@ function main() {
     process.exitCode = result.status !== 0 || findings.length ? 1 : 0; return;
   }
   if (command === "pr") {
-    const result = runLegacy(command, options, positional); printLegacy(result);
-    const findings = semanticFindings(root, configPath, true);
-    if (findings.length) { printSemanticFindings(findings); process.exitCode = 1; } else process.exitCode = result.status ?? 1;
-    return;
+    return writePrSummary(root, configPath, options);
   }
   if (command === "explain" && positional[0] === "CV006") {
     const findings = semanticFindings(root, configPath, false);

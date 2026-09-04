@@ -1,3 +1,3 @@
 declare module "tamagui" {
-  export const Text: any;
+  export const Text: unknown;
 }

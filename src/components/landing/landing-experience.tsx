@@ -1,332 +1,328 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Code2, Layers3, MousePointer2, Play, SlidersHorizontal, Sparkles, WandSparkles } from "lucide-react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import { ComponentPreview } from "@/components/detail/component-preview";
-import { Magnetic, Reveal, RouteProgress, SiteMotionLayer, StaggerGroup, StaggerItem, motionEase } from "@/components/motion/site-motion";
-import { demoComponents } from "@/services/demo-data";
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  CircleCheck,
+  Code2,
+  ExternalLink,
+  FileJson2,
+  GitPullRequest,
+  ScanSearch,
+  ShieldCheck,
+  Terminal,
+  WandSparkles,
+} from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { BrandMark } from "@/components/brand/brand-mark";
+import { Reveal, RouteProgress, StaggerGroup, StaggerItem, motionEase } from "@/components/motion/site-motion";
 
-const storyCards = [
+const proofSteps = [
+  { command: "discover", result: "2 candidates", tone: "text-[#AFA4FF]" },
+  { command: "scan", result: "3 blocking CV006", tone: "text-[#FF9C8F]" },
+  { command: "report", result: "JSON written", tone: "text-[#F5C86B]" },
+  { command: "fix --dry-run", result: "0 files changed", tone: "text-[#AFA4FF]" },
+  { command: "fix", result: "8 safe edits", tone: "text-[#6FE0B2]" },
+  { command: "scan", result: "clean", tone: "text-[#6FE0B2]" },
+];
+
+const surfaces = [
   {
     index: "01",
-    eyebrow: "Discover visually",
-    title: "A library that behaves like a playground.",
-    description: "Browse real previews instead of guessing from names. Every card reacts, reveals states and opens into a focused workspace.",
-    accent: "#6366F1",
+    title: "A contract in the repository",
+    description: "Components, semantic roles, protected props and migration strategy live in reviewable YAML beside the code.",
+    icon: Code2,
+    detail: "component-vault.yaml",
   },
   {
     index: "02",
-    eyebrow: "Shape every state",
-    title: "Change props and watch the interface respond.",
-    description: "Switch viewport, density, loading and content while transitions preserve context and make every change easy to understand.",
-    accent: "#51C89B",
+    title: "The same engine everywhere",
+    description: "Local scans, pull-request gates, JSON reports and the programmatic API use the same deterministic AST analysis.",
+    icon: GitPullRequest,
+    detail: "CLI · CI · API",
   },
   {
     index: "03",
-    eyebrow: "Keep implementation close",
-    title: "Move from preview to code without losing the flow.",
-    description: "Code, usage, accessibility and notes appear exactly when needed, without turning the experience into a dense dashboard.",
-    accent: "#E978D4",
+    title: "A workspace for the result",
+    description: "Review findings, migration progress and governed components in a product surface built around the Guard workflow.",
+    icon: ScanSearch,
+    detail: "Guard dashboard",
   },
 ];
 
-const featureItems = [
-  { title: "Live component states", description: "Preview loading, error, empty and responsive states in the same visual surface.", icon: Play, accent: "#6366F1" },
-  { title: "Interactive prop controls", description: "Tune component behavior and content with immediate visual feedback.", icon: SlidersHorizontal, accent: "#51C89B" },
-  { title: "Code that stays connected", description: "Keep implementation, usage and documentation beside the component.", icon: Code2, accent: "#E978D4" },
+const capabilities = [
+  ["CV001", "Import boundaries"],
+  ["CV002", "Protected properties"],
+  ["CV003", "Raw governed JSX"],
+  ["CV004", "Repeated styles"],
+  ["CV005", "Repository patterns"],
+  ["CV006", "Semantic mappings"],
 ];
 
 export function LandingExperience() {
-  const pricing = demoComponents.find((component) => component.slug === "pricing-card") ?? demoComponents[0];
-  const table = demoComponents.find((component) => component.slug === "table-data-grid") ?? demoComponents[0];
-  const motionExperience = demoComponents.find((component) => component.slug === "card-stack-navigator") ?? pricing;
-  const storyRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: storyRef, offset: ["start start", "end end"] });
-  const railX = useTransform(scrollYProgress, [0, 1], ["0%", "-66%"]);
-  const progressScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <main className="relative isolate min-h-dvh overflow-x-clip bg-[#F7F8FC] text-text-primary">
-      <SiteMotionLayer tone="landing" />
+    <main className="min-h-dvh overflow-x-clip bg-[#0A0B10] text-[#F4F2EC]">
       <RouteProgress />
 
-      <div className="relative z-10">
-        <motion.header
-          className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5"
-          initial={reduceMotion ? false : { opacity: 0, y: -14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: motionEase }}
-        >
-          <Link href="/" className="group flex items-center gap-3">
-            <motion.span
-              className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-[#6366F1] to-[#9A78FF] text-white shadow-lg shadow-indigo-200"
-              whileHover={reduceMotion ? undefined : { rotate: -7, scale: 1.06 }}
-              transition={{ type: "spring", stiffness: 320, damping: 18 }}
-            >
-              <Layers3 size={20} aria-hidden />
-            </motion.span>
-            <span className="font-bold tracking-[-0.02em]">Component Vault</span>
+      <header className="relative z-20 border-b border-white/10 bg-[#0A0B10]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 md:px-8">
+          <Link href="/" className="flex items-center gap-3" aria-label="Component Vault home">
+            <BrandMark size="sm" className="rounded-lg shadow-none" />
+            <span className="text-sm font-semibold tracking-[-0.02em]">Component Vault</span>
+            <span className="hidden rounded-full border border-white/10 px-2 py-0.5 font-mono text-[10px] text-white/45 sm:inline">v0.6.0</span>
           </Link>
-          <nav className="flex items-center gap-2">
-            <Link href="/login" className="hidden min-h-10 items-center rounded-2xl px-4 text-sm font-semibold text-[#6D7285] transition hover:text-text-primary sm:inline-flex">
-              Login
+          <nav className="flex items-center gap-1" aria-label="Primary navigation">
+            <a href="#proof" className="hidden min-h-10 items-center px-3 text-sm text-white/55 transition hover:text-white sm:inline-flex">Proof</a>
+            <a href="https://github.com/WessYu/component-vault" target="_blank" rel="noreferrer" className="hidden min-h-10 items-center gap-1.5 px-3 text-sm text-white/55 transition hover:text-white md:inline-flex">
+              Source <ExternalLink size={13} aria-hidden />
+            </a>
+            <Link href="/vault/guard" className="ml-2 inline-flex min-h-10 items-center gap-2 rounded-full bg-[#F4F2EC] px-4 text-sm font-semibold text-[#0A0B10] transition hover:bg-white">
+              Open Guard <ArrowRight size={15} aria-hidden />
             </Link>
-            <Magnetic>
-              <Link href="/vault/components" className="group inline-flex min-h-10 items-center gap-2 rounded-2xl bg-[#171A2B] px-4 text-sm font-semibold text-white shadow-lg shadow-[#171A2B]/10 transition hover:-translate-y-0.5">
-                Explore vault
-                <ArrowRight className="transition-transform group-hover:translate-x-0.5" size={16} aria-hidden />
-              </Link>
-            </Magnetic>
           </nav>
-        </motion.header>
+        </div>
+      </header>
 
-        <section className="mx-auto grid min-h-[calc(100dvh-80px)] max-w-7xl items-center gap-14 px-5 py-12 lg:grid-cols-[0.88fr_1.12fr] lg:py-20">
+      <section className="relative border-b border-white/10">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="absolute left-[-12rem] top-[-10rem] size-[32rem] rounded-full bg-[#705CF6]/15 blur-[110px]" />
+          <div className="absolute bottom-[-18rem] right-[-12rem] size-[38rem] rounded-full bg-[#53D6A5]/8 blur-[130px]" />
+          <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
+        </div>
+
+        <div className="relative mx-auto grid max-w-[1440px] gap-14 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20 lg:py-36">
           <div>
-            <motion.p
-              className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EF] bg-white/82 px-3 py-1 text-sm font-medium text-[#6366F1] shadow-sm backdrop-blur"
-              initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.08, ease: motionEase }}
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: motionEase }}
+              className="inline-flex items-center gap-2 rounded-full border border-[#8877FF]/35 bg-[#8877FF]/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#B7ADFF]"
             >
-              <Sparkles size={15} aria-hidden />
-              Visual Component Playground
-            </motion.p>
+              <ShieldCheck size={14} aria-hidden /> Deterministic design-system governance
+            </motion.div>
             <motion.h1
-              className="mt-6 max-w-3xl text-5xl font-bold tracking-[-0.06em] md:text-7xl"
-              initial={reduceMotion ? false : { opacity: 0, y: 28, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.72, delay: 0.12, ease: motionEase }}
+              initial={reduceMotion ? false : { opacity: 0, y: 26 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.08, ease: motionEase }}
+              className="mt-7 max-w-4xl text-[clamp(3.5rem,7vw,7.3rem)] font-semibold leading-[0.9] tracking-[-0.075em]"
             >
-              Build once.
-              <span className="relative block w-fit text-[#6366F1]">
-                Reuse everywhere.
-                <motion.span
-                  className="absolute -bottom-2 left-0 h-1.5 w-full origin-left rounded-full bg-gradient-to-r from-[#6366F1] via-[#9A78FF] to-[#E978D4]"
-                  initial={reduceMotion ? false : { scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.75, delay: 0.55, ease: motionEase }}
-                />
-              </span>
+              Your design system,
+              <span className="block text-white/38">enforced as code.</span>
             </motion.h1>
             <motion.p
-              className="mt-7 max-w-2xl text-lg leading-8 text-[#6D7285]"
               initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.58, delay: 0.24, ease: motionEase }}
+              transition={{ duration: 0.55, delay: 0.18, ease: motionEase }}
+              className="mt-8 max-w-2xl text-lg leading-8 text-white/58 md:text-xl"
             >
-              A living workspace to save, test, document and reuse the interface pieces behind your products.
+              Component Vault turns repository-owned component rules into AST checks, conservative fixes and pull-request gates for React codebases.
             </motion.p>
             <motion.div
-              className="mt-8 flex flex-wrap gap-3"
-              initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.32, ease: motionEase }}
+              transition={{ duration: 0.5, delay: 0.26, ease: motionEase }}
+              className="mt-9 flex flex-col gap-3 sm:flex-row"
             >
-              <Magnetic>
-                <Link href="/vault/components" className="group inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[#6366F1] px-5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:shadow-xl hover:shadow-indigo-200">
-                  Start exploring <ArrowRight className="transition-transform group-hover:translate-x-1" size={17} aria-hidden />
-                </Link>
-              </Magnetic>
-              <Link href="/vault/components/card-stack-navigator" className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white/84 px-5 text-sm font-bold text-text-primary shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-[#D4D8E3]">
-                See motion experiences
-              </Link>
+              <a href="#proof" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#806CFF] px-5 text-sm font-semibold text-white transition hover:bg-[#907FFF]">
+                See the reproducible proof <ArrowRight size={16} aria-hidden />
+              </a>
+              <a href="https://www.npmjs.com/package/@wess2001/component-vault" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white/78 transition hover:border-white/30 hover:text-white">
+                View package on npm <ExternalLink size={14} aria-hidden />
+              </a>
             </motion.div>
             <motion.div
-              className="mt-8 flex flex-wrap gap-4 text-sm text-[#6D7285]"
               initial={reduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.42 }}
+              transition={{ duration: 0.5, delay: 0.34 }}
+              className="mt-8 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-white/38"
             >
-              {["Live previews", "Motion patterns", "Props editor"].map((item) => (
-                <span key={item} className="inline-flex items-center gap-2">
-                  <Check size={15} className="text-[#51C89B]" aria-hidden />
-                  {item}
-                </span>
-              ))}
+              <span>TypeScript compiler API</span>
+              <span>JS · JSX · TS · TSX</span>
+              <span>No model at enforcement time</span>
             </motion.div>
           </div>
 
           <motion.div
-            className="relative [perspective:1400px]"
-            initial={reduceMotion ? false : { opacity: 0, x: 34, rotateY: -7 }}
+            initial={reduceMotion ? false : { opacity: 0, x: 28, rotateY: -3 }}
             animate={{ opacity: 1, x: 0, rotateY: 0 }}
-            transition={{ duration: 0.8, delay: 0.18, ease: motionEase }}
+            transition={{ duration: 0.7, delay: 0.12, ease: motionEase }}
+            className="relative [perspective:1200px]"
           >
-            <motion.div
-              className="absolute -left-5 top-20 z-20 hidden items-center rounded-2xl border border-[#E4E7EF] bg-white/92 px-4 py-3 text-sm font-semibold shadow-2xl shadow-[#171A2B]/12 backdrop-blur md:flex"
-              animate={reduceMotion ? undefined : { y: [0, -7, 0] }}
-              transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <MousePointer2 size={16} className="mr-2 text-[#6366F1]" aria-hidden />
-              Selected: Card Stack
-            </motion.div>
-            <motion.div
-              className="absolute -right-5 bottom-16 z-20 hidden rounded-2xl border border-[#E4E7EF] bg-[#171A2B] px-4 py-3 text-xs font-medium text-white shadow-2xl md:block"
-              animate={reduceMotion ? undefined : { y: [0, 8, 0], rotate: [0, 1, 0] }}
-              transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              Props updated in real time
-            </motion.div>
-
-            <motion.div
-              className="rounded-[38px] border border-white/70 bg-white/72 p-4 shadow-[0_45px_120px_rgba(23,26,43,0.16)] backdrop-blur-xl"
-              whileHover={reduceMotion ? undefined : { rotateX: 1.2, rotateY: -1.2, y: -4 }}
-              transition={{ type: "spring", stiffness: 180, damping: 22 }}
-            >
-              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-[#E4E7EF] bg-white px-4 py-3">
-                <span className="size-2.5 rounded-full bg-[#FF7664]" />
-                <span className="size-2.5 rounded-full bg-[#F1BE48]" />
-                <span className="size-2.5 rounded-full bg-[#51C89B]" />
-                <span className="ml-3 text-xs font-medium text-[#9A9FB1]">component-vault / playground</span>
-              </div>
-              <div className="grid gap-4 lg:grid-cols-[1fr_230px]">
-                <div className="space-y-4">
-                  <ComponentPreview component={motionExperience} compact />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <ComponentPreview component={pricing} compact />
-                    <ComponentPreview component={table} compact />
-                  </div>
+            <div className="absolute -inset-6 rounded-[2.5rem] bg-[#806CFF]/10 blur-3xl" aria-hidden />
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/12 bg-[#101117] shadow-[0_36px_120px_rgba(0,0,0,.55)]">
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-[#FF7D70]" />
+                  <span className="size-2 rounded-full bg-[#F5C86B]" />
+                  <span className="size-2 rounded-full bg-[#6FE0B2]" />
                 </div>
-                <div className="rounded-[28px] border border-[#E4E7EF] bg-white p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold">Properties</h3>
-                    <span className="rounded-full bg-[#EEF0FF] px-2 py-1 text-xs font-bold text-[#6366F1]">Live</span>
-                  </div>
-                  <div className="mt-5 space-y-4">
-                    {["motion", "depth", "snap", "reducedMotion"].map((item, index) => (
-                      <motion.div
-                        key={item}
-                        className="rounded-2xl border border-[#E4E7EF] bg-[#F7F8FC] p-3"
-                        animate={reduceMotion ? undefined : { borderColor: index === 1 ? ["#E4E7EF", "#9A78FF", "#E4E7EF"] : "#E4E7EF" }}
-                        transition={{ duration: 3.4, repeat: Infinity, delay: index * 0.2 }}
-                      >
-                        <span className="text-xs font-medium text-[#9A9FB1]">{item}</span>
-                        <div className="mt-2 h-2 rounded-full bg-white shadow-inner">
-                          <motion.div
-                            className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#E978D4]"
-                            initial={{ width: `${38 + index * 11}%` }}
-                            animate={reduceMotion ? undefined : { width: [`${38 + index * 11}%`, `${62 + index * 7}%`, `${38 + index * 11}%`] }}
-                            transition={{ duration: 4.4, repeat: Infinity, delay: index * 0.28, ease: "easeInOut" }}
-                          />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/30">verified fixture · react/vite</span>
+              </div>
+              <div className="p-5 md:p-7">
+                <div className="font-mono text-xs text-white/42"><span className="text-[#6FE0B2]">$</span> npm run demo:proof</div>
+                <div className="mt-6 space-y-1">
+                  {proofSteps.map((step, index) => (
+                    <motion.div
+                      key={`${step.command}-${index}`}
+                      initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.35, delay: 0.38 + index * 0.06 }}
+                      className="grid grid-cols-[24px_minmax(0,1fr)] items-center gap-2 border-b border-white/[0.06] py-3 font-mono text-xs sm:grid-cols-[24px_minmax(0,1fr)_auto]"
+                    >
+                      <span className="text-white/20">0{index + 1}</span>
+                      <span className="text-white/68">component-vault {step.command}</span>
+                      <span className={`${step.tone} col-start-2 sm:col-start-auto`}>{step.result}</span>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-6 flex items-center justify-between rounded-2xl border border-[#6FE0B2]/25 bg-[#6FE0B2]/[0.07] px-4 py-3">
+                  <span className="flex items-center gap-2 text-sm font-medium text-[#93EBC8]"><CircleCheck size={16} aria-hidden /> Proof passed</span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#93EBC8]/65">build green</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
-        </section>
+        </div>
+      </section>
 
-        <section ref={storyRef} className="relative hidden h-[310vh] lg:block">
-          <div className="sticky top-0 flex h-dvh items-center overflow-hidden">
-            <div className="absolute left-8 top-8 z-20 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#9A9FB1]">
-              <span>Scroll through the workflow</span>
-              <span className="h-px w-24 bg-[#D4D8E3]">
-                <motion.span className="block h-full origin-left bg-[#6366F1]" style={{ scaleX: progressScale }} />
-              </span>
+      <section className="border-b border-white/10 bg-[#F1EFE8] text-[#121318]">
+        <div className="mx-auto max-w-[1440px] px-5 py-20 md:px-8 md:py-28">
+          <Reveal className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#6653E4]">One policy model</p>
+              <h2 className="mt-4 text-4xl font-semibold leading-[0.98] tracking-[-0.055em] md:text-6xl">Not another component gallery.</h2>
             </div>
-            <motion.div className="flex w-[300vw] gap-8 px-[8vw]" style={{ x: railX }}>
-              {storyCards.map((card, index) => {
-                const preview = index === 0 ? motionExperience : index === 1 ? table : pricing;
-                return (
-                  <article key={card.index} className="grid h-[72vh] w-[84vw] shrink-0 grid-cols-[0.78fr_1.22fr] items-center gap-12 rounded-[44px] border border-white/70 bg-white/74 p-10 shadow-[0_38px_110px_rgba(23,26,43,0.1)] backdrop-blur-xl">
-                    <div>
-                      <span className="font-mono text-sm font-bold" style={{ color: card.accent }}>{card.index}</span>
-                      <p className="mt-5 text-sm font-semibold uppercase tracking-[0.15em] text-[#9A9FB1]">{card.eyebrow}</p>
-                      <h2 className="mt-4 max-w-xl text-5xl font-bold tracking-[-0.055em]">{card.title}</h2>
-                      <p className="mt-5 max-w-xl text-lg leading-8 text-[#6D7285]">{card.description}</p>
-                      <div className="mt-8 inline-flex items-center gap-2 text-sm font-bold" style={{ color: card.accent }}>
-                        Explore the pattern <ArrowRight size={16} aria-hidden />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute -inset-10 rounded-full opacity-40 blur-3xl" style={{ background: card.accent }} />
-                      <div className="relative rounded-[36px] border border-[#E4E7EF] bg-white p-5 shadow-2xl shadow-[#171A2B]/10">
-                        <ComponentPreview component={preview} />
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </motion.div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-5 py-20 lg:hidden">
-          <StaggerGroup className="space-y-5">
-            {storyCards.map((card, index) => (
-              <StaggerItem key={card.index}>
-                <article className="rounded-[32px] border border-[#E4E7EF] bg-white/82 p-6 shadow-lg shadow-[#171A2B]/5 backdrop-blur">
-                  <span className="font-mono text-sm font-bold" style={{ color: card.accent }}>{card.index}</span>
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-[0.15em] text-[#9A9FB1]">{card.eyebrow}</p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-[-0.04em]">{card.title}</h2>
-                  <p className="mt-3 leading-7 text-[#6D7285]">{card.description}</p>
-                  <div className="mt-6"><ComponentPreview component={index === 0 ? motionExperience : index === 1 ? table : pricing} compact /></div>
-                </article>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-5 py-24">
-          <Reveal>
-            <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#6366F1]">A system with a pulse</p>
-                <h2 className="mt-3 max-w-3xl text-4xl font-bold tracking-[-0.045em] md:text-6xl">Motion that explains, guides and rewards interaction.</h2>
-              </div>
-              <WandSparkles className="hidden text-[#9A78FF] md:block" size={42} aria-hidden />
-            </div>
+            <p className="max-w-2xl text-lg leading-8 text-[#5E6069] lg:justify-self-end">
+              The library is the review surface. The product is the contract connecting repository policy, developer workflow and migration evidence.
+            </p>
           </Reveal>
-          <StaggerGroup className="grid gap-5 md:grid-cols-3">
-            {featureItems.map((feature) => {
-              const Icon = feature.icon;
+
+          <StaggerGroup className="mt-14 grid border-l border-t border-[#C9C6BD] md:grid-cols-3">
+            {surfaces.map((surface) => {
+              const Icon = surface.icon;
               return (
-                <StaggerItem key={feature.title}>
-                  <motion.article
-                    className="group relative min-h-[260px] overflow-hidden rounded-[32px] border border-[#E4E7EF] bg-white/82 p-6 shadow-[0_22px_80px_rgba(23,26,43,0.06)] backdrop-blur"
-                    whileHover={reduceMotion ? undefined : { y: -7, rotate: -0.35 }}
-                    transition={{ type: "spring", stiffness: 250, damping: 21 }}
-                  >
-                    <div className="absolute -right-14 -top-14 size-40 rounded-full opacity-10 blur-2xl transition-transform duration-500 group-hover:scale-125" style={{ background: feature.accent }} />
-                    <span className="relative grid size-12 place-items-center rounded-2xl text-white shadow-lg" style={{ background: feature.accent }}>
-                      <Icon size={21} aria-hidden />
-                    </span>
-                    <h3 className="relative mt-8 text-xl font-bold tracking-[-0.025em]">{feature.title}</h3>
-                    <p className="relative mt-3 leading-7 text-[#6D7285]">{feature.description}</p>
-                    <div className="relative mt-7 h-1.5 overflow-hidden rounded-full bg-[#F2F4FA]">
-                      <motion.span className="block h-full origin-left rounded-full" style={{ background: feature.accent }} initial={{ scaleX: 0.28 }} whileInView={{ scaleX: 0.78 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: motionEase }} />
+                <StaggerItem key={surface.index} className="h-full">
+                  <article className="flex h-full min-h-[330px] flex-col border-b border-r border-[#C9C6BD] p-6 md:p-8">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs text-[#878982]">/{surface.index}</span>
+                      <Icon size={20} className="text-[#6653E4]" aria-hidden />
                     </div>
-                  </motion.article>
+                    <h3 className="mt-16 max-w-xs text-2xl font-semibold tracking-[-0.035em]">{surface.title}</h3>
+                    <p className="mt-4 max-w-sm leading-7 text-[#696B72]">{surface.description}</p>
+                    <div className="mt-auto pt-8 font-mono text-[11px] uppercase tracking-[0.12em] text-[#6653E4]">{surface.detail}</div>
+                  </article>
                 </StaggerItem>
               );
             })}
           </StaggerGroup>
-        </section>
+        </div>
+      </section>
 
-        <section className="mx-auto max-w-7xl px-5 pb-16">
-          <Reveal>
-            <div className="relative overflow-hidden rounded-[42px] bg-[#171A2B] p-8 text-white shadow-[0_45px_120px_rgba(23,26,43,0.25)] md:p-14">
-              <div className="absolute -right-24 -top-28 size-80 rounded-full bg-[#6366F1]/40 blur-3xl" />
-              <div className="absolute -bottom-28 left-[35%] size-72 rounded-full bg-[#E978D4]/20 blur-3xl" />
-              <div className="relative max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#A8ABFF]">Your component system, alive</p>
-                <h2 className="mt-4 text-4xl font-bold tracking-[-0.045em] md:text-6xl">Stop browsing static cards. Start exploring behavior.</h2>
-                <p className="mt-5 max-w-2xl text-lg leading-8 text-white/65">Open the vault, interact with motion experiences and shape reusable interfaces without losing visual context.</p>
-                <Magnetic className="mt-8 w-fit">
-                  <Link href="/vault/components" className="group inline-flex min-h-12 items-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-text-primary">
-                    Open Component Vault <ArrowRight className="transition-transform group-hover:translate-x-1" size={17} aria-hidden />
-                  </Link>
-                </Magnetic>
+      <section id="proof" className="scroll-mt-16 border-b border-white/10">
+        <div className="mx-auto max-w-[1440px] px-5 py-20 md:px-8 md:py-28">
+          <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#AFA4FF]">Committed fixture · packaged CLI</p>
+              <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-[0.98] tracking-[-0.055em] md:text-6xl">Show the failure. Prove the fix.</h2>
+            </div>
+            <a href="https://github.com/WessYu/component-vault/tree/master/examples/react-vite" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 self-start border-b border-white/25 text-sm font-medium text-white/70 transition hover:border-white hover:text-white md:self-auto">
+              Inspect the fixture <ExternalLink size={14} aria-hidden />
+            </a>
+          </Reveal>
+
+          <div className="mt-14 grid gap-px overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/10 lg:grid-cols-2">
+            <div className="bg-[#0E0F14] p-5 md:p-8">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-white/42">src/App.tsx · before (excerpt)</span>
+                <span className="rounded-full border border-[#FF7D70]/25 bg-[#FF7D70]/8 px-2.5 py-1 font-mono text-[10px] text-[#FF9C8F]">3 findings</span>
+              </div>
+              <pre className="mt-8 overflow-x-auto font-mono text-[13px] leading-7 text-white/64"><code>{`<h1>Govern components without guessing</h1>
+<p>Scan the native elements, preview a safe fix, and let Component Vault add only proven imports.</p>
+<button type="button">Review the dry-run</button>`}</code></pre>
+            </div>
+            <div className="bg-[#0E0F14] p-5 md:p-8">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-white/42">src/App.tsx · after (excerpt)</span>
+                <span className="rounded-full border border-[#6FE0B2]/25 bg-[#6FE0B2]/8 px-2.5 py-1 font-mono text-[10px] text-[#93EBC8]">clean scan</span>
+              </div>
+              <pre className="mt-8 overflow-x-auto font-mono text-[13px] leading-7 text-white/64"><code><span className="text-[#93EBC8]">{`import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+`}</span><span className="text-[#AFA4FF]">{`
+<Text.H1>Govern components without guessing</Text.H1>
+<Text.Paragraph>Scan the native elements, preview a safe fix, and let Component Vault add only proven imports.</Text.Paragraph>
+<Button type="button">Review the dry-run</Button>`}</span></code></pre>
+            </div>
+          </div>
+
+          <Reveal className="mt-6 grid gap-4 rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-5 md:grid-cols-[1fr_auto] md:items-center md:p-7">
+            <div className="flex items-start gap-4">
+              <FileJson2 className="mt-1 shrink-0 text-[#F5C86B]" size={20} aria-hidden />
+              <div>
+                <h3 className="font-semibold">The report is part of the proof.</h3>
+                <p className="mt-1 text-sm leading-6 text-white/48">CI asserts 3 semantic findings are also 3 blocking report findings, preventing scan/report drift.</p>
               </div>
             </div>
+            <code className="rounded-xl bg-black/25 px-4 py-3 font-mono text-xs text-[#F5C86B]">engine: typescript-ast+semantic</code>
           </Reveal>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 bg-[#101117]">
+        <div className="mx-auto grid max-w-[1440px] gap-14 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[0.8fr_1.2fr]">
+          <Reveal>
+            <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#AFA4FF]">Scope, stated honestly</p>
+            <h2 className="mt-4 text-4xl font-semibold leading-[1] tracking-[-0.05em] md:text-5xl">Strong claims need visible boundaries.</h2>
+            <p className="mt-6 max-w-xl leading-7 text-white/52">
+              CV006 enforces semantic mappings defined by the repository—for example, <code className="font-mono text-[#AFA4FF]">h1 → Text.H1</code>. It supports accessibility governance, but it is not presented as a complete WCAG audit.
+            </p>
+            <div className="mt-8 flex items-center gap-3 text-sm text-[#93EBC8]"><Check size={16} aria-hidden /> Deterministic and testable</div>
+            <div className="mt-3 flex items-center gap-3 text-sm text-white/48"><ChevronRight size={16} aria-hidden /> Repository-specific by design</div>
+          </Reveal>
+
+          <StaggerGroup className="grid gap-3 sm:grid-cols-2">
+            {capabilities.map(([id, label]) => (
+              <StaggerItem key={id}>
+                <div className="flex min-h-20 items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-5">
+                  <span className="font-mono text-xs text-[#AFA4FF]">{id}</span>
+                  <span className="text-sm font-medium text-white/72">{label}</span>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
+        </div>
+      </section>
+
+      <section className="bg-[#806CFF] text-white">
+        <div className="mx-auto grid max-w-[1440px] gap-8 px-5 py-16 md:px-8 md:py-20 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-white/65"><Terminal size={15} aria-hidden /> Start with the actual workflow</div>
+            <h2 className="mt-4 max-w-4xl text-4xl font-semibold leading-[0.98] tracking-[-0.055em] md:text-6xl">Put the contract next to the code.</h2>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+            <a href="https://www.npmjs.com/package/@wess2001/component-vault" target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#36269E] transition hover:bg-[#F4F2EC]">
+              Install from npm <ArrowRight size={16} aria-hidden />
+            </a>
+            <Link href="/vault/guard" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/30 px-5 text-sm font-semibold transition hover:bg-white/10">
+              Open Guard dashboard <WandSparkles size={15} aria-hidden />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-white/10 bg-[#0A0B10]">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-5 px-5 py-7 text-sm text-white/38 md:flex-row md:items-center md:justify-between md:px-8">
+          <div className="flex items-center gap-3"><BrandMark size="sm" className="rounded-lg shadow-none" /><span>Component Vault · repository-owned governance</span></div>
+          <div className="flex flex-wrap gap-5">
+            <a className="transition hover:text-white" href="https://github.com/WessYu/component-vault" target="_blank" rel="noreferrer">GitHub</a>
+            <a className="transition hover:text-white" href="https://www.npmjs.com/package/@wess2001/component-vault" target="_blank" rel="noreferrer">npm</a>
+            <Link className="transition hover:text-white" href="/vault/components">Component workspace</Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
