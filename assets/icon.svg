@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Component Vault icon</title>
+  <desc id="desc">Minimal monochrome stacked component layers on a dark rounded square.</desc>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="#0A0A0A"/>
+  <rect x="9" y="9" width="238" height="238" rx="51" fill="none" stroke="#2A2D31" stroke-width="2"/>
+  <polygon points="128,61 188,92 128,123 68,92" fill="#F4F4F2"/>
+  <polygon points="128,105 184,134 128,163 72,134" fill="#B8BBC0"/>
+  <polygon points="128,145 178,171 128,197 78,171" fill="#666A70"/>
+</svg>
