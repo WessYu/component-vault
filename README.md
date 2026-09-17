@@ -1,6 +1,10 @@
 # Component Vault
 
 <p align="center">
+  <img src="./assets/icon.svg" alt="Component Vault" width="96" />
+</p>
+
+<p align="center">
   <a href="https://component-vault-dun.vercel.app/">
     <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/landing.svg" alt="Component Vault" width="100%" />
   </a>
