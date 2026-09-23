@@ -28,6 +28,21 @@
   <img src="https://img.shields.io/badge/npm-111111?style=flat-square&logo=npm" alt="npm" />
 </p>
 
+## Real CLI demo
+
+<p align="center">
+  <a href="https://github.com/WessYu/component-vault/actions/runs/35852978749">
+    <img src="https://raw.githubusercontent.com/WessYu/WESSYU-ARQUIVO/main/public/projects/component-vault/proof.gif" alt="Real Component Vault CLI execution showing discover, scan, fix and clean rescan" width="100%" />
+  </a>
+</p>
+
+This is an **actual terminal recording** captured from CI while the packaged CLI runs against the repository's React/Vite proof fixture.
+
+**Observed in this run:** 2 discovered candidates · 3 blocking CV006 findings · dry-run with no writes · 8 deterministic edits · clean rescan · green production build.
+
+[View the exact CI run that produced this recording →](https://github.com/WessYu/component-vault/actions/runs/35852978749)
+
+
 ## The problem
 
 Design-system drift usually happens through small changes that are individually reasonable:
